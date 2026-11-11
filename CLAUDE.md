@@ -109,6 +109,7 @@ PLAN.md              original product plan and schedule
 - Events: now_hearing, passed_over, recalled, adjourned, break_start, break_end, court_not_sitting, court_risen, correction.
 
 **Nexconn** (`server/src/lib/nexconn.ts`, `client/src/lib/nexconn.ts`)
+- **Core rule (Urja, 12 Nov 2026): Nexconn's Chat SDK and Call SDK are the backbone of CourtCall and must "light up" across the whole system.** For every feature, first design how it runs on Nexconn: realtime updates as Chat SDK messages (`CC:Progress`, `CC:Alert`, planned `CC:Briefing`), conversations as Nexconn channels, voice as Call SDK calls (planned "Call my lawyer" / "Call client" and the hearing-day briefing). Use other services only where Nexconn can't do the job (e.g. the Call SDK can't dial phone numbers) and say so. Make the usage visible in the UI, the demo video and the write-up.
 - IDs: staff `u<uuid without dashes>`, clients `c<…>`, courtroom group `s<sessionId>`, firm team group `o<officeId>`, bot user `courtcallbot`.
 - Server signs requests: `SHA1(appSecret + nonce + timestamp)` lowercase hex; fails over to the `api-b.` backup domain.
 - Custom message types: `CC:Progress` (structured courtroom update posted into the room group by the bot) and `CC:Alert` (client alerts). The web SDK's real field is `isPersisted` — the docs misspell it `isPersited`; trust the `.d.ts` types over the docs.
