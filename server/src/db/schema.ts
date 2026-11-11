@@ -205,6 +205,8 @@ export const accessLinks = pgTable('access_links', {
   deviceIdHash: text('device_id_hash'),
   activatedAt: timestamp('activated_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  // Lawyer or staff member who shared the link: the client's default chat contact.
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: createdAt(),
 })
 

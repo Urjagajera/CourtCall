@@ -1,0 +1,2 @@
+ALTER TABLE "access_links" ADD COLUMN "created_by" uuid;--> statement-breakpoint
+ALTER TABLE "access_links" ADD CONSTRAINT "access_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
