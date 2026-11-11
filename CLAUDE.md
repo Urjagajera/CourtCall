@@ -81,14 +81,16 @@ PLAN.md              original product plan and schedule
 
 | Role (`users.role`) | Can do | Approved by |
 |---|---|---|
-| `lawyer` (senior lawyer) | Clients, cases, courtrooms (join + report), team room, client chat | Firm founder: CourtCall team (Bar Council check). Others: a firm admin |
+| `lawyer` (senior lawyer) | Assigned clients, their cases + chats; courtrooms (join + report), team room | Firm founder: nobody (starts right away). Others: a firm admin |
 | `junior` | Join courtrooms, report progress, room chat, team room | A firm admin |
-| `staff` (office clerk) | Clients, cases, team room, client chat; today's courtrooms **read-only**, never reports | A firm admin |
-| `admin` | **CourtCall platform team**, not part of any firm. Only verifies firm founders | — |
+| `staff` (office clerk) | Assigned clients, their cases + chats, team room; today's courtrooms **read-only**, never reports | A firm admin |
+| `admin` | Removed (Nov 2026). The enum value stays in the DB but nothing uses it | — |
 
 - **Firm admin** is a flag (`users.is_firm_admin`), not a role. The founder (`offices.owner_id`) always has it and can't be deactivated or demoted. Firm admins can give it to lawyers or staff (never juniors). They approve/decline/deactivate people, change roles, and rotate the invite code (`/api/office/*`).
 - People join a firm with its 6-character invite code (`/api/auth/register/member` with a role) and wait in `pending` until approved. "Deactivated" = `verification_status = 'rejected'`.
-- All firm data (clients, cases, chats) is shared across the firm and **never** with other firms. Courtroom progress is the only thing shared between firms.
+- Firm data is **never** shared with other firms; courtroom progress is the only thing shared between firms.
+- **Client visibility** (`server/src/lib/visibility.ts`, table `client_assignments`): firm admins see every client; juniors see every firm case (they cover courtrooms) but not /clients; other lawyers and staff see only assigned clients (clients, cases, links, Today case rows). Assigned when sharing a link (`assignTo`, sharer always included unless firm admin), when adding a client, or by a firm admin (`PUT /api/clients/:id/assignees`). Clients chat only with assignees + firm admins.
+- Bar Council no. is optional profile info: there is no public API to verify it.
 - `requireAuth`, `requireRole`, `requireVerified`, `requireFirmAdmin` in `server/src/lib/auth.ts` enforce this. Always enforce permissions on the server, not only in the UI.
 
 ---
@@ -144,7 +146,7 @@ Done (in order):
 
 11. Automatic client alerts: rules in `server/src/lib/alertRules.ts` (unit tested), sending in `alerts.ts` (dedupe via `alert_logs`, Nexconn bot DM `CC:Alert`, Web Push in `push.ts`), client page banner + "Turn on alerts" (`client/public/sw.js`, `client/src/lib/push.ts`)
 12. Deployed on Vercel Hobby (free): **https://courtcall-kappa.vercel.app**. Installable app (PWA): `client/public/manifest.webmanifest`, icons, `sw.js` (offline page + push), service worker registration (`client/src/lib/install.ts`; the in-app install card was removed on request, Android users get an APK built with PWABuilder), app opens at `/app` which routes staff/clients. User guide `GUIDE.md` lives in the repo only (not shown inside the app); keep it updated with features. `vercel.json` builds server + client, serves client/dist, rewrites /api/* to the function pi/index.js (imports server/dist), region hnd1 (Tokyo). Alerts use waitUntil on Vercel. Every push to `main` redeploys.
-13. **Polish on real phones** ← next; family links; Gujarati/Hindi alert templates; PWA install
+13. Done: client history/sign out/tour, firm chat filters, client assignment, platform admin removed. **Languages**: client page + client tour + alerts in en/hi/gu (`client/src/lib/clientI18n.ts`, `server/src/lib/alertText.ts`; client switch saves `clients.language` via `POST /api/c/language`). Staff screens stay English. **Voice typing** in every chat box (`client/src/lib/dictation.ts`, browser SpeechRecognition, text goes into the box, never auto-sent). Next: polish on real phones
 14. Real-user testing with actual lawyers/juniors/clients (traction bonus); record usage numbers
 15. Demo video + PDF write-up + submit by 22 Nov
 

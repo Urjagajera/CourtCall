@@ -44,7 +44,6 @@ Open the link in Chrome or Edge and click the **install** icon at the right of t
 | Office staff | Neha Parikh | Cases and clients; courtrooms read-only |
 | Senior lawyer / Junior (2nd office) | Desai Law Chambers | The **same Court 4**, with private data of another firm |
 | Client | Ramesh Patel | His own case page, alerts and chat with the firm |
-| CourtCall team | Platform team | Verifying new firms |
 
 **Best demo:** open **Junior lawyer** in one window and **Client** in a private/incognito window. Report "Now hearing" in Court 4 and watch the client's page update and alert.
 
@@ -54,9 +53,9 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 ## 3. Set up your firm (for the senior lawyer who starts it)
 
-1. Tap **Get started → Create a firm**. Enter your name, email, mobile, a password, your **Bar Council enrolment number** and your firm's name.
-2. The CourtCall team checks your Bar Council number. You'll see "Awaiting verification" until then.
-3. Once verified, you're the **firm admin**. Open **Team** to find your firm's **6-character invite code**.
+1. Tap **Get started → Create a firm**. Enter your name, email, mobile, a password and your firm's name. Your **Bar Council enrolment number** is optional (shown on your profile).
+2. You can start straight away: you're the **firm admin**.
+3. As firm admin, Open **Team** to find your firm's **6-character invite code**.
 4. Send the code to your lawyers, juniors and office staff.
 
 ### People joining a firm
@@ -74,6 +73,14 @@ The first time each person signs in, a **guided tour** points out every feature.
 | **Office staff** | Clients, cases, team chat, client chat; see today's courtrooms (read-only) |
 
 Your firm's clients and cases are **never** visible to other firms. Only courtroom progress is shared.
+
+### Who sees which clients
+
+- **Firm admins** see every client, case and client chat in the firm.
+- **Other senior lawyers and office staff** see only the clients assigned to them: their cases, links and chats.
+- **Junior lawyers** see every case of the firm on **Today** and in courtrooms (they cover the rooms), but not the Clients page.
+- **Assigning:** when you share a client's WhatsApp link (**Cases → link icon**), tick **Who looks after this client**. You're always included. A firm admin can change it anytime on **Clients → person icon**. Whoever adds a client looks after them.
+- The client can chat only with the people assigned to them and the firm admins.
 
 ---
 
@@ -106,7 +113,8 @@ Open **Chat**:
 - **Team room** (at the top): one room for everyone in the firm.
 - **Lawyers** tab: a private chat with each colleague, senior lawyers first, then junior lawyers. The firm admin is marked.
 - **Staff** tab: office staff.
-- **Clients** tab (senior lawyers and staff): a private chat with each client.
+- **Clients** tab (senior lawyers and staff): a private chat with each client you look after (firm admins: every client).
+- **Voice typing:** tap the **mic** next to the message box and speak. The words appear in the box so you can check them before tapping Send. The **EN / हिं / ગુ** button next to the mic picks the language you speak.
 - Use the search box to find someone. A dot on a tab means unread messages there.
 
 ### Lawyers: watch from anywhere
@@ -124,10 +132,10 @@ Open **Chat**:
    - How many cases are before yours, and when it was last reported.
 3. Tap **Turn on** under **Get alerts on this phone** to get notifications.
 4. Install it (section 1) so it opens from your home screen next time.
-5. **Chat with your firm** at the bottom of the page.
+5. **Chat with your firm** at the bottom of the page. Type, or tap the **mic** and speak (in the page's language).
 6. **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
 7. **History**: what happened on earlier court days for the case, such as when it was heard, adjourned or passed over.
-8. At the top: **Tour** replays the guided tour (it also runs on your first visit), and **Sign out** removes your case and alerts from this phone. To come back, open the WhatsApp link again.
+8. At the top: **EN / हिं / ગુ** switches the page language (English, Hindi, Gujarati). Your alerts switch to that language too. **Tour** replays the guided tour (it also runs on your first visit), and **Sign out** removes your case and alerts from this phone. To come back, open the WhatsApp link again.
 
 The link works on **your phone only**. If you change phones, ask your lawyer for a new link.
 
@@ -151,7 +159,9 @@ Each alert comes once. You'll never get a guessed time.
 | "This link was turned off" | Your lawyer turned it off. Ask for a new one. |
 | No **Install app** option on Android | Use Chrome (not an in-app browser such as WhatsApp's). Open the link, tap **⋮ → Open in Chrome**, then install. |
 | No alerts | Tap **Turn on** on your case page and allow notifications. On iPhone, install it to the home screen first. Check that the phone isn't in battery saver. |
-| "Awaiting verification" | Firm founders wait for the CourtCall team; everyone else waits for their firm admin to approve them on **Team**. |
+| "Awaiting approval" | Your firm admin approves you on **Team**. Firm founders never wait. |
+| A client is missing from your list | Only clients assigned to you are shown. Ask a firm admin to add you on **Clients**, or share the client's link and tick yourself. |
+| Mic button missing or "Microphone is blocked" | Voice typing works in Chrome, Edge and Safari (not Firefox). Allow the microphone for this site in the browser settings. |
 | Progress says "may be out of date" | Nobody has reported for 20 minutes. Ask the junior in court, or check again soon. |
 | Red dot next to your name | Chat is reconnecting. Courtroom updates still work. |
 | "You're offline" | CourtCall needs internet for live progress. Reconnect and tap **Try again**. |

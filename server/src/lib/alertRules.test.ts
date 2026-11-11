@@ -61,3 +61,10 @@ test('undo never alerts, and no message predicts a time', () => {
   const msgs = [run(ev('now_hearing', 1), 1), run(ev('now_hearing', 14), 14), run(ev('now_hearing', 15), 15)].map((a) => a!.message)
   for (const m of msgs) assert.doesNotMatch(m, /\b(minute|min|hour|o'clock|am|pm|soon)\b/i)
 })
+
+test('alerts use the client language (Hindi, Gujarati)', () => {
+  const base = { event: { type: 'now_hearing' as const, item: 12, version: 9 }, currentItem: 12, caseItem: 15, roomNo: '4', sent: new Set<string>() }
+  assert.match(chooseAlert({ ...base, lang: 'hi' })!.message, /कोर्ट 4.*3 बाकी/)
+  assert.match(chooseAlert({ ...base, lang: 'gu' })!.message, /કોર્ટ 4.*3 બાકી/)
+  assert.match(chooseAlert(base)!.message, /Court 4 is at Item 12/)
+})

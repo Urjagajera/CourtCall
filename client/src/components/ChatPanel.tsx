@@ -1,4 +1,4 @@
-import { Loader2, MessageCircle, Send, WifiOff } from 'lucide-react'
+import { Loader2, MessageCircle, Mic, Send, Square, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EVENT_META, clockTime, type EventType } from '../lib/court'
 import {
@@ -14,7 +14,23 @@ import {
   type ChannelKind,
   type Message,
 } from '../lib/nexconn'
+import { useDictation } from '../lib/dictation'
 import { cx } from './ui'
+
+const VOICE_LANGS = [
+  { code: 'en-IN', short: 'EN', name: 'English' },
+  { code: 'hi-IN', short: 'हिं', name: 'Hindi' },
+  { code: 'gu-IN', short: 'ગુ', name: 'Gujarati' },
+]
+const VOICE_KEY = 'cc-voice-lang'
+function storedVoice() {
+  try {
+    const v = localStorage.getItem(VOICE_KEY)
+    return VOICE_LANGS.some((l) => l.code === v) ? v! : 'en-IN'
+  } catch {
+    return 'en-IN'
+  }
+}
 
 interface Props {
   kind: ChannelKind
@@ -25,13 +41,15 @@ interface Props {
   readOnly?: boolean
   className?: string
   emptyText?: string
+  /** Fixed voice-typing language (client page). Without it, staff pick EN / हिं / ગુ next to the mic. */
+  voiceLang?: string
 }
 
 /** Oldest at the top, newest at the bottom, whatever order the server or socket delivers them in. */
 const byTime = (list: Message[]) => [...list].sort((a, b) => a.sentTime - b.sentTime)
 
 /** Real-time chat for one Nexconn channel: history, live messages, structured progress cards. */
-export function ChatPanel({ kind, channelId, names, placeholder = 'Message', readOnly, className, emptyText = 'No messages yet.' }: Props) {
+export function ChatPanel({ kind, channelId, names, placeholder = 'Message', readOnly, className, emptyText = 'No messages yet.', voiceLang }: Props) {
   const chat = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,6 +57,18 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const [pickedVoice, setPickedVoice] = useState(storedVoice)
+  const speechLang = voiceLang ?? pickedVoice
+  const voice = useDictation(speechLang, setText)
+  const cycleVoice = () => {
+    const next = VOICE_LANGS[(VOICE_LANGS.findIndex((l) => l.code === pickedVoice) + 1) % VOICE_LANGS.length].code
+    setPickedVoice(next)
+    try {
+      localStorage.setItem(VOICE_KEY, next)
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     if (chat.status !== 'ready' || !channelId) return
@@ -72,6 +102,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
     e.preventDefault()
     const t = text.trim()
     if (!t || !channelId) return
+    voice.stop()
     setSending(true)
     setError(null)
     try {
@@ -114,6 +145,35 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
             aria-label={placeholder}
             className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface-raised px-3 text-body outline-none focus:border-accent focus:ring-2 focus:ring-accent/40"
           />
+          {voice.supported && (
+            <>
+              {!voiceLang && (
+                <button
+                  type="button"
+                  onClick={cycleVoice}
+                  disabled={voice.listening}
+                  aria-label={`Voice typing language: ${VOICE_LANGS.find((l) => l.code === pickedVoice)?.name}. Tap to change.`}
+                  title="Voice typing language"
+                  className="flex h-11 min-w-10 items-center justify-center rounded-md border border-line px-2 text-label font-semibold text-ink-muted hover:text-ink disabled:opacity-50"
+                >
+                  {VOICE_LANGS.find((l) => l.code === pickedVoice)?.short}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => (voice.listening ? voice.stop() : voice.start(text))}
+                disabled={offline || chat.status !== 'ready'}
+                aria-pressed={voice.listening}
+                aria-label={voice.listening ? 'Stop voice typing' : 'Speak to type'}
+                className={cx(
+                  'flex size-11 shrink-0 items-center justify-center rounded-md border transition-colors disabled:opacity-50',
+                  voice.listening ? 'animate-pulse border-stopped-fg bg-stopped-bg text-stopped-fg' : 'border-line text-ink hover:border-accent',
+                )}
+              >
+                {voice.listening ? <Square className="size-4" strokeWidth={2} /> : <Mic className="size-5" strokeWidth={1.75} />}
+              </button>
+            </>
+          )}
           <button
             type="submit"
             disabled={sending || !text.trim() || chat.status !== 'ready'}
@@ -124,7 +184,8 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
           </button>
         </form>
       )}
-      {error && <p className="px-3 pb-2 text-caption text-stopped-fg">{error}</p>}
+      {voice.listening && <p className="px-3 pb-2 text-caption text-ink-muted" aria-live="polite">Listening… speak now, then check the text and tap Send.</p>}
+      {(error || voice.error) && <p className="px-3 pb-2 text-caption text-stopped-fg">{error ?? voice.error}</p>}
     </div>
   )
 }

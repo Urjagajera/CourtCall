@@ -1,3 +1,4 @@
+import type { Lang } from './alertText.js'
 // After every accepted courtroom update: work out which clients (in ANY firm with a case in that
 // courtroom today) need an alert, record it once in alert_logs, and deliver it by Nexconn + Web Push.
 import { and, eq, inArray, isNull } from 'drizzle-orm'
@@ -19,6 +20,7 @@ export async function alertClients(session: CourtSession, event: CourtEvent) {
       title: schema.cases.title,
       clientId: schema.clients.id,
       clientName: schema.clients.name,
+      language: schema.clients.language,
       roomNo: schema.courtrooms.roomNo,
     })
     .from(schema.cases)
@@ -43,6 +45,7 @@ export async function alertClients(session: CourtSession, event: CourtEvent) {
         caseItem: r.itemNo,
         roomNo: r.roomNo,
         sent: sentFor(r.caseId),
+        lang: (['en', 'hi', 'gu'].includes(r.language) ? r.language : 'en') as Lang,
       }),
     }))
     .filter((p): p is typeof p & { pick: NonNullable<typeof p.pick> } => p.pick !== null)

@@ -135,6 +135,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
   res.json({
     kind: ctx.link.kind,
     clientName: ctx.client.name,
+    language: ctx.client.language,
     firmName: ctx.office.name,
     linkId: ctx.link.id,
     caseId: theCase.id,
@@ -154,6 +155,15 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     history,
     cases: cases.map((c) => ({ ...c, current: c.id === theCase.id })),
   })
+})
+
+/** The client picks their language on their page: it also changes the language of their alerts. */
+clientRouter.post('/language', requireClient, async (req, res) => {
+  const { language } = parse(z.object({ language: z.enum(['en', 'hi', 'gu']) }), req.body)
+  const ctx = req.clientCtx!
+  // A family link only changes what that phone shows, not the client's alerts.
+  if (ctx.link.kind === 'client') await db.update(schema.clients).set({ language }).where(eq(schema.clients.id, ctx.client.id))
+  res.json({ ok: true })
 })
 
 // ---- Phone notifications (Web Push) ----

@@ -247,6 +247,9 @@ check('people list for the picker', ((await staff.get('/office/people')).body.pe
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
 const rameshMe = (await demoClient.get('/c/me')).body
+check('client picks Gujarati (also their alert language)', (await demoClient.post('/c/language', { language: 'gu' })).status === 200 && (await demoClient.get('/c/me')).body.language === 'gu')
+await demoClient.post('/c/language', { language: 'en' })
+check('unsupported language rejected', (await demoClient.post('/c/language', { language: 'fr' })).status === 400)
 check('client sees all their cases (today and past)', rameshMe.cases?.length >= 3 && rameshMe.cases.some((k: any) => k.hearingDate < rameshMe.today), rameshMe.cases)
 check('client sees earlier court days in history', rameshMe.history?.some((h: any) => h.date < rameshMe.today && /adjourned/.test(h.message)))
 const pastCase = rameshMe.cases?.find((k: any) => k.hearingDate < rameshMe.today)

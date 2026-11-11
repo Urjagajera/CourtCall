@@ -230,72 +230,59 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
   ]
 }
 
+
+type ClientLang = 'en' | 'hi' | 'gu'
+type T2 = [title: string, body: string]
+type TourText = { welcome: (n: string) => T2 } & Record<'progress' | 'updates' | 'alerts' | 'chat' | 'cases' | 'history' | 'menu' | 'finish', T2>
+const CLIENT_TOUR: Record<ClientLang, TourText> = {
+  en: {
+    welcome: (n) => [`Namaste ${n}, welcome to CourtCall`, 'This page shows how far the court has reached with your case, live. Here is a quick look around. Tap End tour anytime.'],
+    progress: ['Your case, live', '"Now" is the item the court is hearing. "Your item" is your number on today\'s list. It shows how many cases are before yours and when it was last reported. CourtCall never guesses a time.'],
+    updates: ['Latest updates', 'Everything reported in your courtroom today, and every alert you were sent.'],
+    alerts: ['Alerts on this phone', 'Tap Turn on to get a notification when the court is 10, 5 and 2 cases away, and when your case is heard, passed over or adjourned.'],
+    chat: ['Chat with your lawyer', 'Message your firm privately. Type, or tap the microphone and speak. Your lawyer sees it in CourtCall straight away.'],
+    cases: ['All your cases', 'Your other cases with this firm, upcoming and past. Tap one to see its progress and history.'],
+    history: ['History', 'What happened on earlier court days for this case: when it was heard, adjourned or passed over.'],
+    menu: ['Language, tour and sign out', 'Switch between English, Hindi and Gujarati (your alerts change too), replay this tour, or sign out of this phone.'],
+    finish: ["You're all set", 'Keep this page open on court days, or turn on alerts and put your phone away. We will let you know.'],
+  },
+  hi: {
+    welcome: (n) => [`नमस्ते ${n}, CourtCall में आपका स्वागत है`, 'यह पेज लाइव दिखाता है कि कोर्ट आपके केस तक कितना पहुँची। चलिए जल्दी से देखते हैं। कभी भी टूर बंद कर सकते हैं।'],
+    progress: ['आपका केस, लाइव', '"अभी" वह आइटम है जिसकी सुनवाई चल रही है। "आपका आइटम" आज की सूची में आपका नंबर है। आपसे पहले कितने केस हैं और आखिरी अपडेट कब आया, यह भी दिखता है। CourtCall कभी समय का अंदाज़ा नहीं लगाता।'],
+    updates: ['ताज़ा अपडेट', 'आज आपके कोर्टरूम में जो भी बताया गया, और आपको भेजे गए सभी अलर्ट।'],
+    alerts: ['इस फ़ोन पर अलर्ट', '"चालू करें" दबाएँ: जब आपका केस 10, 5 और 2 केस दूर हो, और जब सुनवाई हो, पास ओवर हो या स्थगित हो, तब सूचना मिलेगी।'],
+    chat: ['अपने वकील से चैट', 'अपनी फ़र्म को निजी संदेश भेजें। लिखें, या माइक दबाकर बोलें। वकील इसे तुरंत CourtCall में देखते हैं।'],
+    cases: ['आपके सभी केस', 'इस फ़र्म के साथ आपके दूसरे केस, आगामी और पिछले। प्रगति और इतिहास देखने के लिए किसी पर टैप करें।'],
+    history: ['इतिहास', 'इस केस की पिछली तारीखों पर क्या हुआ: कब सुनवाई हुई, स्थगित हुआ या पास ओवर हुआ।'],
+    menu: ['भाषा, टूर और साइन आउट', 'English, हिन्दी और ગુજરાતી में बदलें (आपके अलर्ट की भाषा भी बदलेगी), टूर दोबारा देखें, या इस फ़ोन से साइन आउट करें।'],
+    finish: ['सब तैयार है', 'सुनवाई के दिन यह पेज खुला रखें, या अलर्ट चालू करके फ़ोन रख दें। हम आपको बता देंगे।'],
+  },
+  gu: {
+    welcome: (n) => [`નમસ્તે ${n}, CourtCallમાં તમારું સ્વાગત છે`, 'આ પેજ લાઇવ બતાવે છે કે કોર્ટ તમારા કેસ સુધી કેટલી પહોંચી. ચાલો ઝડપથી જોઈએ. ગમે ત્યારે ટૂર બંધ કરી શકો છો.'],
+    progress: ['તમારો કેસ, લાઇવ', '"હમણાં" એ આઇટમ છે જેની સુનાવણી ચાલે છે. "તમારી આઇટમ" આજની યાદીમાં તમારો નંબર છે. તમારા પહેલાં કેટલા કેસ છે અને છેલ્લો અપડેટ ક્યારે આવ્યો તે પણ દેખાય છે. CourtCall ક્યારેય સમયનો અંદાજ લગાવતું નથી.'],
+    updates: ['તાજા અપડેટ', 'આજે તમારા કોર્ટરૂમમાં જે જણાવાયું તે બધું, અને તમને મોકલેલા બધા અલર્ટ.'],
+    alerts: ['આ ફોન પર અલર્ટ', '"ચાલુ કરો" દબાવો: જ્યારે તમારો કેસ 10, 5 અને 2 કેસ દૂર હોય, અને જ્યારે સુનાવણી થાય, પાસ ઓવર થાય કે મુલતવી રહે ત્યારે સૂચના મળશે.'],
+    chat: ['તમારા વકીલ સાથે ચેટ', 'તમારી ફર્મને ખાનગી સંદેશ મોકલો. લખો, અથવા માઇક દબાવીને બોલો. વકીલ તેને તરત CourtCallમાં જુએ છે.'],
+    cases: ['તમારા બધા કેસ', 'આ ફર્મ સાથેના તમારા બીજા કેસ, આગામી અને પાછલા. પ્રગતિ અને ઇતિહાસ જોવા કોઈ પર ટેપ કરો.'],
+    history: ['ઇતિહાસ', 'આ કેસની પાછલી તારીખોએ શું થયું: ક્યારે સુનાવણી થઈ, મુલતવી રહ્યો કે પાસ ઓવર થયો.'],
+    menu: ['ભાષા, ટૂર અને સાઇન આઉટ', 'English, हिन्दी અને ગુજરાતીમાં બદલો (તમારા અલર્ટની ભાષા પણ બદલાશે), ટૂર ફરી જુઓ, અથવા આ ફોનમાંથી સાઇન આઉટ કરો.'],
+    finish: ['બધું તૈયાર છે', 'સુનાવણીના દિવસે આ પેજ ખુલ્લું રાખો, અથવા અલર્ટ ચાલુ કરીને ફોન મૂકી દો. અમે તમને જણાવીશું.'],
+  },
+}
+
 /** Tour for a client opening their case page (no account; opened from a WhatsApp link). */
-export function clientTourSteps(firstName: string, kind: 'client' | 'family'): TourStep[] {
+export function clientTourSteps(firstName: string, kind: 'client' | 'family', lang: ClientLang = 'en'): TourStep[] {
+  const T = CLIENT_TOUR[lang]
+  const step = (id: string, [title, body]: T2, target?: string, optional?: boolean): TourStep => ({ id: `client-${id}`, title, body, target, optional })
   const steps: TourStep[] = [
-    {
-      id: 'client-welcome',
-      title: `Namaste ${firstName}, welcome to CourtCall`,
-      body: 'This page shows how far the court has reached with your case, live. Here is a quick look around. Tap End tour anytime.',
-    },
-    {
-      id: 'client-progress',
-      target: 'client-progress',
-      title: 'Your case, live',
-      body: '"Now" is the item the court is hearing. "Your item" is your number on today\'s list. It shows how many cases are before yours and when it was last reported. CourtCall never guesses a time.',
-    },
-    {
-      id: 'client-updates',
-      target: 'client-updates',
-      optional: true,
-      title: 'Latest updates',
-      body: 'Everything reported in your courtroom today, and every alert you were sent.',
-    },
-    {
-      id: 'client-alerts',
-      target: 'client-alerts',
-      optional: true,
-      title: 'Alerts on this phone',
-      body: 'Tap Turn on to get a notification when the court is 10, 5 and 2 cases away, and when your case is heard, passed over or adjourned.',
-    },
+    step('welcome', T.welcome(firstName)),
+    step('progress', T.progress, 'client-progress'),
+    step('updates', T.updates, 'client-updates', true),
+    step('alerts', T.alerts, 'client-alerts', true),
   ]
   if (kind === 'client') {
-    steps.push(
-      {
-        id: 'client-chat',
-        target: 'client-chat',
-        optional: true,
-        title: 'Chat with your lawyer',
-        body: 'Message your firm privately. Your lawyer sees it in CourtCall straight away.',
-      },
-      {
-        id: 'client-cases',
-        target: 'client-cases',
-        optional: true,
-        title: 'All your cases',
-        body: 'Your other cases with this firm, upcoming and past. Tap one to see its progress and history.',
-      },
-      {
-        id: 'client-history',
-        target: 'client-history',
-        optional: true,
-        title: 'History',
-        body: 'What happened on earlier court days for this case: when it was heard, adjourned or passed over.',
-      },
-    )
+    steps.push(step('chat', T.chat, 'client-chat', true), step('cases', T.cases, 'client-cases', true), step('history', T.history, 'client-history', true))
   }
-  steps.push(
-    {
-      id: 'client-menu',
-      target: 'client-menu',
-      title: 'Tour and sign out',
-      body: 'Replay this tour anytime, or sign out of this phone. To come back after signing out, open the link your lawyer sent on WhatsApp.',
-    },
-    {
-      id: 'client-finish',
-      title: "You're all set",
-      body: 'Keep this page open on court days, or turn on alerts and put your phone away. We will let you know.',
-    },
-  )
+  steps.push(step('menu', T.menu, 'client-menu'), step('finish', T.finish))
   return steps
 }

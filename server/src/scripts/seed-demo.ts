@@ -10,6 +10,7 @@ import { hashPassword } from '../lib/auth.js'
 import { DEMO_CLIENT_TOKEN, DEMO_LINK_LABEL, sha256 } from '../lib/clientAccess.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
 import { DEMO_ACCOUNTS, type DemoKey } from '../lib/demo.js'
+import { ALERT_TEXT } from '../lib/alertText.js'
 import { courtDate } from '../lib/engine.js'
 
 const acc = (k: DemoKey) => DEMO_ACCOUNTS.find((a) => a.key === k)!
@@ -72,7 +73,9 @@ const neha = await user(acc('staff').email, acc('staff').name, 'staff', a.office
 const court4 = await upsertCourtroom(COMPLEX, '4')
 const court7 = await upsertCourtroom(COMPLEX, '7')
 
-const ramesh = await client(a.officeId, 'Ramesh Patel', 'gu')
+// Demo client opens in English (judges); the EN / हिं / ગુ switch on his page shows the other languages.
+const ramesh = await client(a.officeId, 'Ramesh Patel', 'en')
+await db.update(schema.clients).set({ language: 'en' }).where(eq(schema.clients.id, ramesh.id))
 const sunita = await client(a.officeId, 'Sunita Joshi', 'hi')
 // Who looks after whom (firm admin Mehta sees everyone): Anil + Neha look after Ramesh, Neha alone looks after Sunita.
 await db.delete(schema.clientAssignments).where(inArray(schema.clientAssignments.clientId, [ramesh.id, sunita.id]))
@@ -121,17 +124,21 @@ async function pastDay(courtroomId: string, date: string, caseId: string, alerts
     .onConflictDoNothing()
 }
 const patelMain = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!
+// Same wording as real alerts, in the client's language.
+const T = ALERT_TEXT.en
+const v4 = (cur: number) => ({ court: '4', mine: 11, cur, away: 11 - cur })
+const v12 = (cur: number) => ({ court: '12', mine: 31, cur, away: 31 - cur })
 await pastDay(court4.id, daysAgo(7), patelMain.id, [
-  ['first', 'Court 4 has started. Now: Item 2. Your case is Item 11 (9 away).', 2],
-  ['within_5', 'Court 4 is at Item 6. Your case is Item 11 (5 away). Get ready.', 31],
-  ['within_2', 'Your case is close: Court 4 is at Item 9, yours is Item 11 (2 away). Be near the courtroom.', 48],
-  ['now_hearing', 'Your case (Item 11) is being heard now in Court 4.', 57],
-  ['adjourned', 'Your case (Item 11) was adjourned in Court 4. Your lawyer will share the next date.', 59],
+  ['first', T.first(v4(2)), 2],
+  ['within_5', T.within(v4(6)), 31],
+  ['within_2', T.close(v4(9)), 48],
+  ['now_hearing', T.now_hearing(v4(11)), 57],
+  ['adjourned', T.adjourned(v4(11)), 59],
 ])
 await pastDay(cityCivil12.id, daysAgo(21), oldCase.id, [
-  ['within_10', 'Court 12 is at Item 22. Your case is Item 31 (9 away). Get ready.', 10],
-  ['within_2', 'Your case is close: Court 12 is at Item 29, yours is Item 31 (2 away). Be near the courtroom.', 40],
-  ['now_hearing', 'Your case (Item 31) is being heard now in Court 12.', 52],
+  ['within_10', T.within(v12(22)), 10],
+  ['within_2', T.close(v12(29)), 40],
+  ['now_hearing', T.now_hearing(v12(31)), 52],
 ])
 
 // Demo client link for Ramesh Patel's main case: opened by the "Client" demo button (never bound to a phone).

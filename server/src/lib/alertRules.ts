@@ -1,3 +1,4 @@
+import { ALERT_TEXT, type Lang } from './alertText.js'
 // Which alert (if any) a client gets after a courtroom update. Pure function: no I/O, unit tested.
 // At most ONE alert per case per update, so clients are never flooded. Alerts never predict times.
 
@@ -34,45 +35,48 @@ export function chooseAlert(input: {
   roomNo: string
   /** Alert keys already sent to this case today. */
   sent: Set<string>
+  /** The client's language (defaults to English). */
+  lang?: Lang
 }): AlertPick | null {
   const { event, currentItem: cur, caseItem: mine, roomNo, sent } = input
-  const court = `Court ${roomNo}`
+  const T = ALERT_TEXT[input.lang ?? 'en']
   const pick = (key: string, message: string, implied: string[] = []): AlertPick | null =>
     sent.has(key) ? null : { key, message, implied: implied.filter((k) => !sent.has(k)) }
   // Once a case has been heard or adjourned, only court-level news that still matters goes out.
   const done = sent.has('now_hearing') || sent.has('adjourned')
   const away = cur == null ? null : mine - cur
+  const v = { court: roomNo, mine, cur, away }
 
   // 1. Updates about this exact case always win.
   if (event.item === mine) {
     switch (event.type) {
       case 'now_hearing':
-        return pick('now_hearing', `Your case (Item ${mine}) is being heard now in ${court}.`, [
+        return pick('now_hearing', T.now_hearing(v), [
           ...THRESHOLDS.map((t) => `within_${t}`),
           'first',
         ])
       case 'passed_over':
         return pick(
           `passed_over:v${event.version}`,
-          `Your case (Item ${mine}) was passed over in ${court}. It may be called again later. Your lawyer will update you.`,
+          T.passed_over(v),
         )
       case 'recalled':
-        return pick(`recalled:v${event.version}`, `Your case (Item ${mine}) has been recalled and is being heard now in ${court}.`)
+        return pick(`recalled:v${event.version}`, T.recalled(v))
       case 'adjourned':
-        return pick('adjourned', `Your case (Item ${mine}) was adjourned in ${court}. Your lawyer will share the next date.`)
+        return pick('adjourned', T.adjourned(v))
     }
   }
 
   // 2. Court-wide news.
   switch (event.type) {
     case 'court_not_sitting':
-      return done ? null : pick('not_sitting', `${court} is not sitting today. Your lawyer will update you.`)
+      return done ? null : pick('not_sitting', T.not_sitting(v))
     case 'court_risen':
-      return done ? null : pick('risen', `${court} has risen for the day. Your lawyer will update you.`)
+      return done ? null : pick('risen', T.risen(v))
     case 'break_start':
       return done || away == null || away <= 0
         ? null
-        : pick(`break:v${event.version}`, `${court} is on a short break. Latest progress: Item ${cur}. Yours is Item ${mine}.`)
+        : pick(`break:v${event.version}`, T.break(v))
     case 'correction':
       return null // an undo: the next real update will alert if needed
   }
@@ -82,20 +86,20 @@ export function chooseAlert(input: {
   if (done || away == null) return null
   if (away < 0) {
     if ([...sent].some((k) => k.startsWith('passed_over'))) return null
-    return pick('moved_past', `${court} has moved past your item (now Item ${cur}). Your lawyer will update you.`)
+    return pick('moved_past', T.moved_past(v))
   }
   for (const t of THRESHOLDS) {
     if (away <= t && !sent.has(`within_${t}`)) {
       const larger = THRESHOLDS.filter((x) => x > t).map((x) => `within_${x}`)
       const message =
         t === 2
-          ? `Your case is close: ${court} is at Item ${cur}, yours is Item ${mine} (${away} away). Be near the courtroom.`
-          : `${court} is at Item ${cur}. Your case is Item ${mine} (${away} away). Get ready.`
+          ? T.close(v)
+          : T.within(v)
       return pick(`within_${t}`, message, [...larger, 'first'])
     }
   }
   if (!sent.has('first') && THRESHOLDS.every((t) => !sent.has(`within_${t}`))) {
-    return pick('first', `${court} has started. Now: Item ${cur}. Your case is Item ${mine} (${away} away).`)
+    return pick('first', T.first(v))
   }
   return null
 }
