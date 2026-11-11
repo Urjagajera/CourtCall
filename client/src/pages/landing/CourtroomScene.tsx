@@ -33,12 +33,15 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
 
       {/* Ceiling fan */}
       <line x1="300" y1="22" x2="300" y2="40" className="stroke-ink-muted" strokeWidth="3" />
-      <g className="cc-spin" style={{ transformOrigin: '300px 44px', transformBox: 'view-box' }}>
-        {[0, 120, 240].map((r) => (
-          <ellipse key={r} cx="300" cy="44" rx="58" ry="5" transform={`rotate(${r} 300 44) translate(30 0)`} className="fill-ink-muted" opacity="0.85" />
-        ))}
+      {/* Flattened vertically so the spinning blades read as a ceiling fan seen from the front. */}
+      <g transform="translate(300 44) scale(1 0.2) translate(-300 -44)">
+        <g className="cc-spin" style={{ transformOrigin: '300px 44px', transformBox: 'view-box' }}>
+          {[0, 120, 240].map((r) => (
+            <ellipse key={r} cx="300" cy="44" rx="34" ry="9" transform={`rotate(${r} 300 44) translate(36 0)`} className="fill-ink-muted" opacity="0.9" />
+          ))}
+        </g>
       </g>
-      <circle cx="300" cy="44" r="7" className="fill-ink-muted" />
+      <ellipse cx="300" cy="44" rx="10" ry="6" className="fill-ink-muted" />
 
       {/* Item display board (like the boards outside Indian courtrooms) */}
       <g>
@@ -51,18 +54,21 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
         <text x="92" y="100" fontSize="9" fill="#A9ABC4" letterSpacing="1">
           {status === 'hearing' ? 'NOW HEARING' : 'ON BREAK'}
         </text>
+        <text x="92" y="128" fontSize="10" fontWeight="700" fill="#A9ABC4" letterSpacing="1">
+          ITEM
+        </text>
         <text
           key={item}
-          x="140"
-          y="130"
-          textAnchor="middle"
+          x="190"
+          y="131"
+          textAnchor="end"
           fontSize="30"
           fontWeight="800"
           fill="#F5B69E"
           className="cc-flip tabular"
           style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
         >
-          ITEM {item}
+          {item}
         </text>
       </g>
 

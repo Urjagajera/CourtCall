@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import Landing from './pages/landing/Landing'
 import { AppLayout } from './components/AppLayout'
 import { PageSpinner } from './components/ui'
 import type { Role } from './lib/api'
@@ -19,8 +20,10 @@ import Settings from './pages/Settings'
 /** Signed-in, verified staff only. Unverified users see the waiting screen. */
 function Protected({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
+  const { pathname } = useLocation()
   if (loading) return <PageSpinner />
-  if (!user) return <Navigate to="/login" replace />
+  // Visitors on "/" see the public landing page; other private URLs go to sign-in.
+  if (!user) return pathname === '/' ? <Landing /> : <Navigate to="/login" replace />
   if (user.verificationStatus !== 'verified') return <Pending />
   return <>{children}</>
 }
