@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, ne } from 'drizzle-orm'
 import { Router } from 'express'
 import { z } from 'zod'
 import { config, nexconnEnabled } from '../config.js'
@@ -14,6 +14,7 @@ import {
 import { courtDate } from '../lib/engine.js'
 import { HttpError, parse } from '../lib/http.js'
 import { issueToken, ncClientId, ncStaffId } from '../lib/nexconn.js'
+import { pushEnabled } from '../lib/push.js'
 import { recentEvents, sessionView } from '../lib/sessions.js'
 
 // The client's side: open a WhatsApp-shared link, see their own case, chat with the firm.
@@ -84,7 +85,8 @@ clientRouter.get('/me', requireClient, async (req, res) => {
   const alerts = await db
     .select({ message: schema.alertLogs.message, at: schema.alertLogs.createdAt })
     .from(schema.alertLogs)
-    .where(eq(schema.alertLogs.caseId, ctx.case.id))
+    // Empty messages are silent bookkeeping (skipped thresholds), never shown.
+    .where(and(eq(schema.alertLogs.caseId, ctx.case.id), ne(schema.alertLogs.message, '')))
     .orderBy(desc(schema.alertLogs.createdAt))
     .limit(20)
 
@@ -105,6 +107,36 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     updates,
     alerts,
   })
+})
+
+// ---- Phone notifications (Web Push) ----
+
+clientRouter.get('/push-key', (_req, res) => {
+  if (!pushEnabled) throw new HttpError(503, 'Phone alerts are not set up on this server')
+  res.json({ publicKey: config.webPush.publicKey })
+})
+
+const subscription = z.object({
+  endpoint: z.url().max(1000),
+  keys: z.object({ p256dh: z.string().min(10).max(200), auth: z.string().min(5).max(100) }),
+})
+
+clientRouter.post('/push', requireClient, async (req, res) => {
+  const sub = parse(subscription, req.body)
+  const linkId = req.clientCtx!.link.id
+  await db
+    .insert(schema.pushSubscriptions)
+    .values({ accessLinkId: linkId, endpoint: sub.endpoint, keys: sub.keys })
+    .onConflictDoUpdate({ target: schema.pushSubscriptions.endpoint, set: { accessLinkId: linkId, keys: sub.keys, userId: null } })
+  res.status(201).json({ ok: true })
+})
+
+clientRouter.post('/push/off', requireClient, async (req, res) => {
+  const { endpoint } = parse(z.object({ endpoint: z.url().max(1000) }), req.body)
+  await db
+    .delete(schema.pushSubscriptions)
+    .where(and(eq(schema.pushSubscriptions.endpoint, endpoint), eq(schema.pushSubscriptions.accessLinkId, req.clientCtx!.link.id)))
+  res.json({ ok: true })
 })
 
 /**

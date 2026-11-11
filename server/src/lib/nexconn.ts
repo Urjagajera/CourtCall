@@ -153,6 +153,20 @@ export async function sendSystemMessage(toUserIds: string[], messageType: string
   })
 }
 
+/** One-to-one message from the CourtCall bot (client alerts arrive in the client's own chat list). */
+export async function sendBotDirectMessage(toUserIds: string[], messageType: string, content: unknown, pushContent?: string) {
+  if (!toUserIds.length) return
+  await ensureBot()
+  await post('/v4/direct-channel/message/send', {
+    fromUserId: BOT_ID,
+    toUserIds: toUserIds.slice(0, 1000),
+    messageType,
+    content: JSON.stringify(content),
+    pushContent,
+    shouldPersist: 1,
+  })
+}
+
 /** Never let a chat-service hiccup break the core courtroom flow. */
 export async function safely(label: string, fn: () => Promise<unknown>) {
   if (!nexconnEnabled) return

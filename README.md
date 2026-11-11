@@ -292,6 +292,24 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - His page shows only his own case: **Now** vs **Your item**, how many cases are before his, court status and how fresh the report is, and the latest updates. It refreshes by itself every 10 seconds. It never shows who reported or other firms' cases, and never predicts times.
 - **Chat with Mehta & Associates** (Nexconn direct chat). The person who shared the link is the default contact; he can switch to the firm's other lawyers and staff. Messages appear on the firm's **Chat** page.
 
+### Client alerts (automatic)
+
+After every accepted courtroom update, CourtCall checks every case in that courtroom today, in every firm, and alerts the clients it concerns:
+
+| When | Alert |
+|---|---|
+| First update while the case is still far away | "Court 4 has started. Now: Item 3. Your case is Item 15 (12 away)." |
+| 10, 5 and 2 cases away | "Court 4 is at Item 10. Your case is Item 15 (5 away). Get ready." |
+| Their case is called | "Your case (Item 15) is being heard now in Court 4." |
+| Their case is passed over, recalled or adjourned | A message for that exact event |
+| Break (while still waiting), court not sitting, court risen | Court-wide news |
+| The court moved past their item without calling it | "Court 4 has moved past your item…" |
+
+- Each alert is sent **once** (deduplicated per case per day), and at most one per update, so clients are never flooded. A big jump sends only the nearest alert. Undo never alerts. No alert ever predicts a time.
+- Delivered three ways: an instant banner on the client's page (Nexconn message from the CourtCall bot), a **phone notification** if the client tapped **Turn on** under "Get alerts on this phone" (Web Push; Android Chrome and desktop, iPhone only after Add to Home Screen), and the "Latest updates" list on their page.
+- Family links get the same alerts on their page and as notifications.
+- To see it: open the **Client** demo in one window and turn alerts on, then as **Junior lawyer** report **Now hearing** in Court 4 until Item 5, 10, 13 and 15.
+
 ### Client links (how the firm shares a case)
 
 - On **Cases**, tap the link icon on a case. **Client link** makes a private link with chat; **Family link** makes one with progress only.
@@ -327,7 +345,7 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
 6. **Joining a firm:** sign out, choose **Create an account → Join a firm**, pick **Office staff** (or junior / senior lawyer) and use invite code **MEHTA4**. The new person waits for approval. Sign in as **Firm admin (Mehta)** → **Team** → **Approve**, then try changing their role or making them a firm admin.
    - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
-7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Report from Priya's window and watch his page update within 10 seconds. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
+7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Tap **Turn on** under "Get alerts on this phone". Report from Priya's window (Court 4, Now hearing 5, then 10, 13, 15) and watch the alert banner, the phone notification and his page update. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
 8. **CourtCall team:** choose **Create an account → Create a firm** to found a new firm, then sign in as **CourtCall team** and approve it on the verification page.
 
 ---

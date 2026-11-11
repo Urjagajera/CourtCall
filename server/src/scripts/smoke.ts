@@ -193,7 +193,32 @@ check('family link has no chat', (await famPhone.post('/c/chat-token')).status =
 check('firm turns the link off', (await lawyer.post(`/links/${clientLink?.id}/revoke`)).status === 200)
 check('turned-off link stops working at once', (await clientA.get('/c/me')).status === 410)
 const re = await lawyer.post(`/links/${clientLink?.id}/reissue`)
-check('reissued link works on a new phone', re.status === 201 && (await new Session('clientNew').post('/c/activate', { token: re.body.token, deviceId: phoneB })).status === 200)
+const clientNew = new Session('clientNew')
+check('reissued link works on a new phone', re.status === 201 && (await clientNew.post('/c/activate', { token: re.body.token, deviceId: phoneB })).status === 200)
+
+// ---- client alerts ----
+const before = (await junior.get(`/sessions/${sid}`)).body.session
+const heard = await junior.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: 8, baseVersion: before.version, confirm: true })
+check('junior reports the client’s own item', heard.status === 201, heard.body)
+const waitAlerts = async (pred: (a: any[]) => boolean) => {
+  for (let i = 0; i < 20; i++) {
+    const a = (await clientNew.get('/c/me')).body.alerts ?? []
+    if (pred(a)) return a
+    await new Promise((r) => setTimeout(r, 500))
+  }
+  return (await clientNew.get('/c/me')).body.alerts ?? []
+}
+const alerts1 = await waitAlerts((a) => a.some((x: any) => /being heard now/.test(x.message)))
+check('client gets a "being heard now" alert', alerts1.some((x: any) => /Item 8\) is being heard now/.test(x.message)), alerts1)
+check('alerts never show empty bookkeeping rows', alerts1.every((x: any) => x.message))
+const after = (await junior.get(`/sessions/${sid}`)).body.session
+await junior.post(`/sessions/${sid}/events`, { type: 'break_start', baseVersion: after.version })
+await new Promise((r) => setTimeout(r, 2500))
+const alerts2 = (await clientNew.get('/c/me')).body.alerts ?? []
+check('no more alerts after the case was heard', alerts2.length === alerts1.length, alerts2)
+const fin = (await junior.get(`/sessions/${sid}`)).body.session
+await junior.post(`/sessions/${sid}/events`, { type: 'break_end', baseVersion: fin.version })
+check('push key is available for phone alerts', (await clientNew.get('/c/push-key')).body.publicKey?.length > 20)
 check('other firm cannot revoke my links', (await lawyer2.post(`/links/${re.body.link?.id}/revoke`)).status === 404)
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')

@@ -1,12 +1,13 @@
-import { BellRing, CalendarDays, Hash, Info, Landmark, MessageCircle, RefreshCw, Users } from 'lucide-react'
+import { BellOff, BellRing, CalendarDays, Hash, Info, Landmark, MessageCircle, RefreshCw, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { ChatPanel } from '../../components/ChatPanel'
 import { Logo } from '../../components/Logo'
-import { Badge, Banner, Card, PageSpinner, cx } from '../../components/ui'
+import { Badge, Banner, Button, Card, PageSpinner, cx } from '../../components/ui'
 import { api } from '../../lib/api'
 import { EVENT_META, clockTime, statusMeta, timeAgo, useNow, usePolling, type EventType, type SessionState } from '../../lib/court'
 import { formatDate } from '../../lib/dates'
-import { startChat, stopChat, useChat } from '../../lib/nexconn'
+import { MSG_ALERT, startChat, stopChat, useChat, useIncomingMessages, type Message } from '../../lib/nexconn'
+import { pushState, turnOffPush, turnOnPush, type PushState } from '../../lib/push'
 
 interface ClientView {
   kind: 'client' | 'family'
@@ -37,6 +38,18 @@ export default function ClientCase() {
     load()
   }, [load])
   usePolling(load, 10000)
+
+  // Alerts arrive instantly over Nexconn (client links): show them and refresh the page.
+  const [flash, setFlash] = useState<string | null>(null)
+  const onIncoming = useCallback(
+    (m: Message) => {
+      if (m.messageType !== MSG_ALERT) return
+      setFlash((m.content as { text?: string }).text ?? 'New update on your case')
+      load()
+    },
+    [load],
+  )
+  useIncomingMessages(onIncoming)
 
   if (error && !data) {
     return (
@@ -73,6 +86,15 @@ export default function ClientCase() {
   return (
     <Shell firm={data.firmName}>
       <p className="text-label text-ink-muted">Namaste {data.clientName.split(' ')[0]}, this is your case</p>
+      {flash && (
+        <button onClick={() => setFlash(null)} className="cc-pop w-full text-left" aria-label="Dismiss alert">
+          <Banner tone="info">
+            <span className="flex items-start gap-2">
+              <BellRing className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} /> {flash}
+            </span>
+          </Banner>
+        </button>
+      )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-4">
           <Card>
@@ -168,6 +190,7 @@ export default function ClientCase() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
+          <AlertsCard />
           {data.kind === 'client' ? (
             <ClientChat firm={data.firmName} />
           ) : (
@@ -184,6 +207,57 @@ export default function ClientCase() {
         </div>
       </div>
     </Shell>
+  )
+}
+
+/** Phone notifications: one tap to get alerts even when this page is closed. */
+function AlertsCard() {
+  const [state, setState] = useState<PushState | 'loading'>('loading')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    pushState()
+      .then(setState)
+      .catch(() => setState('unsupported'))
+  }, [])
+
+  async function toggle() {
+    setBusy(true)
+    setError(null)
+    try {
+      setState(state === 'on' ? await turnOffPush() : await turnOnPush())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Alerts could not be turned on')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (state === 'loading') return null
+  return (
+    <Card className="flex flex-col gap-2">
+      <div className="flex items-center gap-3">
+        <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-md', state === 'on' ? 'bg-hearing-bg text-hearing-fg' : 'bg-base')}>
+          {state === 'on' ? <BellRing className="size-5" strokeWidth={1.75} /> : <BellOff className="size-5" strokeWidth={1.75} />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-label font-semibold">{state === 'on' ? 'Alerts are on' : 'Get alerts on this phone'}</p>
+          <p className="text-caption text-ink-muted">
+            {state === 'unsupported'
+              ? "This browser can't show alerts. Keep this page open, or on iPhone add it to your Home Screen first."
+              : state === 'blocked'
+                ? 'Alerts are blocked. Allow notifications for this site in your browser settings.'
+                : 'When the court is 10, 5 and 2 cases away, when your case is heard, passed over or adjourned.'}
+          </p>
+        </div>
+        {(state === 'on' || state === 'off') && (
+          <Button size="sm" variant={state === 'on' ? 'secondary' : 'primary'} loading={busy} onClick={toggle}>
+            {state === 'on' ? 'Turn off' : 'Turn on'}
+          </Button>
+        )}
+      </div>
+      {error && <p className="text-caption text-stopped-fg">{error}</p>}
+    </Card>
   )
 }
 
