@@ -57,11 +57,32 @@ clientRouter.post('/signout', (_req, res) => {
   res.json({ ok: true })
 })
 
-/** Everything the client page shows. Only this case; never other clients, firms or reporter names. */
+/**
+ * Everything the client page shows: one case (live), the client's other cases, and day-by-day history.
+ * `?case=<id>` opens another case of the SAME client (client links only; family links see one case).
+ * Never other clients, other firms, or reporter names.
+ */
 clientRouter.get('/me', requireClient, async (req, res) => {
   const ctx = req.clientCtx!
   const today = courtDate()
-  const isToday = ctx.case.hearingDate === today
+
+  // Which case to show: the link's own case, or another case of this client.
+  let theCase = ctx.case
+  let courtroom = ctx.courtroom
+  const wanted = typeof req.query.case === 'string' ? req.query.case : null
+  if (wanted && wanted !== ctx.case.id) {
+    if (ctx.link.kind !== 'client') throw new HttpError(404, 'Case not found')
+    const id = parse(z.uuid(), wanted)
+    const [row] = await db
+      .select({ c: schema.cases, room: schema.courtrooms })
+      .from(schema.cases)
+      .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.cases.courtroomId))
+      .where(and(eq(schema.cases.id, id), eq(schema.cases.clientId, ctx.client.id), eq(schema.cases.officeId, ctx.office.id)))
+    if (!row) throw new HttpError(404, 'Case not found')
+    theCase = row.c
+    courtroom = row.room
+  }
+  const isToday = theCase.hearingDate === today
 
   let session: ReturnType<typeof sessionView> | null = null
   let updates: { type: string; item: number | null; at: Date }[] = []
@@ -69,7 +90,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     const [s] = await db
       .select()
       .from(schema.courtSessions)
-      .where(and(eq(schema.courtSessions.courtroomId, ctx.courtroom.id), eq(schema.courtSessions.date, today)))
+      .where(and(eq(schema.courtSessions.courtroomId, courtroom.id), eq(schema.courtSessions.date, today)))
     if (s) {
       session = sessionView(s)
       const events = await recentEvents(s.id, 20)
@@ -82,30 +103,56 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     }
   }
 
-  const alerts = await db
-    .select({ message: schema.alertLogs.message, at: schema.alertLogs.createdAt })
-    .from(schema.alertLogs)
-    // Empty messages are silent bookkeeping (skipped thresholds), never shown.
-    .where(and(eq(schema.alertLogs.caseId, ctx.case.id), ne(schema.alertLogs.message, '')))
-    .orderBy(desc(schema.alertLogs.createdAt))
-    .limit(20)
+  const [history, cases] = await Promise.all([
+    // Every alert ever sent for this case, with the court day it belongs to (newest first).
+    db
+      .select({ date: schema.courtSessions.date, message: schema.alertLogs.message, at: schema.alertLogs.createdAt })
+      .from(schema.alertLogs)
+      .innerJoin(schema.courtSessions, eq(schema.courtSessions.id, schema.alertLogs.sessionId))
+      // Empty messages are silent bookkeeping (skipped thresholds), never shown.
+      .where(and(eq(schema.alertLogs.caseId, theCase.id), ne(schema.alertLogs.message, '')))
+      .orderBy(desc(schema.alertLogs.createdAt))
+      .limit(80),
+    // The client's cases with this firm (family links: only the shared case).
+    ctx.link.kind === 'client'
+      ? db
+          .select({
+            id: schema.cases.id,
+            title: schema.cases.title,
+            caseNo: schema.cases.caseNo,
+            hearingDate: schema.cases.hearingDate,
+            itemNo: schema.cases.itemNo,
+            courtComplex: schema.courtrooms.courtComplex,
+            roomNo: schema.courtrooms.roomNo,
+          })
+          .from(schema.cases)
+          .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.cases.courtroomId))
+          .where(and(eq(schema.cases.clientId, ctx.client.id), eq(schema.cases.officeId, ctx.office.id)))
+          .orderBy(desc(schema.cases.hearingDate))
+      : Promise.resolve([]),
+  ])
 
   res.json({
     kind: ctx.link.kind,
     clientName: ctx.client.name,
     firmName: ctx.office.name,
+    linkId: ctx.link.id,
+    caseId: theCase.id,
     case: {
-      title: ctx.case.title,
-      caseNo: ctx.case.caseNo,
-      itemNo: ctx.case.itemNo,
-      hearingDate: ctx.case.hearingDate,
-      courtComplex: ctx.courtroom.courtComplex,
-      roomNo: ctx.courtroom.roomNo,
+      title: theCase.title,
+      caseNo: theCase.caseNo,
+      itemNo: theCase.itemNo,
+      hearingDate: theCase.hearingDate,
+      courtComplex: courtroom.courtComplex,
+      roomNo: courtroom.roomNo,
     },
     isToday,
+    today,
     session,
     updates,
-    alerts,
+    alerts: history.filter((h) => h.date === today).map(({ message, at }) => ({ message, at })),
+    history,
+    cases: cases.map((c) => ({ ...c, current: c.id === theCase.id })),
   })
 })
 

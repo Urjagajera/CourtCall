@@ -4,7 +4,7 @@
 // The shared demo password is written to server/.demo-credentials.txt (gitignored), never committed.
 import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { db, schema, sql } from '../db/index.js'
 import { hashPassword } from '../lib/auth.js'
 import { DEMO_CLIENT_TOKEN, DEMO_LINK_LABEL, sha256 } from '../lib/clientAccess.js'
@@ -79,6 +79,48 @@ const seededCases = await db.insert(schema.cases).values([
   { officeId: a.officeId, clientId: ramesh.id, title: 'Patel Textiles vs GSFC', caseNo: 'SCA/9021/2026', courtroomId: court7.id, hearingDate: today, itemNo: 9 },
   { officeId: b.officeId, clientId: kiran.id, title: 'Desai vs Municipal Corporation', caseNo: 'SCA/7710/2026', courtroomId: court4.id, hearingDate: today, itemNo: 18 },
 ]).returning()
+
+// History for the client demo: an earlier hearing of Ramesh's main case (adjourned) and an older, finished case.
+const daysAgo = (n: number) => {
+  const d = new Date(`${today}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - n)
+  return d.toISOString().slice(0, 10)
+}
+const cityCivil12 = await upsertCourtroom('City Civil Court', '12')
+const [oldCase] = await db
+  .insert(schema.cases)
+  .values({ officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs Shah (property)', caseNo: 'CS/220/2025', courtroomId: cityCivil12.id, hearingDate: daysAgo(21), itemNo: 31 })
+  .returning()
+async function pastDay(courtroomId: string, date: string, caseId: string, alerts: [string, string, number][]) {
+  await db.insert(schema.courtSessions).values({ courtroomId, date, currentItem: 40, hearingItem: 40, status: 'risen', version: 20 }).onConflictDoNothing()
+  const [s] = await db.select().from(schema.courtSessions).where(and(eq(schema.courtSessions.courtroomId, courtroomId), eq(schema.courtSessions.date, date)))
+  await db
+    .insert(schema.alertLogs)
+    .values(
+      alerts.map(([alertKey, message, minute], i) => ({
+        caseId,
+        sessionId: s.id,
+        eventVersion: i + 1,
+        alertKey,
+        message,
+        createdAt: new Date(`${date}T05:${String(minute).padStart(2, '0')}:00Z`), // 10:30 IST onwards
+      })),
+    )
+    .onConflictDoNothing()
+}
+const patelMain = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!
+await pastDay(court4.id, daysAgo(7), patelMain.id, [
+  ['first', 'Court 4 has started. Now: Item 2. Your case is Item 11 (9 away).', 2],
+  ['within_5', 'Court 4 is at Item 6. Your case is Item 11 (5 away). Get ready.', 31],
+  ['within_2', 'Your case is close: Court 4 is at Item 9, yours is Item 11 (2 away). Be near the courtroom.', 48],
+  ['now_hearing', 'Your case (Item 11) is being heard now in Court 4.', 57],
+  ['adjourned', 'Your case (Item 11) was adjourned in Court 4. Your lawyer will share the next date.', 59],
+])
+await pastDay(cityCivil12.id, daysAgo(21), oldCase.id, [
+  ['within_10', 'Court 12 is at Item 22. Your case is Item 31 (9 away). Get ready.', 10],
+  ['within_2', 'Your case is close: Court 12 is at Item 29, yours is Item 31 (2 away). Be near the courtroom.', 40],
+  ['now_hearing', 'Your case (Item 31) is being heard now in Court 12.', 52],
+])
 
 // Demo client link for Ramesh Patel's main case: opened by the "Client" demo button (never bound to a phone).
 const patelCase = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!

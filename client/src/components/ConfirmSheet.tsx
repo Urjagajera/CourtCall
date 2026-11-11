@@ -9,6 +9,8 @@ export function ConfirmSheet({
   title,
   message,
   confirmLabel = 'Delete',
+  confirmIcon,
+  tone = 'danger',
   onConfirm,
   onClose,
 }: {
@@ -16,6 +18,9 @@ export function ConfirmSheet({
   title: string
   message: string
   confirmLabel?: string
+  /** Defaults to a trash icon (destructive). */
+  confirmIcon?: React.ReactNode
+  tone?: 'danger' | 'primary'
   onConfirm: () => Promise<void>
   onClose: () => void
 }) {
@@ -42,9 +47,9 @@ export function ConfirmSheet({
           Cancel
         </Button>
         <Button
-          variant="danger"
+          variant={tone}
           loading={busy}
-          icon={<Trash2 className="size-5" strokeWidth={1.75} />}
+          icon={confirmIcon ?? <Trash2 className="size-5" strokeWidth={1.75} />}
           onClick={async () => {
             setBusy(true)
             setError(null)

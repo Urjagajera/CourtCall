@@ -252,3 +252,73 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
     finish,
   ]
 }
+
+/** Tour for a client opening their case page (no account; opened from a WhatsApp link). */
+export function clientTourSteps(firstName: string, kind: 'client' | 'family'): TourStep[] {
+  const steps: TourStep[] = [
+    {
+      id: 'client-welcome',
+      title: `Namaste ${firstName}, welcome to CourtCall`,
+      body: 'This page shows how far the court has reached with your case, live. Here is a quick look around. Tap End tour anytime.',
+    },
+    {
+      id: 'client-progress',
+      target: 'client-progress',
+      title: 'Your case, live',
+      body: '"Now" is the item the court is hearing. "Your item" is your number on today\'s list. It shows how many cases are before yours and when it was last reported. CourtCall never guesses a time.',
+    },
+    {
+      id: 'client-updates',
+      target: 'client-updates',
+      optional: true,
+      title: 'Latest updates',
+      body: 'Everything reported in your courtroom today, and every alert you were sent.',
+    },
+    {
+      id: 'client-alerts',
+      target: 'client-alerts',
+      optional: true,
+      title: 'Alerts on this phone',
+      body: 'Tap Turn on to get a notification when the court is 10, 5 and 2 cases away, and when your case is heard, passed over or adjourned.',
+    },
+  ]
+  if (kind === 'client') {
+    steps.push(
+      {
+        id: 'client-chat',
+        target: 'client-chat',
+        optional: true,
+        title: 'Chat with your lawyer',
+        body: 'Message your firm privately. Your lawyer sees it in CourtCall straight away.',
+      },
+      {
+        id: 'client-cases',
+        target: 'client-cases',
+        optional: true,
+        title: 'All your cases',
+        body: 'Your other cases with this firm, upcoming and past. Tap one to see its progress and history.',
+      },
+      {
+        id: 'client-history',
+        target: 'client-history',
+        optional: true,
+        title: 'History',
+        body: 'What happened on earlier court days for this case: when it was heard, adjourned or passed over.',
+      },
+    )
+  }
+  steps.push(
+    {
+      id: 'client-menu',
+      target: 'client-menu',
+      title: 'Tour and sign out',
+      body: 'Replay this tour anytime, or sign out of this phone. To come back after signing out, open the link your lawyer sent on WhatsApp.',
+    },
+    {
+      id: 'client-finish',
+      title: "You're all set",
+      body: 'Keep this page open on court days, or turn on alerts and put your phone away. We will let you know.',
+    },
+  )
+  return steps
+}
