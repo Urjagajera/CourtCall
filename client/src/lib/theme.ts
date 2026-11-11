@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 
 export type ThemePref = 'system' | 'light' | 'dark'
-const KEY = 'cc-theme'
+// v2: light became the default (v1 stored "system" for every visitor).
+const KEY = 'cc-theme-v2'
 
 function readPref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    return v === 'light' || v === 'dark' ? v : 'system'
+    return v === 'system' || v === 'dark' ? v : 'light'
   } catch {
-    return 'system'
+    return 'light'
   }
 }
 

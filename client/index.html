@@ -15,8 +15,8 @@
     <script>
       // Apply the saved/system theme before first paint to avoid a flash.
       ;(function () {
-        var pref = 'system'
-        try { pref = localStorage.getItem('cc-theme') || 'system' } catch (e) {}
+        var pref = 'light'
+        try { pref = localStorage.getItem('cc-theme-v2') || 'light' } catch (e) {}
         var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
         document.querySelector('meta[name="theme-color"]').content = dark ? '#11142A' : '#E4E7F5'

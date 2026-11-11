@@ -5,9 +5,9 @@ import { useAuth } from '../lib/auth'
 import { useTheme, type ThemePref } from '../lib/theme'
 
 const OPTIONS: [ThemePref, string, typeof Sun][] = [
-  ['system', 'System', Monitor],
   ['light', 'Light', Sun],
   ['dark', 'Dark', Moon],
+  ['system', 'System', Monitor],
 ]
 
 export default function Settings() {

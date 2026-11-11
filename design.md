@@ -62,8 +62,8 @@ Courtroom events have to be told apart instantly, so they use standard status co
 
 ## 3. Light and dark mode
 
-- The app follows the phone or system setting by default (`prefers-color-scheme`).
-- A toggle in settings (System / Light / Dark) stores the choice in `localStorage` and sets `data-theme` on `<html>`.
+- **Light is the default** for everyone. Dark mode is opt-in.
+- A toggle in settings (Light / Dark / System) stores the choice in `localStorage` (`cc-theme-v2`) and sets `data-theme` on `<html>`. "System" follows the phone setting (`prefers-color-scheme`).
 - The accent lightens in dark mode (`#3B4CCA` becomes `#8C9BFF`) so buttons stay bright. Its text flips from white to dark indigo to keep contrast.
 - The browser `theme-color` meta tag is `#E4E7F5` in light mode and `#11142A` in dark mode, so the phone status bar blends in.
 
