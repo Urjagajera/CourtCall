@@ -15,7 +15,7 @@ function readPref(): ThemePref {
 function apply(pref: ThemePref) {
   const dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
   document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#14233B' : '#8DB9F0')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#11142A' : '#E4E7F5')
 }
 
 export function useTheme() {
