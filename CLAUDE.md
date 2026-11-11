@@ -143,8 +143,8 @@ Done (in order):
 **Not done yet:**
 
 11. Automatic client alerts: rules in `server/src/lib/alertRules.ts` (unit tested), sending in `alerts.ts` (dedupe via `alert_logs`, Nexconn bot DM `CC:Alert`, Web Push in `push.ts`), client page banner + "Turn on alerts" (`client/public/sw.js`, `client/src/lib/push.ts`)
-12. **Deploy** ← in progress: repo is ready for Vercel Hobby (free). `vercel.json` builds server + client, serves client/dist, rewrites /api/* to the function pi/index.js (imports server/dist), region hnd1 (Tokyo). Alerts use waitUntil on Vercel. Remaining: Urja imports the repo on vercel.com and sets env vars (README Part 4)
-13. Polish on real phones; family links; Gujarati/Hindi alert templates; PWA install
+12. Deployed on Vercel Hobby (free): **https://courtcall-kappa.vercel.app**. Installable app (PWA): `client/public/manifest.webmanifest`, icons, `sw.js` (offline page + push), install button (`client/src/lib/install.ts`, `InstallApp`), app opens at `/app` which routes staff/clients. User guide `GUIDE.md` is rendered on the site at `/guide`; keep it updated with features. `vercel.json` builds server + client, serves client/dist, rewrites /api/* to the function pi/index.js (imports server/dist), region hnd1 (Tokyo). Alerts use waitUntil on Vercel. Every push to `main` redeploys.
+13. **Polish on real phones** ← next; family links; Gujarati/Hindi alert templates; PWA install
 14. Real-user testing with actual lawyers/juniors/clients (traction bonus); record usage numbers
 15. Demo video + PDF write-up + submit by 22 Nov
 

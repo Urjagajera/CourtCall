@@ -6,6 +6,8 @@ Juniors report courtroom progress ("Item 12 is being heard") with one tap. Court
 
 > eCourts tells you which day. CourtCall tells you the latest reported courtroom progress.
 
+**Live:** https://courtcall-kappa.vercel.app · **How to install and use it:** [GUIDE.md](GUIDE.md) (also on the site at [/guide](https://courtcall-kappa.vercel.app/guide)). It installs as an app on Android and iPhone.
+
 Built for the **Nexconn Build Challenge 2026**. All real-time messaging runs on the Nexconn Chat SDK.
 
 ---

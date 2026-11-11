@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { InstallApp } from '../../components/InstallApp'
 import { Logo } from '../../components/Logo'
 import { cx } from '../../components/ui'
 import { prefersReducedMotion, useReveal } from '../../lib/useReveal'
@@ -80,8 +81,12 @@ export default function Landing() {
             <a href="#demo" className="hover:underline underline-offset-4">Live demo</a>
             <a href="#roles" className="hover:underline underline-offset-4">Who it's for</a>
             <a href="#trust" className="hover:underline underline-offset-4">Reliability</a>
+            <Link to="/guide" className="hover:underline underline-offset-4">Guide</Link>
           </nav>
           <div className="flex items-center gap-2">
+            <div className="hidden sm:block">
+              <InstallApp compact />
+            </div>
             <Link to="/login" className="flex h-10 items-center rounded-md px-3 text-label font-semibold hover:bg-surface/60">
               Sign in
             </Link>
@@ -228,7 +233,8 @@ export default function Landing() {
           <Logo />
           <p className="max-w-2xl text-caption text-ink-muted">
             CourtCall shows the latest courtroom progress reported by verified lawyers and juniors. It does not predict hearing
-            times and is not affiliated with eCourts or any official court system.
+            times and is not affiliated with eCourts or any official court system.{' '}
+            <Link to="/guide" className="font-semibold text-ink underline underline-offset-4">How to install and use CourtCall</Link>
           </p>
         </div>
       </footer>
