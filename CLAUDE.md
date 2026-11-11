@@ -157,6 +157,23 @@ Done (in order):
 - Alerts after each accepted courtroom event: first update of the day, then distance ≤10, ≤5, ≤2, now hearing; plus passed over / recalled / adjourned for that case. Deduplicate with `alert_logs`. Send as `CC:Alert` from the bot + Web Push. Fixed templates; never predict times.
 - Add a **Client** demo button that opens Ramesh Patel's case page; add smoke-test checks; add tour/README sections.
 
+**Detailed design for module 10 (decided, not yet coded):**
+- Links are **per case** (`access_links.case_id`). Add a migration column `access_links.created_by` (user who shared it). The client chats with that person by default.
+- `server/src/lib/clientAccess.ts`: token = `randomBytes(24).toString('base64url')`, store `sha256` hash. A separate cookie `cc_client` (JWT `{ lid: linkId }`). Middleware `requireClient` loads the link (not revoked) + case + client + firm.
+- Firm routes (lawyer/staff, verified, same firm as the case):
+  - `GET /api/cases/:id/links` lists links (never tokens).
+  - `POST /api/cases/:id/links {kind: client|family, label?}` returns the raw token **once**.
+  - `POST /api/links/:id/revoke`.
+  - `POST /api/links/:id/reissue` revokes the old link and returns a new token.
+- Client routes:
+  - `POST /api/c/activate {token, deviceId}`. A revoked link returns 410 "This link was turned off. Ask your lawyer for a new one". A different device returns 409 "This link is already in use on another phone". Otherwise it binds `device_id_hash` on first open and sets the cookie.
+  - `GET /api/c/me` returns the case, court, firm name, link kind, today's session state (if the hearing is today), recent events **without reporter names**, and alert history.
+  - `POST /api/c/chat-token` (client links only, not family) issues a Nexconn token for `c<clientId>` and returns contacts (the link creator first, plus anyone who already messaged).
+  - `POST /api/c/demo` (only when `DEMO_LOGIN=true`) sets the cookie for the seeded demo link, skipping device binding.
+- Frontend: `/c/:token` keeps a random `deviceId` in localStorage, calls activate, then `navigate('/case', { replace: true })`, so the token never stays in the history. `/case` is the client page: Now / Yours / N away, status, updates, chat via `ChatPanel` direct channel, and polls every 10 s. Use `startChat('/c/chat-token')`.
+- Cases page: add a "Client link" button per case. It opens a sheet listing links (active / opened on a phone / revoked), with create, copy, **Share on WhatsApp** (`https://wa.me/91<10-digit phone>?text=…`), revoke and reissue. Warn: "Opening the link yourself locks it to your phone."
+- Seed: create a demo client link for "Patel vs State of Gujarat". Add a "Client" demo button that calls `/api/c/demo` and goes to `/case`.
+
 ---
 
 ## 7. Working conventions
