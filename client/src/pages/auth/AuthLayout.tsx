@@ -1,4 +1,4 @@
-import { BellRing, CheckCircle2, Landmark, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, BellRing, CheckCircle2, Landmark, ShieldCheck, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
@@ -23,9 +23,15 @@ export function AuthLayout({
     <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <BrandPanel />
       <main className="mx-auto flex min-h-screen w-full max-w-[520px] flex-col justify-center gap-6 px-4 py-10 lg:max-w-[560px] lg:px-8">
-        <div className="lg:hidden">
+        <Link
+          to="/"
+          className="flex w-fit items-center gap-1.5 rounded-md text-label font-semibold text-ink-muted hover:text-ink hover:underline underline-offset-4"
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.75} /> Back to home
+        </Link>
+        <Link to="/" aria-label="CourtCall home" className="w-fit lg:hidden">
           <Logo size="lg" />
-        </div>
+        </Link>
         {before}
         <div className="rounded-lg border border-line bg-surface p-5 shadow-card sm:p-6">
           <h1 className="text-h1">{title}</h1>
