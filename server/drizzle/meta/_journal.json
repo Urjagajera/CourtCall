@@ -64,6 +64,13 @@
       "when": 1794433652854,
       "tag": "0008_hearing_outcomes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794435276661,
+      "tag": "0009_drop_bar_council_no",
+      "breakpoints": true
     }
   ]
 }

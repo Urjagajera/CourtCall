@@ -270,7 +270,6 @@ function Person({ m, ownerId, self }: { m: Member; ownerId: string; self?: boole
           {R.label}
           {m.email && ` · ${m.email}`}
           {m.phone && ` · ${m.phone}`}
-          {m.barCouncilNo && ` · Bar Council ${m.barCouncilNo}`}
         </p>
       </div>
     </div>

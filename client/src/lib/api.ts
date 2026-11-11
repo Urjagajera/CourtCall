@@ -35,7 +35,6 @@ export interface User {
   name: string
   email: string
   phone: string | null
-  barCouncilNo: string | null
   verificationStatus: Verification
   officeId: string | null
   isFirmAdmin: boolean

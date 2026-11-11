@@ -90,7 +90,7 @@ PLAN.md              original product plan and schedule
 - People join a firm with its 6-character invite code (`/api/auth/register/member` with a role) and wait in `pending` until approved. "Deactivated" = `verification_status = 'rejected'`.
 - Firm data is **never** shared with other firms; courtroom progress is the only thing shared between firms.
 - **Client visibility** (`server/src/lib/visibility.ts`, table `client_assignments`): firm admins see every client; juniors see every firm case (they cover courtrooms) but not /clients; other lawyers and staff see only assigned clients (clients, cases, links, Today case rows). Assigned when sharing a link (`assignTo`, sharer always included unless firm admin), when adding a client, or by a firm admin (`PUT /api/clients/:id/assignees`). Clients chat only with assignees + firm admins.
-- Bar Council no. is optional profile info: there is no public API to verify it.
+- No Bar Council number is collected (removed Nov 2026: there is no public API to verify it). Firm admins approve everyone who joins.
 - `requireAuth`, `requireRole`, `requireVerified`, `requireFirmAdmin` in `server/src/lib/auth.ts` enforce this. Always enforce permissions on the server, not only in the UI.
 
 ---

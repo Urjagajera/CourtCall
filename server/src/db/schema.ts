@@ -46,7 +46,6 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   phone: text('phone'),
   passwordHash: text('password_hash').notNull(),
-  barCouncilNo: text('bar_council_no'),
   verificationStatus: verificationStatus('verification_status').notNull().default('pending'),
   officeId: uuid('office_id').references((): AnyPgColumn => offices.id, { onDelete: 'set null' }),
   // Firm admin: manages people in the firm (approve, roles, deactivate). The founder starts as one.

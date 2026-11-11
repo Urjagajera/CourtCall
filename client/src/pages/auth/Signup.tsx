@@ -26,7 +26,6 @@ export default function Signup() {
     email: '',
     phone: '',
     password: '',
-    barCouncilNo: '',
     officeName: '',
     inviteCode: '',
   })
@@ -70,9 +69,9 @@ export default function Signup() {
             const common = { name: v.name, email: v.email, phone: v.phone, password: v.password }
             const { user } =
               mode === 'create'
-                ? await api<{ user: User }>('/auth/register/lawyer', { body: { ...common, barCouncilNo: v.barCouncilNo || undefined, officeName: v.officeName } })
+                ? await api<{ user: User }>('/auth/register/lawyer', { body: { ...common, officeName: v.officeName } })
                 : await api<{ user: User }>('/auth/register/member', {
-                    body: { ...common, role, inviteCode: v.inviteCode, barCouncilNo: role === 'staff' ? undefined : v.barCouncilNo || undefined },
+                    body: { ...common, role, inviteCode: v.inviteCode },
                   })
             await setSession(user)
             navigate('/')
@@ -111,7 +110,6 @@ export default function Signup() {
 
         {mode === 'create' ? (
           <>
-            <Input label="Bar Council enrolment no. (optional)" hint="Shown on your profile to your firm" {...field('barCouncilNo')} />
             <Input label="Firm / chamber name" required placeholder="e.g. Mehta & Associates" {...field('officeName')} />
           </>
         ) : (
@@ -125,12 +123,6 @@ export default function Signup() {
               hint="Your firm admin shares this code"
               {...field('inviteCode')}
             />
-            {role !== 'staff' && (
-              <Input
-                label="Bar Council enrolment no. (optional)"
-                {...field('barCouncilNo')}
-              />
-            )}
           </>
         )}
         <Button type="submit" loading={submitting} icon={<UserPlus className="size-5" strokeWidth={1.75} />}>

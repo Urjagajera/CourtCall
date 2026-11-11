@@ -22,10 +22,10 @@ export default function Pending() {
             {rejected
               ? joinedFirm
                 ? 'Your firm admin has declined or deactivated this account. Please contact them.'
-                : 'Your account could not be verified. Please contact CourtCall support.'
+                : 'This account was deactivated. Please contact your firm admin.'
               : joinedFirm
                 ? 'A firm admin needs to approve you before you can see the firm’s cases and courtrooms.'
-                : 'CourtCall is checking your Bar Council details. This is usually done within a few hours.'}
+                : 'A firm admin needs to approve you before you can use CourtCall.'}
           </span>
         </Banner>
         <p className="text-label text-ink-muted">Signed in as {user?.email}</p>

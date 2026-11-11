@@ -53,7 +53,7 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 ## 3. Set up your firm (for the senior lawyer who starts it)
 
-1. Tap **Get started → Create a firm**. Enter your name, email, mobile, a password and your firm's name. Your **Bar Council enrolment number** is optional (shown on your profile).
+1. Tap **Get started → Create a firm**. Enter your name, email, mobile, a password and your firm's name.
 2. You can start straight away: you're the **firm admin**.
 3. As firm admin, Open **Team** to find your firm's **6-character invite code**.
 4. Send the code to your lawyers, juniors and office staff.

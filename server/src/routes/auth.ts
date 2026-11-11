@@ -27,8 +27,6 @@ const base = {
 
 const lawyerSignup = z.object({
   ...base,
-  // Optional profile detail: there is no public Bar Council lookup to check it against.
-  barCouncilNo: z.string().trim().max(40).optional(),
   officeName: z.string().trim().min(2).max(100),
 })
 
@@ -36,7 +34,6 @@ const memberSignup = z
   .object({
     ...base,
     role: z.enum(['lawyer', 'junior', 'staff']),
-    barCouncilNo: z.string().trim().max(40).optional(),
     inviteCode: z.string().trim().toUpperCase().length(6),
   })
 
@@ -61,7 +58,6 @@ authRouter.post('/register/lawyer', async (req, res) => {
         email: body.email,
         phone: body.phone,
         passwordHash,
-        barCouncilNo: body.barCouncilNo || null,
         isFirmAdmin: true,
         // The founder can start straight away; everyone else is approved by a firm admin.
         verificationStatus: 'verified',
@@ -99,7 +95,6 @@ async function registerMember(reqBody: unknown, res: import('express').Response)
       email: body.email,
       phone: body.phone,
       passwordHash: await hashPassword(body.password),
-      barCouncilNo: body.role === 'staff' ? null : body.barCouncilNo || null,
       officeId: office.id,
     })
     .returning()

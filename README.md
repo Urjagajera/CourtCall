@@ -218,7 +218,7 @@ All demo accounts are already verified, so they can use every feature straight a
 | Role | Who | Can do | Approved by |
 |---|---|---|---|
 | **Firm admin** | A senior lawyer or office staff member with admin rights. The founder is always one. | Everything their role can do, plus the **Team** page: approve or decline new people, change roles (senior lawyer / junior / staff), make or remove other firm admins, deactivate and reactivate people, and make a new invite code | Founder: nobody (starts right away). Others: another firm admin |
-| **Senior lawyer** | Advocates of the firm | Clients, cases, courtrooms (join and report), team room, private client chat | Founder: nobody. Joining lawyers: a firm admin. Bar Council no. is optional |
+| **Senior lawyer** | Advocates of the firm | Clients, cases, courtrooms (join and report), team room, private client chat | Founder: nobody. Joining lawyers: a firm admin |
 | **Junior lawyer** | Juniors who go to court | Join courtrooms, report progress, room chat, team room | A firm admin |
 | **Office staff** | Clerks and office employees | Clients, cases, team room, private client chat; watch today's courtrooms **read-only** (they never report) | A firm admin |
 

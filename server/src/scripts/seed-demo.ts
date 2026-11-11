@@ -42,7 +42,7 @@ async function user(email: string, name: string, role: Role, officeId: string | 
 }
 
 async function office(ownerEmail: string, ownerName: string, officeName: string, code: string) {
-  const owner = await user(ownerEmail, ownerName, 'lawyer', null, { barCouncilNo: `G/${code}/2015`, isFirmAdmin: true })
+  const owner = await user(ownerEmail, ownerName, 'lawyer', null, { isFirmAdmin: true })
   if (owner.officeId) {
     // Restore the demo invite code (a test or a demo may have rotated it).
     await db.update(schema.offices).set({ inviteCode: code }).where(eq(schema.offices.id, owner.officeId))
@@ -67,7 +67,7 @@ const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associa
 const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
 const juniorA = await user(acc('junior').email, acc('junior').name, 'junior', a.officeId)
 await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
-const anil = await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId, { barCouncilNo: 'G/2211/2018' })
+const anil = await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId)
 const neha = await user(acc('staff').email, acc('staff').name, 'staff', a.officeId)
 
 const court4 = await upsertCourtroom(COMPLEX, '4')

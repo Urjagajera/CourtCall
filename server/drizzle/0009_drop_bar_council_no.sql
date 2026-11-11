@@ -1,0 +1,1 @@
+ALTER TABLE "users" DROP COLUMN "bar_council_no";
