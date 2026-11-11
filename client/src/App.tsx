@@ -9,6 +9,7 @@ import Verify from './pages/admin/Verify'
 import Login from './pages/auth/Login'
 import Pending from './pages/auth/Pending'
 import Signup from './pages/auth/Signup'
+import Room from './pages/court/Room'
 import Cases from './pages/lawyer/Cases'
 import Clients from './pages/lawyer/Clients'
 import Team from './pages/lawyer/Team'
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
           <Route element={<Protected><AppLayout /></Protected>}>
             <Route index element={<Home />} />
+            <Route path="room/:id" element={<RoleOnly roles={['lawyer', 'junior']}><Room /></RoleOnly>} />
             <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior']}><Cases /></RoleOnly>} />
             <Route path="clients" element={<RoleOnly roles={['lawyer']}><Clients /></RoleOnly>} />
             <Route path="team" element={<RoleOnly roles={['lawyer']}><Team /></RoleOnly>} />

@@ -1,11 +1,14 @@
 export class ApiError extends Error {
   status: number
   details?: Record<string, string[] | undefined>
+  /** Full JSON error body (e.g. the latest session state on a 409 conflict). */
+  body: Record<string, unknown>
 
-  constructor(status: number, message: string, details?: Record<string, string[] | undefined>) {
+  constructor(status: number, message: string, details?: Record<string, string[] | undefined>, body: Record<string, unknown> = {}) {
     super(message)
     this.status = status
     this.details = details
+    this.body = body
   }
 }
 
@@ -17,7 +20,7 @@ export async function api<T = unknown>(path: string, options: { method?: string;
     credentials: 'include',
   })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new ApiError(res.status, data.error ?? 'Something went wrong', data.details)
+  if (!res.ok) throw new ApiError(res.status, data.error ?? 'Something went wrong', data.details, data)
   return data as T
 }
 
