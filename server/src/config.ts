@@ -8,7 +8,7 @@ function required(name: string): string {
 
 export const config = {
   port: Number(process.env.PORT ?? 4000),
-  mongoUri: required('MONGODB_URI'),
+  databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
   nexconn: {

@@ -1,0 +1,225 @@
+import {
+  type AnyPgColumn,
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core'
+
+// ---------- enums ----------
+
+export const userRole = pgEnum('user_role', ['lawyer', 'junior', 'admin'])
+export const verificationStatus = pgEnum('verification_status', ['pending', 'verified', 'rejected'])
+export const sessionStatus = pgEnum('session_status', ['not_started', 'hearing', 'break', 'risen', 'not_sitting'])
+export const eventType = pgEnum('event_type', [
+  'now_hearing',
+  'passed_over',
+  'recalled',
+  'adjourned',
+  'break_start',
+  'break_end',
+  'court_not_sitting',
+  'court_risen',
+  'correction',
+])
+export const linkKind = pgEnum('link_kind', ['client', 'family'])
+
+const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+
+// ---------- people & offices ----------
+
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  role: userRole('role').notNull(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  phone: text('phone'),
+  passwordHash: text('password_hash').notNull(),
+  barCouncilNo: text('bar_council_no'),
+  verificationStatus: verificationStatus('verification_status').notNull().default('pending'),
+  officeId: uuid('office_id').references((): AnyPgColumn => offices.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+})
+
+export const offices = pgTable('offices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  ownerId: uuid('owner_id')
+    .notNull()
+    .references((): AnyPgColumn => users.id),
+  // Juniors join an office with this code; the senior lawyer then approves them.
+  inviteCode: text('invite_code').notNull().unique(),
+  nexconnTeamGroupId: text('nexconn_team_group_id'),
+  createdAt: createdAt(),
+})
+
+// ---------- courtrooms (shared across offices) ----------
+
+export const courtrooms = pgTable(
+  'courtrooms',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    courtComplex: text('court_complex').notNull(),
+    roomNo: text('room_no').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [unique('courtroom_complex_room').on(t.courtComplex, t.roomNo)],
+)
+
+// One row per courtroom per day: the live, shared progress state.
+export const courtSessions = pgTable(
+  'court_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    courtroomId: uuid('courtroom_id')
+      .notNull()
+      .references(() => courtrooms.id),
+    date: date('date').notNull(),
+    currentItem: integer('current_item'),
+    status: sessionStatus('status').notNull().default('not_started'),
+    // Incremented on every accepted event; reporters send the version they last saw.
+    version: integer('version').notNull().default(0),
+    lastEventAt: timestamp('last_event_at', { withTimezone: true }),
+    nexconnGroupId: text('nexconn_group_id'),
+    createdAt: createdAt(),
+  },
+  (t) => [unique('session_courtroom_date').on(t.courtroomId, t.date)],
+)
+
+export const courtSessionMembers = pgTable(
+  'court_session_members',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => courtSessions.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    joinedAt: createdAt(),
+    lastReportedAt: timestamp('last_reported_at', { withTimezone: true }),
+  },
+  (t) => [primaryKey({ columns: [t.sessionId, t.userId] })],
+)
+
+// Append-only history. Corrections are new rows pointing at the event they correct.
+export const courtEvents = pgTable(
+  'court_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => courtSessions.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    type: eventType('type').notNull(),
+    item: integer('item'),
+    reporterId: uuid('reporter_id')
+      .notNull()
+      .references(() => users.id),
+    officeId: uuid('office_id').references(() => offices.id),
+    singleReporter: boolean('single_reporter').notNull().default(false),
+    confirmed: boolean('confirmed').notNull().default(false),
+    correctsEventId: uuid('corrects_event_id').references((): AnyPgColumn => courtEvents.id),
+    note: text('note'),
+    createdAt: createdAt(),
+  },
+  (t) => [unique('event_session_version').on(t.sessionId, t.version)],
+)
+
+// ---------- office-private data ----------
+
+export const clients = pgTable(
+  'clients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    officeId: uuid('office_id')
+      .notNull()
+      .references(() => offices.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    phone: text('phone'),
+    language: text('language').notNull().default('en'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('clients_office_idx').on(t.officeId)],
+)
+
+export const cases = pgTable(
+  'cases',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    officeId: uuid('office_id')
+      .notNull()
+      .references(() => offices.id, { onDelete: 'cascade' }),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => clients.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    caseNo: text('case_no'),
+    courtroomId: uuid('courtroom_id')
+      .notNull()
+      .references(() => courtrooms.id),
+    hearingDate: date('hearing_date').notNull(),
+    itemNo: integer('item_no').notNull(),
+    assignedJuniorId: uuid('assigned_junior_id').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('cases_office_idx').on(t.officeId),
+    index('cases_courtroom_date_idx').on(t.courtroomId, t.hearingDate),
+  ],
+)
+
+// ---------- client access ----------
+
+export const accessLinks = pgTable('access_links', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  caseId: uuid('case_id')
+    .notNull()
+    .references(() => cases.id, { onDelete: 'cascade' }),
+  kind: linkKind('kind').notNull().default('client'),
+  label: text('label'),
+  // Only a SHA-256 hash of the token is stored; the raw token lives only in the shared URL.
+  tokenHash: text('token_hash').notNull().unique(),
+  deviceIdHash: text('device_id_hash'),
+  activatedAt: timestamp('activated_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: createdAt(),
+})
+
+export const alertLogs = pgTable(
+  'alert_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => cases.id, { onDelete: 'cascade' }),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => courtSessions.id, { onDelete: 'cascade' }),
+    eventVersion: integer('event_version').notNull(),
+    // e.g. "first", "within_10", "within_5", "within_2", "now_hearing", "passed_over:v12"
+    alertKey: text('alert_key').notNull(),
+    message: text('message').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [unique('alert_once').on(t.caseId, t.sessionId, t.alertKey)],
+)
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  accessLinkId: uuid('access_link_id').references(() => accessLinks.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  keys: jsonb('keys').$type<{ p256dh: string; auth: string }>().notNull(),
+  createdAt: createdAt(),
+})
+
+export type User = typeof users.$inferSelect
+export type Office = typeof offices.$inferSelect

@@ -1,30 +1,43 @@
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
-import mongoose from 'mongoose'
 import { config, nexconnEnabled } from './config.js'
+import { sql } from './db/index.js'
+import { errorHandler } from './lib/http.js'
+import { adminRouter } from './routes/admin.js'
+import { authRouter } from './routes/auth.js'
+import { casesRouter } from './routes/cases.js'
+import { clientsRouter } from './routes/clients.js'
+import { officeRouter } from './routes/office.js'
 
-const app = express()
+export const app = express()
 
 app.use(cors({ origin: config.clientOrigin, credentials: true }))
 app.use(express.json({ limit: '100kb' }))
 app.use(cookieParser())
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    ok: true,
-    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    nexconn: nexconnEnabled ? 'configured' : 'not configured',
-  })
+app.get('/api/health', async (_req, res) => {
+  let db = 'connected'
+  try {
+    await sql`select 1`
+  } catch {
+    db = 'disconnected'
+  }
+  res.json({ ok: true, db, nexconn: nexconnEnabled ? 'configured' : 'not configured' })
 })
 
-async function start() {
-  await mongoose.connect(config.mongoUri)
-  console.log('MongoDB connected')
+app.use('/api/auth', authRouter)
+app.use('/api/admin', adminRouter)
+app.use('/api/office', officeRouter)
+app.use('/api/clients', clientsRouter)
+app.use('/api/cases', casesRouter)
+
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Not found' })
+})
+app.use(errorHandler)
+
+// Local dev / long-running host. On Vercel the app is imported as a serverless handler instead.
+if (!process.env.VERCEL) {
   app.listen(config.port, () => console.log(`CourtCall API on http://localhost:${config.port}`))
 }
-
-start().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
