@@ -6,9 +6,9 @@ import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { notFound, parse } from '../lib/http.js'
 import { ncClientId } from '../lib/nexconn.js'
 
-// Clients are private to an office. Only the senior lawyer manages them.
+// Clients are private to a firm, managed by its senior lawyers and office staff.
 export const clientsRouter = Router()
-clientsRouter.use(requireAuth, requireRole('lawyer'), requireVerified)
+clientsRouter.use(requireAuth, requireRole('lawyer', 'staff'), requireVerified)
 
 const clientInput = z.object({
   name: z.string().trim().min(2).max(80),

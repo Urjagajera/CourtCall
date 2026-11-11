@@ -1,4 +1,4 @@
-import { Briefcase, ChevronRight, Loader2, ShieldCheck, Sparkles, Users, type LucideIcon } from 'lucide-react'
+import { Briefcase, ChevronRight, ClipboardList, Crown, Loader2, ShieldCheck, Sparkles, Users, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Banner } from '../../components/ui'
@@ -13,10 +13,12 @@ interface DemoAccount {
 }
 
 const ICONS: Record<string, LucideIcon> = {
-  lawyer: Briefcase,
+  lawyer: Crown,
   lawyer2: Briefcase,
+  lawyer3: Briefcase,
   junior: Users,
   junior2: Users,
+  staff: ClipboardList,
   admin: ShieldCheck,
 }
 

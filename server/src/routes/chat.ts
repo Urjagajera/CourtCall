@@ -14,7 +14,7 @@ export const chatRouter = Router()
  * Gives a signed-in lawyer/junior a Nexconn token for the browser SDK, and makes sure their
  * office team room and today's courtroom rooms include them (self-healing if an earlier sync failed).
  */
-chatRouter.post('/token', requireAuth, requireVerified, requireRole('lawyer', 'junior'), async (req, res) => {
+chatRouter.post('/token', requireAuth, requireVerified, requireRole('lawyer', 'junior', 'staff'), async (req, res) => {
   if (!nexconnEnabled) throw new HttpError(503, 'Chat is not configured on this server')
   const user = req.user!
   const ncId = ncStaffId(user.id)

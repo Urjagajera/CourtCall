@@ -63,10 +63,10 @@ export default function App() {
           <Route element={<Protected><AppLayout /></Protected>}>
             <Route index element={<Home />} />
             <Route path="room/:id" element={<RoleOnly roles={['lawyer', 'junior']}><Room /></RoleOnly>} />
-            <Route path="chats" element={<RoleOnly roles={['lawyer', 'junior']}><Chats /></RoleOnly>} />
-            <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior']}><Cases /></RoleOnly>} />
-            <Route path="clients" element={<RoleOnly roles={['lawyer']}><Clients /></RoleOnly>} />
-            <Route path="team" element={<RoleOnly roles={['lawyer']}><Team /></RoleOnly>} />
+            <Route path="chats" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Chats /></RoleOnly>} />
+            <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Cases /></RoleOnly>} />
+            <Route path="clients" element={<RoleOnly roles={['lawyer', 'staff']}><Clients /></RoleOnly>} />
+            <Route path="team" element={<RoleOnly roles={['lawyer', 'staff']}><Team /></RoleOnly>} />
             <Route path="admin" element={<RoleOnly roles={['admin']}><Verify /></RoleOnly>} />
             <Route path="settings" element={<Settings />} />
           </Route>

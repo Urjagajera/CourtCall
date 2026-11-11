@@ -6,7 +6,8 @@ import { AuthLayout } from './AuthLayout'
 export default function Pending() {
   const { user, logout, refresh } = useAuth()
   const rejected = user?.verificationStatus === 'rejected'
-  const isJunior = user?.role === 'junior'
+  // Firm founders are checked by CourtCall; everyone who joined a firm is approved by its firm admin.
+  const joinedFirm = !user?.isFirmAdmin
 
   return (
     <AuthLayout title={rejected ? 'Verification declined' : 'Awaiting verification'}>
@@ -19,10 +20,12 @@ export default function Pending() {
               <Hourglass className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} />
             )}
             {rejected
-              ? 'Your account could not be verified. Please contact CourtCall support.'
-              : isJunior
-                ? 'Your senior lawyer needs to approve you before you can join courtrooms.'
-                : 'We are checking your Bar Council details. This is usually done within a few hours.'}
+              ? joinedFirm
+                ? 'Your firm admin has declined or deactivated this account. Please contact them.'
+                : 'Your account could not be verified. Please contact CourtCall support.'
+              : joinedFirm
+                ? 'A firm admin needs to approve you before you can see the firm’s cases and courtrooms.'
+                : 'CourtCall is checking your Bar Council details. This is usually done within a few hours.'}
           </span>
         </Banner>
         <p className="text-label text-ink-muted">Signed in as {user?.email}</p>

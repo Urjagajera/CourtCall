@@ -26,7 +26,7 @@ export async function api<T = unknown>(path: string, options: { method?: string;
 
 // ---- shared types (mirror server responses) ----
 
-export type Role = 'lawyer' | 'junior' | 'admin'
+export type Role = 'lawyer' | 'junior' | 'admin' | 'staff'
 export type Verification = 'pending' | 'verified' | 'rejected'
 
 export interface User {
@@ -38,6 +38,7 @@ export interface User {
   barCouncilNo: string | null
   verificationStatus: Verification
   officeId: string | null
+  isFirmAdmin: boolean
   tourCompletedAt: string | null
   createdAt: string
 }
@@ -46,6 +47,9 @@ export interface Office {
   id: string
   name: string
   inviteCode?: string
+  /** The signed-in user founded this firm. */
+  isFounder?: boolean
+  ownerId?: string
 }
 
 export interface Client {

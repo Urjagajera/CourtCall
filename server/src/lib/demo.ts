@@ -6,8 +6,15 @@ export const DEMO_ACCOUNTS = [
     key: 'lawyer',
     email: 'mehta@courtcall.demo',
     name: 'Adv. Rakesh Mehta',
+    label: 'Firm admin (senior lawyer)',
+    description: 'Mehta & Associates founder: manages the whole firm, plus clients, cases and courtrooms',
+  },
+  {
+    key: 'lawyer3',
+    email: 'anil@courtcall.demo',
+    name: 'Adv. Anil Shah',
     label: 'Senior lawyer',
-    description: 'Mehta & Associates: dashboard, clients, cases, team approvals, client chat',
+    description: 'Second senior lawyer at Mehta & Associates: clients, cases, courtrooms (no team admin)',
   },
   {
     key: 'junior',
@@ -15,6 +22,13 @@ export const DEMO_ACCOUNTS = [
     name: 'Priya Shah',
     label: 'Junior lawyer',
     description: 'Reports live progress from Court 4 and Court 7',
+  },
+  {
+    key: 'staff',
+    email: 'neha@courtcall.demo',
+    name: 'Neha Parikh',
+    label: 'Office staff',
+    description: 'Mehta & Associates clerk: keeps cases and clients updated, watches courtrooms read-only',
   },
   {
     key: 'lawyer2',

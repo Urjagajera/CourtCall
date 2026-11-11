@@ -34,6 +34,8 @@ export default function Today() {
     load()
   }, [load])
   usePolling(load, 10000)
+  // Office staff watch courtrooms read-only: they don't join rooms or report.
+  const readOnly = user!.role === 'staff'
 
   return (
     <>
@@ -41,9 +43,11 @@ export default function Today() {
         title={`Good day, ${firstName(user!.name)}`}
         subtitle={data ? formatDate(data.date) : undefined}
         action={
+          readOnly ? undefined : (
           <Button data-tour="join-courtroom" variant="secondary" onClick={() => setJoinOpen(true)} icon={<LogIn className="size-5" strokeWidth={1.75} />}>
             Join courtroom
           </Button>
+          )
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
@@ -52,13 +56,13 @@ export default function Today() {
       ) : data.sessions.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {data.sessions.map((s) => (
-            <RoomCard key={s.id} s={s} now={now} />
+            <RoomCard key={s.id} s={s} now={now} readOnly={readOnly} />
           ))}
         </div>
       ) : (
         <Card>
           <EmptyState icon={<CalendarCheck className="size-10" strokeWidth={1.5} />} title="No courtrooms today">
-            Rooms with your office's cases for today appear here automatically. You can also join any courtroom.
+            {readOnly ? "Courtrooms with your firm's cases for today appear here automatically." : "Rooms with your office's cases for today appear here automatically. You can also join any courtroom."}
           </EmptyState>
         </Card>
       )}
@@ -67,13 +71,12 @@ export default function Today() {
   )
 }
 
-function RoomCard({ s, now }: { s: TodaySession; now: number }) {
+function RoomCard({ s, now, readOnly }: { s: TodaySession; now: number; readOnly?: boolean }) {
   const st = statusMeta(s)
   const recall = s.hearingItem != null && s.currentItem != null && s.hearingItem !== s.currentItem
 
-  return (
-    <Link to={`/room/${s.id}`} data-tour="room-card" className="group block rounded-lg focus-visible:outline-none">
-      <Card className="h-full transition-colors group-hover:border-accent">
+  const card = (
+      <Card data-tour={readOnly ? 'room-card' : undefined} className="h-full transition-colors group-hover:border-accent">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-h2">
@@ -122,10 +125,19 @@ function RoomCard({ s, now }: { s: TodaySession; now: number }) {
             })}
           </ul>
         )}
-        <p className="mt-3 flex items-center justify-end gap-1 text-label font-semibold">
-          Open room <ChevronRight className="size-4" strokeWidth={1.75} />
-        </p>
+        {readOnly ? (
+          <p className="mt-3 text-right text-caption text-ink-muted">Reported by the juniors in this courtroom</p>
+        ) : (
+          <p className="mt-3 flex items-center justify-end gap-1 text-label font-semibold">
+            Open room <ChevronRight className="size-4" strokeWidth={1.75} />
+          </p>
+        )}
       </Card>
+  )
+  if (readOnly) return card
+  return (
+    <Link to={`/room/${s.id}`} data-tour="room-card" className="group block rounded-lg focus-visible:outline-none">
+      {card}
     </Link>
   )
 }

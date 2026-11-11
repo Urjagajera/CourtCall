@@ -22,7 +22,7 @@ function navFor(role: string): NavItem[] {
     { to: '/cases', label: 'Cases', icon: CalendarDays },
     { to: '/chats', label: 'Chat', icon: MessageCircle },
   ]
-  if (role === 'lawyer') {
+  if (role === 'lawyer' || role === 'staff') {
     items.push({ to: '/clients', label: 'Clients', icon: Briefcase }, { to: '/team', label: 'Team', icon: Users })
   }
   return items
@@ -44,7 +44,7 @@ export function AppLayout() {
   useEffect(() => {
     const u = user!
     if (tourSeen(u)) return
-    const t = setTimeout(() => tour.start(tourStepsFor(u.role, firstName(u.name)), () => markTourSeen(u)), 900)
+    const t = setTimeout(() => tour.start(tourStepsFor(u.role, firstName(u.name), u.isFirmAdmin), () => markTourSeen(u)), 900)
     return () => clearTimeout(t)
     // Only once per signed-in user, not on every profile refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +88,7 @@ export function AppLayout() {
           <p className="flex items-center gap-2 font-semibold text-ink">
             {user!.name} {chatDot}
           </p>
-          <p className="text-ink-muted">{office?.name ?? (user!.role === 'admin' ? 'Platform admin' : '')}</p>
+          <p className="text-ink-muted">{office?.name ?? (user!.role === 'admin' ? 'CourtCall team' : '')}</p>
         </div>
       </aside>
 

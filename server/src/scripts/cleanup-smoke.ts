@@ -12,5 +12,7 @@ if (ids.length) {
   await db.delete(schema.courtSessions).where(inArray(schema.courtSessions.courtroomId, ids)) // cascades members/events/alerts
   await db.delete(schema.courtrooms).where(inArray(schema.courtrooms.id, ids))
 }
-console.log(`Removed ${ids.length} smoke-test courtroom(s).`)
+// People who signed up during the smoke test (never own data, so a plain delete is safe).
+const people = await db.delete(schema.users).where(dsql`${schema.users.email} like '%@smoke.test'`).returning({ id: schema.users.id })
+console.log(`Removed ${ids.length} smoke-test courtroom(s) and ${people.length} smoke-test account(s).`)
 await sql.end()

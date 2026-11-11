@@ -26,8 +26,8 @@ export const courtroomsRouter = Router()
 // Guard per route (not router.use) because this router is mounted at /api.
 const staff = [requireAuth, requireVerified, requireRole('lawyer', 'junior')]
 
-/** Today's rooms for me, each with live state and only MY office's cases in it. */
-courtroomsRouter.get('/courtrooms/today', ...staff, async (req, res) => {
+/** Today's rooms for me, each with live state and only MY office's cases in it. Office staff get a read-only view. */
+courtroomsRouter.get('/courtrooms/today', requireAuth, requireVerified, requireRole('lawyer', 'junior', 'staff'), async (req, res) => {
   const user = req.user!
   const date = courtDate()
   const [rows, officeCases] = await Promise.all([

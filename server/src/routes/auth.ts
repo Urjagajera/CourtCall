@@ -1,5 +1,5 @@
-import { randomBytes } from 'node:crypto'
 import { eq } from 'drizzle-orm'
+import { newInviteCode } from './office.js'
 import { Router } from 'express'
 import { z } from 'zod'
 import { config } from '../config.js'
@@ -31,22 +31,25 @@ const lawyerSignup = z.object({
   officeName: z.string().trim().min(2).max(100),
 })
 
-const juniorSignup = z.object({
-  ...base,
-  barCouncilNo: z.string().trim().max(40).optional(),
-  inviteCode: z.string().trim().toUpperCase().length(6),
-})
-
-// No 0/O/1/I so codes are easy to read out over the phone.
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-const newInviteCode = () => [...randomBytes(6)].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('')
+const memberSignup = z
+  .object({
+    ...base,
+    role: z.enum(['lawyer', 'junior', 'staff']),
+    barCouncilNo: z.string().trim().max(40).optional(),
+    inviteCode: z.string().trim().toUpperCase().length(6),
+  })
+  .refine((b) => b.role !== 'lawyer' || (b.barCouncilNo?.length ?? 0) >= 3, {
+    path: ['barCouncilNo'],
+    message: 'Senior lawyers need a Bar Council enrolment number',
+  })
 
 async function ensureEmailFree(email: string) {
   const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email))
   if (existing) throw new HttpError(409, 'An account with this email already exists')
 }
 
-// Senior lawyer: creates the account + their office. Needs admin verification before using the app.
+// Senior lawyer founding a firm: creates the account + the firm, and becomes its first firm admin.
+// Needs CourtCall verification (Bar Council check) before using the app.
 authRouter.post('/register/lawyer', async (req, res) => {
   const body = parse(lawyerSignup, req.body)
   await ensureEmailFree(body.email)
@@ -62,6 +65,7 @@ authRouter.post('/register/lawyer', async (req, res) => {
         phone: body.phone,
         passwordHash,
         barCouncilNo: body.barCouncilNo,
+        isFirmAdmin: true,
       })
       .returning()
     const [office] = await tx
@@ -80,29 +84,34 @@ authRouter.post('/register/lawyer', async (req, res) => {
   res.status(201).json({ user: publicUser(user) })
 })
 
-// Junior: joins an existing office using its invite code. The senior lawyer approves them.
-authRouter.post('/register/junior', async (req, res) => {
-  const body = parse(juniorSignup, req.body)
+// Senior lawyer, junior or office staff joining an existing firm with its invite code.
+// They wait until a firm admin of that firm approves them.
+async function registerMember(reqBody: unknown, res: import('express').Response) {
+  const body = parse(memberSignup, reqBody)
   const [office] = await db.select().from(schema.offices).where(eq(schema.offices.inviteCode, body.inviteCode))
-  if (!office) throw badRequest('Invalid office invite code')
+  if (!office) throw badRequest('Invalid firm invite code')
   await ensureEmailFree(body.email)
 
   const [user] = await db
     .insert(schema.users)
     .values({
-      role: 'junior',
+      role: body.role,
       name: body.name,
       email: body.email,
       phone: body.phone,
       passwordHash: await hashPassword(body.password),
-      barCouncilNo: body.barCouncilNo,
+      barCouncilNo: body.role === 'staff' ? null : body.barCouncilNo || null,
       officeId: office.id,
     })
     .returning()
 
   setSessionCookie(res, user.id)
   res.status(201).json({ user: publicUser(user) })
-})
+}
+
+authRouter.post('/register/member', (req, res) => registerMember(req.body, res))
+// Older clients: junior signup without a role field.
+authRouter.post('/register/junior', (req, res) => registerMember({ ...req.body, role: 'junior' }, res))
 
 authRouter.post('/login', async (req, res) => {
   const body = parse(z.object({ email: base.email, password: z.string().min(1) }), req.body)
@@ -165,8 +174,9 @@ authRouter.get('/me', async (req, res) => {
       ? {
           id: office.id,
           name: office.name,
-          // Only the office owner sees the invite code.
-          inviteCode: office.ownerId === user.id ? office.inviteCode : undefined,
+          // Only firm admins see the invite code.
+          inviteCode: user.isFirmAdmin ? office.inviteCode : undefined,
+          isFounder: office.ownerId === user.id,
         }
       : null,
   })

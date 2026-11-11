@@ -21,13 +21,13 @@ const passwordHash = await hashPassword(password)
 const today = courtDate()
 const COMPLEX = 'Gujarat High Court'
 
-type Role = 'lawyer' | 'junior' | 'admin'
+type Role = 'lawyer' | 'junior' | 'admin' | 'staff'
 async function user(email: string, name: string, role: Role, officeId: string | null, extra: Partial<typeof schema.users.$inferInsert> = {}) {
   const [existing] = await db.select().from(schema.users).where(eq(schema.users.email, email))
   if (existing) {
     const [u] = await db
       .update(schema.users)
-      .set({ passwordHash, verificationStatus: 'verified', officeId: officeId ?? existing.officeId })
+      .set({ passwordHash, role, verificationStatus: 'verified', officeId: officeId ?? existing.officeId, isFirmAdmin: extra.isFirmAdmin ?? false })
       .where(eq(schema.users.id, existing.id))
       .returning()
     return u
@@ -40,7 +40,7 @@ async function user(email: string, name: string, role: Role, officeId: string | 
 }
 
 async function office(ownerEmail: string, ownerName: string, officeName: string, code: string) {
-  const owner = await user(ownerEmail, ownerName, 'lawyer', null, { barCouncilNo: `G/${code}/2015` })
+  const owner = await user(ownerEmail, ownerName, 'lawyer', null, { barCouncilNo: `G/${code}/2015`, isFirmAdmin: true })
   if (owner.officeId) return { owner, officeId: owner.officeId }
   const [o] = await db.insert(schema.offices).values({ name: officeName, ownerId: owner.id, inviteCode: code }).returning()
   await db.update(schema.users).set({ officeId: o.id }).where(eq(schema.users.id, owner.id))
@@ -60,6 +60,8 @@ const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associa
 const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
 const juniorA = await user(acc('junior').email, acc('junior').name, 'junior', a.officeId)
 await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
+await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId, { barCouncilNo: 'G/2211/2018' })
+await user(acc('staff').email, acc('staff').name, 'staff', a.officeId)
 
 const court4 = await upsertCourtroom(COMPLEX, '4')
 const court7 = await upsertCourtroom(COMPLEX, '7')
@@ -82,9 +84,11 @@ writeFileSync(
   [
     'CourtCall demo accounts (local only, do not commit)',
     `password: ${password}`,
-    'admin@courtcall.demo   - platform admin',
-    'mehta@courtcall.demo   - senior lawyer, Mehta & Associates (invite code MEHTA4)',
+    'admin@courtcall.demo   - CourtCall team (verifies firm founders)',
+    'mehta@courtcall.demo   - firm admin + senior lawyer, Mehta & Associates (invite code MEHTA4)',
+    'anil@courtcall.demo    - senior lawyer, Mehta & Associates',
     'priya@courtcall.demo   - junior, Mehta & Associates',
+    'neha@courtcall.demo    - office staff, Mehta & Associates',
     'desai@courtcall.demo   - senior lawyer, Desai Law Chambers (invite code DESAI7)',
     'arjun@courtcall.demo   - junior, Desai Law Chambers',
     '',

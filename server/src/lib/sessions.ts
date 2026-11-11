@@ -296,6 +296,15 @@ export async function sessionsForUser(user: User, date: string) {
       .insert(courtSessions)
       .values(roomIds.map((courtroomId) => ({ courtroomId, date })))
       .onConflictDoNothing()
+    // Office staff watch the firm's courtrooms read-only: they never join the shared rooms.
+    if (user.role === 'staff') {
+      return db
+        .select({ session: courtSessions, courtroom: courtrooms })
+        .from(courtSessions)
+        .innerJoin(courtrooms, eq(courtrooms.id, courtSessions.courtroomId))
+        .where(and(inArray(courtSessions.courtroomId, roomIds), eq(courtSessions.date, date)))
+        .orderBy(asc(courtrooms.courtComplex), asc(courtrooms.roomNo))
+    }
     const sessions = await db
       .select({ id: courtSessions.id })
       .from(courtSessions)

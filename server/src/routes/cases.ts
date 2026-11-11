@@ -46,7 +46,7 @@ async function assertOfficeJunior(officeId: string, juniorId: string | null | un
 }
 
 // Lawyers see all office cases; juniors see the same list (they work the courtrooms for the office).
-casesRouter.get('/', requireRole('lawyer', 'junior'), async (req, res) => {
+casesRouter.get('/', requireRole('lawyer', 'junior', 'staff'), async (req, res) => {
   const date = req.query.date ? parse(z.iso.date(), req.query.date) : undefined
   const rows = await db
     .select({
@@ -68,7 +68,7 @@ casesRouter.get('/', requireRole('lawyer', 'junior'), async (req, res) => {
   res.json({ cases: rows })
 })
 
-casesRouter.post('/', requireRole('lawyer'), async (req, res) => {
+casesRouter.post('/', requireRole('lawyer', 'staff'), async (req, res) => {
   const body = parse(caseInput, req.body)
   const officeId = req.user!.officeId!
   await assertOfficeClient(officeId, body.clientId)
@@ -91,7 +91,7 @@ casesRouter.post('/', requireRole('lawyer'), async (req, res) => {
   res.status(201).json({ case: created })
 })
 
-casesRouter.patch('/:id', requireRole('lawyer'), async (req, res) => {
+casesRouter.patch('/:id', requireRole('lawyer', 'staff'), async (req, res) => {
   const body = parse(caseInput.partial(), req.body)
   const officeId = req.user!.officeId!
   if (body.clientId) await assertOfficeClient(officeId, body.clientId)
@@ -113,7 +113,7 @@ casesRouter.patch('/:id', requireRole('lawyer'), async (req, res) => {
   res.json({ case: updated })
 })
 
-casesRouter.delete('/:id', requireRole('lawyer'), async (req, res) => {
+casesRouter.delete('/:id', requireRole('lawyer', 'staff'), async (req, res) => {
   const [deleted] = await db
     .delete(schema.cases)
     .where(and(eq(schema.cases.id, String(req.params.id)), eq(schema.cases.officeId, req.user!.officeId!)))

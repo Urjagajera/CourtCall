@@ -18,7 +18,8 @@ import { sql } from 'drizzle-orm'
 
 // ---------- enums ----------
 
-export const userRole = pgEnum('user_role', ['lawyer', 'junior', 'admin'])
+// admin = CourtCall platform team (verifies firm founders). staff = office clerks / employees of a firm.
+export const userRole = pgEnum('user_role', ['lawyer', 'junior', 'admin', 'staff'])
 export const verificationStatus = pgEnum('verification_status', ['pending', 'verified', 'rejected'])
 export const sessionStatus = pgEnum('session_status', ['not_started', 'hearing', 'break', 'risen', 'not_sitting'])
 export const eventType = pgEnum('event_type', [
@@ -48,6 +49,8 @@ export const users = pgTable('users', {
   barCouncilNo: text('bar_council_no'),
   verificationStatus: verificationStatus('verification_status').notNull().default('pending'),
   officeId: uuid('office_id').references((): AnyPgColumn => offices.id, { onDelete: 'set null' }),
+  // Firm admin: manages people in the firm (approve, roles, deactivate). The founder starts as one.
+  isFirmAdmin: boolean('is_firm_admin').notNull().default(false),
   // Set when the user finishes or ends the first-login guided tour.
   tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
   createdAt: createdAt(),
@@ -59,7 +62,7 @@ export const offices = pgTable('offices', {
   ownerId: uuid('owner_id')
     .notNull()
     .references((): AnyPgColumn => users.id),
-  // Juniors join an office with this code; the senior lawyer then approves them.
+  // Lawyers, juniors and staff join a firm with this code; a firm admin then approves them.
   inviteCode: text('invite_code').notNull().unique(),
   nexconnTeamGroupId: text('nexconn_team_group_id'),
   createdAt: createdAt(),

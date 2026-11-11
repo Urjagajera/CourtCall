@@ -74,7 +74,7 @@ const shared = {
   },
 } satisfies Record<string, TourStep>
 
-export function tourStepsFor(role: Role, firstName: string): TourStep[] {
+export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false): TourStep[] {
   if (role === 'admin') {
     return [
       welcome(firstName),
@@ -147,6 +147,62 @@ export function tourStepsFor(role: Role, firstName: string): TourStep[] {
     ]
   }
 
+  const team: TourStep[] = isFirmAdmin
+    ? [
+        {
+          id: 'team',
+          target: 'invite-code',
+          route: '/team',
+          title: 'You are a firm admin',
+          body: 'Senior lawyers, juniors and office staff join with this invite code. Nobody gets in until a firm admin approves them.',
+        },
+        {
+          id: 'team-members',
+          target: 'team-members',
+          route: '/team',
+          title: 'Manage everyone',
+          body: 'Change anyone’s role, make another lawyer or staff member a firm admin, or deactivate someone who has left the firm.',
+        },
+      ]
+    : [
+        {
+          id: 'team',
+          target: 'team-members',
+          route: '/team',
+          title: 'Your firm',
+          body: 'Everyone at your firm and their role. Firm admins approve new people and manage roles.',
+        },
+      ]
+
+  if (role === 'staff') {
+    return [
+      welcome(firstName),
+      {
+        ...shared.today,
+        body: 'Every courtroom where your firm has a case today, with live progress. You watch courtrooms read-only; juniors report from inside.',
+      },
+      { ...shared.roomCard, body: 'The latest reported item in this courtroom, and how far away each of the firm’s cases is.' },
+      {
+        id: 'cases',
+        target: 'add-case',
+        route: '/cases',
+        title: 'Keep the cause list updated',
+        body: 'Add each hearing: client, court complex, court number, date and item number, and assign the junior who will be in court.',
+      },
+      {
+        id: 'clients',
+        target: 'add-client',
+        route: '/clients',
+        title: 'Clients',
+        body: 'Add clients with their WhatsApp number and alert language. They are private to your firm.',
+      },
+      ...team,
+      shared.chat,
+      shared.settings,
+      finish,
+    ]
+  }
+
   // Senior lawyer
   return [
     welcome(firstName),
@@ -167,13 +223,7 @@ export function tourStepsFor(role: Role, firstName: string): TourStep[] {
       title: 'Clients',
       body: 'Your clients are private to your office. Add their WhatsApp number and alert language; their private case link is shared from here.',
     },
-    {
-      id: 'team',
-      target: 'invite-code',
-      route: '/team',
-      title: 'Your team',
-      body: 'Juniors sign up with this invite code. They can use CourtCall only after you approve them on this page.',
-    },
+    ...team,
     {
       id: 'chat-list',
       target: 'chat-list',

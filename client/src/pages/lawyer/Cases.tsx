@@ -13,7 +13,7 @@ import { useForm } from '../../lib/useForm'
 
 export default function Cases() {
   const { user } = useAuth()
-  const isLawyer = user!.role === 'lawyer'
+  const isLawyer = user!.role === 'lawyer' || user!.role === 'staff' // can manage cases
   const { data, error, loading, reload } = useApi<{ cases: Case[] }>('/cases')
   const [editing, setEditing] = useState<Case | 'new' | null>(null)
 

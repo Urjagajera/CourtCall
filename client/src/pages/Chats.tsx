@@ -14,7 +14,7 @@ type Conv = { key: string; kind: 'group' | 'direct'; id: string; title: string; 
 export default function Chats() {
   const { user } = useAuth()
   const chat = useChat()
-  const isLawyer = user!.role === 'lawyer'
+  const isLawyer = user!.role === 'lawyer' || user!.role === 'staff' // can chat with clients
   const clients = useApi<{ clients: (Client & { ncId: string })[] }>(isLawyer ? '/clients' : null)
   const [selected, setSelected] = useState<string | null>(null)
   const unread = useUnreadCounts(selected)

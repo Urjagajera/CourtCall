@@ -81,6 +81,13 @@ export function requireVerified(req: Request, _res: Response, next: NextFunction
   next()
 }
 
+/** Firm management (people, roles, invite code). Needs a verified firm admin in a firm. */
+export function requireFirmAdmin(req: Request, _res: Response, next: NextFunction) {
+  const u = req.user
+  if (!u?.officeId || !u.isFirmAdmin || u.verificationStatus !== 'verified') throw forbidden('Only a firm admin can do this')
+  next()
+}
+
 /** Strips secrets before sending a user to the browser. */
 export function publicUser(u: User) {
   const { passwordHash: _omit, ...rest } = u

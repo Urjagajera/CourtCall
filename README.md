@@ -201,13 +201,27 @@ npm --prefix server run db:migrate
 
 | Demo button | Email | Role | Office | Invite code |
 |---|---|---|---|---|
-| Senior lawyer | `mehta@courtcall.demo` | Senior lawyer (office owner) | Mehta & Associates | `MEHTA4` |
+| Firm admin (senior lawyer) | `mehta@courtcall.demo` | Senior lawyer, **firm admin**, founder | Mehta & Associates | `MEHTA4` |
+| Senior lawyer | `anil@courtcall.demo` | Senior lawyer | Mehta & Associates | n/a |
 | Junior lawyer | `priya@courtcall.demo` | Junior lawyer | Mehta & Associates | n/a |
-| Senior lawyer (2nd office) | `desai@courtcall.demo` | Senior lawyer (office owner) | Desai Law Chambers | `DESAI7` |
+| Office staff | `neha@courtcall.demo` | Office staff (clerk) | Mehta & Associates | n/a |
+| Senior lawyer (2nd office) | `desai@courtcall.demo` | Senior lawyer, firm admin, founder | Desai Law Chambers | `DESAI7` |
 | Junior lawyer (2nd office) | `arjun@courtcall.demo` | Junior lawyer | Desai Law Chambers | n/a |
 | CourtCall team | `admin@courtcall.demo` | CourtCall staff (not a firm role) | none | n/a |
 
-All demo accounts are already verified, so they can use every feature straight away.
+All demo accounts are already verified, so they can use every feature straight away. Re-running `seed:demo` also resets their roles, in case you changed them on the Team page.
+
+### Roles in a firm
+
+| Role | Who | Can do | Approved by |
+|---|---|---|---|
+| **Firm admin** | A senior lawyer or office staff member with admin rights. The founder is always one. | Everything their role can do, plus the **Team** page: approve or decline new people, change roles (senior lawyer / junior / staff), make or remove other firm admins, deactivate and reactivate people, and make a new invite code | Founder: CourtCall team. Others: another firm admin |
+| **Senior lawyer** | Advocates of the firm | Clients, cases, courtrooms (join and report), team room, private client chat | Founder: CourtCall team (Bar Council check). Joining lawyers: a firm admin |
+| **Junior lawyer** | Juniors who go to court | Join courtrooms, report progress, room chat, team room | A firm admin |
+| **Office staff** | Clerks and office employees | Clients, cases, team room, private client chat; watch today's courtrooms **read-only** (they never report) | A firm admin |
+| **CourtCall team** | CourtCall itself, not part of any firm | Checks the Bar Council number of each lawyer who **founds** a firm | n/a |
+
+**How people join a firm:** they choose **Create an account → Join a firm**, pick their role, and enter the firm's invite code. They wait on an "awaiting approval" screen until a firm admin approves them on the **Team** page. All data (clients, cases, chats) is shared across the whole firm and never with other firms.
 
 ### Demo data (created by `seed:demo`)
 
@@ -226,11 +240,27 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 
 ### What each demo user can do
 
-**Senior lawyer: Adv. Rakesh Mehta (Mehta & Associates)**
+**Firm admin: Adv. Rakesh Mehta (Mehta & Associates)**
+- Everything a senior lawyer can do (below), plus he runs the firm on the **Team** page:
+  - **Invite code** `MEHTA4` with copy and **Make a new code**.
+  - **Your firm** at a glance: how many senior lawyers, juniors and staff.
+  - **Waiting for your approval:** approve or decline people who joined with the code.
+  - **People:** change anyone's role, **Make admin / Remove admin**, **Deactivate** (with confirmation). Deactivated people can be reactivated.
+  - The founder can't be deactivated or demoted, and nobody can edit their own account.
+
+**Senior lawyer: Adv. Anil Shah (Mehta & Associates)**
+- A second senior lawyer at the same firm, without admin rights. He sees the same firm clients, cases and courtrooms as Mehta. His **Team** page is read-only and lists the firm admins to contact.
+
+**Office staff: Neha Parikh (Mehta & Associates)**
+- **Today:** the firm's courtrooms with live progress, **read-only** (no Join courtroom, no reporting).
+- **Cases** and **Clients:** add, edit and delete, like a senior lawyer.
+- **Chat:** the office team room and private chats with clients.
+- **Team:** read-only.
+
+**What every senior lawyer can do (Mehta and Anil)**
 - **Today:** live cards for Court 4 and Court 7 showing the latest reported item, status (hearing, break, stale) and how far each of the office's cases is ("3 away").
 - **Cases:** add, edit or delete cases (client, court, date, item number, assigned junior).
 - **Clients:** add, edit or delete clients (name, WhatsApp number, alert language).
-- **Team:** see the invite code `MEHTA4`, and approve or decline juniors who sign up with it.
 - **Chat:** the private office team room, plus a private chat with each client.
 - **Courtroom rooms:** open any room to see progress, history and room chat. Lawyers can report too.
 
@@ -264,7 +294,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 The first time someone signs in, CourtCall starts a guided tour. It dims the page, zooms a spotlight onto one feature at a time, and explains what that feature does and how it works. The tour moves between pages by itself (for juniors, it opens a courtroom and walks through the reporting buttons).
 
 - **Next / Back** (or the arrow keys) move between steps. **End tour** (or Esc) stops it at any point.
-- Each role gets its own tour: senior lawyer (10 steps), junior lawyer (13), CourtCall team (5).
+- Each role gets its own tour: senior lawyer (11 steps, 12 for firm admins), junior lawyer (13), office staff (9, 10 for firm admins), CourtCall team (5).
 - **Real accounts** see it once; it's saved on the server, so it won't repeat on another device. **Demo accounts** remember it per browser, so every person trying a demo account gets the tour.
 - To see it again: **Settings → Take the tour again**.
 - To replay it on a demo account from scratch, clear the site's local storage, or open a private window.
@@ -283,8 +313,9 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
    - **Conflict protection:** report from one window, then immediately report from the other without waiting. The older update is rejected with "Someone else just reported a newer update".
 4. **Senior lawyer Mehta** (sign out first, or use a third window): **Today** now shows Court 4's live item and "N away" for Ramesh (15) and Sunita (22). Open **Chat** for the office team room and the client list.
 5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
-6. **Sign-up and approvals:** sign out, choose **Create an account → Junior lawyer**, and use invite code **MEHTA4**. The new junior waits for approval. Sign in as **Mehta** → **Team** → **Approve**.
-7. **CourtCall team:** sign up a new **Senior lawyer** account, then sign in as **CourtCall team** and approve it on the verification page.
+6. **Joining a firm:** sign out, choose **Create an account → Join a firm**, pick **Office staff** (or junior / senior lawyer) and use invite code **MEHTA4**. The new person waits for approval. Sign in as **Firm admin (Mehta)** → **Team** → **Approve**, then try changing their role or making them a firm admin.
+   - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
+7. **CourtCall team:** choose **Create an account → Create a firm** to found a new firm, then sign in as **CourtCall team** and approve it on the verification page.
 
 ---
 

@@ -25,7 +25,9 @@ export default function Settings() {
         <Card>
           <p className="text-h2">{user!.name}</p>
           <p className="text-label text-ink-muted">
-            {user!.email} · <span className="capitalize">{user!.role}</span>
+            {user!.email} ·{' '}
+            {{ lawyer: 'Senior lawyer', junior: 'Junior lawyer', staff: 'Office staff', admin: 'CourtCall team' }[user!.role]}
+            {user!.isFirmAdmin && ' · Firm admin'}
             {office && ` · ${office.name}`}
           </p>
         </Card>
@@ -57,7 +59,7 @@ export default function Settings() {
             variant="secondary"
             size="sm"
             icon={<Compass className="size-4" strokeWidth={1.75} />}
-            onClick={() => tour.start(tourStepsFor(user!.role, firstName(user!.name)), () => markTourSeen(user!))}
+            onClick={() => tour.start(tourStepsFor(user!.role, firstName(user!.name), user!.isFirmAdmin), () => markTourSeen(user!))}
           >
             Take the tour again
           </Button>
