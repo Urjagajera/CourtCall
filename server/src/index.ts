@@ -8,8 +8,10 @@ import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { casesRouter } from './routes/cases.js'
 import { chatRouter } from './routes/chat.js'
+import { clientRouter } from './routes/client.js'
 import { clientsRouter } from './routes/clients.js'
 import { courtroomsRouter } from './routes/courtrooms.js'
+import { linksRouter } from './routes/links.js'
 import { officeRouter } from './routes/office.js'
 
 export const app = express()
@@ -34,6 +36,9 @@ app.use('/api/office', officeRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/cases', casesRouter)
 app.use('/api/chat', chatRouter)
+// Client links: firm side (create/revoke) and the client's own side (/api/c).
+app.use('/api', linksRouter)
+app.use('/api/c', clientRouter)
 app.use('/api', courtroomsRouter)
 
 app.use('/api', (_req, res) => {

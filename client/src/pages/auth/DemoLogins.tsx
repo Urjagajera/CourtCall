@@ -1,4 +1,4 @@
-import { Briefcase, ChevronRight, ClipboardList, Crown, Loader2, ShieldCheck, Sparkles, Users, type LucideIcon } from 'lucide-react'
+import { Briefcase, ChevronRight, UserRound, ClipboardList, Crown, Loader2, ShieldCheck, Sparkles, Users, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Banner } from '../../components/ui'
@@ -12,7 +12,16 @@ interface DemoAccount {
   description: string
 }
 
+/** Clients don't sign in; they open a private link. This demo entry opens a seeded one. */
+const CLIENT: DemoAccount = {
+  key: 'client',
+  label: 'Client',
+  name: 'Ramesh Patel',
+  description: 'Opens the private WhatsApp link: his own case, live progress, chat with the firm',
+}
+
 const ICONS: Record<string, LucideIcon> = {
+  client: UserRound,
   lawyer: Crown,
   lawyer2: Briefcase,
   lawyer3: Briefcase,
@@ -42,6 +51,12 @@ export function DemoLogins() {
     setBusy(key)
     setError(null)
     try {
+      if (key === CLIENT.key) {
+        // Clients have no account: this opens the seeded WhatsApp link for Ramesh Patel.
+        await api('/c/demo', { method: 'POST' })
+        navigate('/case')
+        return
+      }
       const { user } = await api<{ user: User }>('/auth/demo', { body: { account: key } })
       await setSession(user)
       navigate('/')
@@ -64,7 +79,7 @@ export function DemoLogins() {
         </div>
       )}
       <ul className="mt-4 flex flex-col gap-2">
-        {accounts.map((a) => {
+        {[...accounts.filter((a) => a.key !== 'admin'), CLIENT, ...accounts.filter((a) => a.key === 'admin')].map((a) => {
           const Icon = ICONS[a.key] ?? Briefcase
           return (
             <li key={a.key}>
@@ -92,7 +107,6 @@ export function DemoLogins() {
           )
         })}
       </ul>
-      <p className="mt-3 text-caption text-ink-muted">The client view (private WhatsApp link) is added in the next update.</p>
     </section>
   )
 }

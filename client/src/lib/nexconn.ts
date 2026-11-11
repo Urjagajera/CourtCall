@@ -24,16 +24,29 @@ export interface TeamInfo {
   name: string
   members: { ncId: string; name: string; role: string }[]
 }
+export interface ChatContact {
+  ncId: string
+  name: string
+  role: string
+}
 interface TokenResponse {
   appKey: string
   userId: string
   token: string
   team?: TeamInfo | null
+  /** Client links only: the firm people the client can message. */
+  contacts?: ChatContact[]
 }
 
-export type ChatState = { status: 'idle' | 'connecting' | 'ready' | 'error'; myId: string | null; team: TeamInfo | null; error?: string }
+export type ChatState = {
+  status: 'idle' | 'connecting' | 'ready' | 'error'
+  myId: string | null
+  team: TeamInfo | null
+  contacts: ChatContact[]
+  error?: string
+}
 
-let state: ChatState = { status: 'idle', myId: null, team: null }
+let state: ChatState = { status: 'idle', myId: null, team: null, contacts: [] }
 const stateSubs = new Set<() => void>()
 const setState = (s: Partial<ChatState>) => {
   state = { ...state, ...s }
@@ -80,7 +93,7 @@ export function startChat(tokenPath = '/chat/token') {
       }
       const r = await NCEngine.connect({ token: t.token })
       if (!r.isOk) throw new Error(`Chat connection failed (code ${r.code})`)
-      setState({ status: 'ready', myId: r.data?.userId ?? t.userId, team: t.team ?? null })
+      setState({ status: 'ready', myId: r.data?.userId ?? t.userId, team: t.team ?? null, contacts: t.contacts ?? [] })
     } catch (e) {
       setState({ status: 'error', error: e instanceof Error ? e.message : 'Chat unavailable' })
     } finally {
@@ -97,7 +110,7 @@ export async function stopChat() {
   } catch {
     /* already disconnected */
   }
-  setState({ status: 'idle', myId: null, team: null })
+  setState({ status: 'idle', myId: null, team: null, contacts: [] })
 }
 
 export function useChat() {

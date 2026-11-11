@@ -7,6 +7,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { eq, inArray } from 'drizzle-orm'
 import { db, schema, sql } from '../db/index.js'
 import { hashPassword } from '../lib/auth.js'
+import { DEMO_CLIENT_TOKEN, DEMO_LINK_LABEL, sha256 } from '../lib/clientAccess.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
 import { DEMO_ACCOUNTS, type DemoKey } from '../lib/demo.js'
 import { courtDate } from '../lib/engine.js'
@@ -72,12 +73,22 @@ const kiran = await client(b.officeId, 'Kiran Desai', 'en')
 
 // Fresh cases for today (old demo cases for these offices are replaced).
 await db.delete(schema.cases).where(inArray(schema.cases.officeId, [a.officeId, b.officeId]))
-await db.insert(schema.cases).values([
+const seededCases = await db.insert(schema.cases).values([
   { officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs State of Gujarat', caseNo: 'CR.MA/1452/2026', courtroomId: court4.id, hearingDate: today, itemNo: 15, assignedJuniorId: juniorA.id },
   { officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi', caseNo: 'FA/388/2025', courtroomId: court4.id, hearingDate: today, itemNo: 22, assignedJuniorId: juniorA.id },
   { officeId: a.officeId, clientId: ramesh.id, title: 'Patel Textiles vs GSFC', caseNo: 'SCA/9021/2026', courtroomId: court7.id, hearingDate: today, itemNo: 9 },
   { officeId: b.officeId, clientId: kiran.id, title: 'Desai vs Municipal Corporation', caseNo: 'SCA/7710/2026', courtroomId: court4.id, hearingDate: today, itemNo: 18 },
-])
+]).returning()
+
+// Demo client link for Ramesh Patel's main case: opened by the "Client" demo button (never bound to a phone).
+const patelCase = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!
+await db.insert(schema.accessLinks).values({
+  caseId: patelCase.id,
+  kind: 'client',
+  label: DEMO_LINK_LABEL,
+  tokenHash: sha256(DEMO_CLIENT_TOKEN),
+  createdBy: a.owner.id,
+})
 
 writeFileSync(
   CRED_FILE,

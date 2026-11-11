@@ -207,6 +207,7 @@ npm --prefix server run db:migrate
 | Office staff | `neha@courtcall.demo` | Office staff (clerk) | Mehta & Associates | n/a |
 | Senior lawyer (2nd office) | `desai@courtcall.demo` | Senior lawyer, firm admin, founder | Desai Law Chambers | `DESAI7` |
 | Junior lawyer (2nd office) | `arjun@courtcall.demo` | Junior lawyer | Desai Law Chambers | n/a |
+| Client | no account (private link) | Client of Mehta & Associates: Ramesh Patel | Mehta & Associates | n/a |
 | CourtCall team | `admin@courtcall.demo` | CourtCall staff (not a firm role) | none | n/a |
 
 All demo accounts are already verified, so they can use every feature straight away. Re-running `seed:demo` also resets their roles, in case you changed them on the Team page.
@@ -286,8 +287,19 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - **CourtCall verification page:** when a senior lawyer signs up, they wait here until the team checks their Bar Council enrolment number and taps **Verify** or **Reject**. Tabs show pending, verified and rejected lawyers.
 - Juniors are never approved here: their own firm approves them on its **Team** page.
 
-**Client (coming next)**
-- The client's private WhatsApp link page (case progress, alerts, chat with the lawyer) is the next module. A client demo button will be added with it.
+**Client: Ramesh Patel (no account)**
+- Clients never sign in. The firm shares a private link on WhatsApp; the **Client** demo button opens Ramesh's seeded link directly.
+- His page shows only his own case: **Now** vs **Your item**, how many cases are before his, court status and how fresh the report is, and the latest updates. It refreshes by itself every 10 seconds. It never shows who reported or other firms' cases, and never predicts times.
+- **Chat with Mehta & Associates** (Nexconn direct chat). The person who shared the link is the default contact; he can switch to the firm's other lawyers and staff. Messages appear on the firm's **Chat** page.
+
+### Client links (how the firm shares a case)
+
+- On **Cases**, tap the link icon on a case. **Client link** makes a private link with chat; **Family link** makes one with progress only.
+- **Share on WhatsApp** opens WhatsApp with a ready message to the client's number (+91 is added to 10-digit numbers). **Copy link** works for any other app. The full link is shown only once.
+- The link **locks to the first phone that opens it**. The same phone can always reopen it; any other phone sees "This link is already in use on another phone". Don't open a client's link yourself.
+- **Turn off** stops a link at once. **New link** turns the old one off and makes a fresh one (lost or new phone).
+- The list shows each link's status: not opened yet, on a phone, or turned off.
+- To try the real flow: create a link as Mehta, then open it in a private window. Open it again in a second private window to see the one-phone rule.
 
 ### Guided tour (first login)
 
@@ -315,7 +327,8 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
 6. **Joining a firm:** sign out, choose **Create an account → Join a firm**, pick **Office staff** (or junior / senior lawyer) and use invite code **MEHTA4**. The new person waits for approval. Sign in as **Firm admin (Mehta)** → **Team** → **Approve**, then try changing their role or making them a firm admin.
    - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
-7. **CourtCall team:** choose **Create an account → Create a firm** to found a new firm, then sign in as **CourtCall team** and approve it on the verification page.
+7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Report from Priya's window and watch his page update within 10 seconds. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
+8. **CourtCall team:** choose **Create an account → Create a firm** to found a new firm, then sign in as **CourtCall team** and approve it on the verification page.
 
 ---
 

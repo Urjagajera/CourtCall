@@ -1,8 +1,9 @@
-import { CalendarDays, Hash, Landmark, Pencil, Plus, Trash2, UserRound } from 'lucide-react'
+import { CalendarDays, Hash, Landmark, Link2, Pencil, Plus, Trash2, UserRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
+import { LinkSheet } from '../../components/LinkSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
 import { api, type Case, type Client, type User } from '../../lib/api'
@@ -28,6 +29,9 @@ export default function Cases() {
 
   const [deleting, setDeleting] = useState<Case | null>(null)
   const remove = (c: Case) => setDeleting(c)
+  const [sharing, setSharing] = useState<Case | null>(null)
+  // Client phone numbers for the WhatsApp share button.
+  const clientList = useApi<{ clients: Client[] }>(isLawyer ? '/clients' : null)
 
   return (
     <>
@@ -76,6 +80,16 @@ export default function Cases() {
                     </div>
                     {isLawyer && (
                       <div className="flex">
+                        <Button
+                          data-tour={c === list[0] ? 'client-link' : undefined}
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Client links"
+                          title="Share a private link with the client"
+                          onClick={() => setSharing(c)}
+                        >
+                          <Link2 className="size-4" strokeWidth={1.75} />
+                        </Button>
                         <Button variant="ghost" size="sm" aria-label="Edit case" onClick={() => setEditing(c)}>
                           <Pencil className="size-4" strokeWidth={1.75} />
                         </Button>
@@ -108,6 +122,14 @@ export default function Cases() {
           reload()
         }}
       />
+
+      {sharing && (
+        <LinkSheet
+          c={sharing}
+          clientPhone={clientList.data?.clients.find((x) => x.id === sharing.clientId)?.phone ?? null}
+          onClose={() => setSharing(null)}
+        />
+      )}
 
       {editing && (
         <CaseForm

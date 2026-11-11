@@ -163,6 +163,41 @@ s = (await junior2.get(`/sessions/${sid}`)).body
 check('history visible to other office', s.events?.length >= 7 && s.events.some((e: any) => e.officeName === 'Mehta & Associates'), s.events?.length)
 check('lawyer today shows room with distance data', (await lawyer.get('/courtrooms/today')).body.sessions?.some((x: any) => x.id === sid && x.currentItem != null))
 
+// ---- client links ----
+const mk = await lawyer.post(`/cases/${caseId}/links`, { kind: 'client' })
+check('lawyer creates a client link (token returned once)', mk.status === 201 && typeof mk.body.token === 'string' && mk.body.token.length > 20, mk.body)
+const linkToken = mk.body.token
+check('junior cannot create links', (await junior.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 403)
+check('other firm cannot see my links', (await lawyer2.get(`/cases/${caseId}/links`)).status === 404)
+check('staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 201)
+const phoneA = 'device-aaaaaaaaaaaaaaaa'
+const phoneB = 'device-bbbbbbbbbbbbbbbb'
+const clientA = new Session('clientA')
+check('no link, no access', (await clientA.get('/c/me')).status === 401)
+check('client opens link on first phone', (await clientA.post('/c/activate', { token: linkToken, deviceId: phoneA })).status === 200)
+const cme = await clientA.get('/c/me')
+check('client sees only their case, live', cme.body.case?.title === 'Smoke vs Test' && cme.body.isToday === true && cme.body.session?.currentItem != null, cme.body)
+check('client never sees reporter names', !JSON.stringify(cme.body.updates ?? []).includes('reporter') && !JSON.stringify(cme.body).includes('Priya'))
+check('second phone is refused', (await new Session('clientB').post('/c/activate', { token: linkToken, deviceId: phoneB })).status === 409)
+check('same phone can reopen the link', (await new Session('clientA2').post('/c/activate', { token: linkToken, deviceId: phoneA })).status === 200)
+const listed2 = await lawyer.get(`/cases/${caseId}/links`)
+const clientLink = listed2.body.links?.find((l: any) => l.kind === 'client' && !l.revokedAt)
+check('firm sees the link as opened, never the token', !!clientLink?.activatedAt && !JSON.stringify(listed2.body).includes(linkToken), listed2.body)
+const ct = await clientA.post('/c/chat-token')
+check('client gets a chat token with firm contacts', ct.status === 200 && ct.body.userId?.startsWith('c') && ct.body.contacts?.length >= 1, { status: ct.status, err: ct.body.error })
+const fam = await lawyer.post(`/cases/${caseId}/links`, { kind: 'family' })
+const famPhone = new Session('family')
+await famPhone.post('/c/activate', { token: fam.body.token, deviceId: 'device-family-1234567' })
+check('family link shows progress', (await famPhone.get('/c/me')).body.kind === 'family')
+check('family link has no chat', (await famPhone.post('/c/chat-token')).status === 403)
+check('firm turns the link off', (await lawyer.post(`/links/${clientLink?.id}/revoke`)).status === 200)
+check('turned-off link stops working at once', (await clientA.get('/c/me')).status === 410)
+const re = await lawyer.post(`/links/${clientLink?.id}/reissue`)
+check('reissued link works on a new phone', re.status === 201 && (await new Session('clientNew').post('/c/activate', { token: re.body.token, deviceId: phoneB })).status === 200)
+check('other firm cannot revoke my links', (await lawyer2.post(`/links/${re.body.link?.id}/revoke`)).status === 404)
+const demoClient = new Session('demoClient')
+check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
+
 // ---- chat + admin ----
 const tok = await junior.post('/chat/token')
 check('chat token for junior (with team room)', tok.status === 200 && !!tok.body.token && !!tok.body.team?.groupId, { status: tok.status, err: tok.body.error })

@@ -190,6 +190,14 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         body: 'Add each hearing: client, court complex, court number, date and item number, and assign the junior who will be in court.',
       },
       {
+        id: 'client-link',
+        target: 'client-link',
+        route: '/cases',
+        optional: true,
+        title: 'Share the case with your client',
+        body: 'This button makes a private link for the client. Share it on WhatsApp: they see live progress for their own case and can chat with you. No app, no password. It locks to the first phone that opens it, and you can turn it off or make a new one anytime.',
+      },
+      {
         id: 'clients',
         target: 'add-client',
         route: '/clients',
@@ -215,6 +223,14 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
       route: '/cases',
       title: 'Cases',
       body: 'Add each hearing from the cause list: client, court complex, court number, date and item number. You can also assign the junior who will be in court.',
+    },
+    {
+      id: 'client-link',
+      target: 'client-link',
+      route: '/cases',
+      optional: true,
+      title: 'Share the case with your client',
+      body: 'This button makes a private link for the client. Share it on WhatsApp: they see live progress for their own case and can chat with you. No app, no password. It locks to the first phone that opens it, and you can turn it off or make a new one anytime.',
     },
     {
       id: 'clients',

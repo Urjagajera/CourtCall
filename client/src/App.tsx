@@ -18,6 +18,8 @@ import Team from './pages/lawyer/Team'
 import Today from './pages/lawyer/Today'
 import Settings from './pages/Settings'
 import Chats from './pages/Chats'
+import ClientCase from './pages/client/ClientCase'
+import OpenLink from './pages/client/OpenLink'
 
 /** Signed-in, verified staff only. Unverified users see the waiting screen. */
 function Protected({ children }: { children: ReactNode }) {
@@ -58,6 +60,9 @@ export default function App() {
       <BrowserRouter>
         <TourProvider>
         <Routes>
+          {/* Clients: no account, opened from a WhatsApp link */}
+          <Route path="/c/:token" element={<OpenLink />} />
+          <Route path="/case" element={<ClientCase />} />
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
           <Route element={<Protected><AppLayout /></Protected>}>
