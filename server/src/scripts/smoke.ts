@@ -42,7 +42,7 @@ const anon = new Session('anon')
 check('health ok', (await anon.get('/health')).body.db === 'connected')
 check('unknown /api route is 404', (await anon.get('/nope')).status === 404)
 check('me without login returns no user', (await anon.get('/auth/me')).body.user === null)
-check('demo list available', (await anon.get('/auth/demo')).body.accounts?.length === 7)
+check('demo list available', (await anon.get('/auth/demo')).body.accounts?.length === 6)
 const wrong = await anon.post('/auth/login', { email: 'mehta@courtcall.demo', password: 'wrong-password' })
 check('wrong password rejected', wrong.status === 401, wrong)
 check('junior signup with bad invite code rejected', (await anon.post('/auth/register/junior', { name: 'Test', email: `x${Date.now()}@t.test`, phone: '9800000000', password: 'password123', inviteCode: 'ZZZZZZ' })).status === 400)
@@ -52,7 +52,6 @@ const lawyer = await login('lawyer')
 const junior = await login('junior')
 const lawyer2 = await login('lawyer2')
 const junior2 = await login('junior2')
-const admin = await login('admin')
 
 const me = await lawyer.get('/auth/me')
 check('lawyer me has office + invite code', me.body.office?.inviteCode === 'MEHTA4', me.body)
@@ -94,8 +93,7 @@ const reg = await newbie.post('/auth/register/member', { name: 'Smoke Clerk', em
 check('staff signs up with the invite code (pending)', reg.status === 201 && reg.body.user?.role === 'staff' && reg.body.user?.verificationStatus === 'pending', reg.body)
 const newbieId = reg.body.user?.id
 check('pending member is blocked', (await newbie.get('/clients')).status === 403)
-check('lawyer signup without bar council no rejected', (await anon.post('/auth/register/member', { name: 'Smoke Lawyer', email: `law${stamp}@smoke.test`, phone: '9800000002', password: 'password123', role: 'lawyer', inviteCode: 'MEHTA4' })).status === 400)
-check('joined members are not in the CourtCall queue', !(await admin.get('/admin/lawyers?status=pending')).body.lawyers?.some((l: any) => l.id === newbieId))
+check('lawyer can join without a Bar Council no. (optional)', (await anon.post('/auth/register/member', { name: 'Smoke Lawyer', email: `law${stamp}@smoke.test`, phone: '9800000002', password: 'password123', role: 'lawyer', inviteCode: 'MEHTA4' })).status === 201)
 check('firm admin approves the new member', (await lawyer.post(`/office/members/${newbieId}/verification`, { status: 'verified' })).body.user?.verificationStatus === 'verified')
 check('approved member gets in', (await newbie.get('/clients')).status === 200)
 check('firm admin makes staff a firm admin', (await lawyer.patch(`/office/members/${newbieId}`, { isFirmAdmin: true })).body.user?.isFirmAdmin === true)
@@ -233,12 +231,13 @@ check('client cannot open another client’s case', (await clientNew.get(`/c/me?
 check('family link sees only the shared case', (await famPhone.get(`/c/me?case=${rameshMe.caseId}`)).status === 404 && ((await famPhone.get('/c/me')).body.cases ?? []).length === 0)
 check('client signs out of this phone', (await clientNew.post('/c/signout')).status === 200 && (await clientNew.get('/c/me')).status === 401)
 
-// ---- chat + admin ----
+// ---- chat ----
 const tok = await junior.post('/chat/token')
 check('chat token for junior (with team room)', tok.status === 200 && !!tok.body.token && !!tok.body.team?.groupId, { status: tok.status, err: tok.body.error })
-check('admin cannot get chat token', (await admin.post('/chat/token')).status === 403)
-check('admin lists lawyers', (await admin.get('/admin/lawyers?status=verified')).body.lawyers?.length >= 2)
-check('lawyer cannot use admin api', (await lawyer.get('/admin/lawyers')).status === 403)
+check('old platform admin api is gone', (await lawyer.get('/admin/lawyers')).status === 404)
+const founder = new Session('founder')
+const fr = await founder.post('/auth/register/lawyer', { name: 'Smoke Founder', email: `founder${Date.now()}@smoke.test`, phone: '9800000003', password: 'password123', officeName: 'Smoke Firm' })
+check('a new firm founder can start straight away (no Bar Council no. needed)', fr.status === 201 && fr.body.user?.verificationStatus === 'verified' && fr.body.user?.isFirmAdmin === true, fr.body)
 
 // ---- logout + cleanup ----
 check('delete case', (await lawyer.del(`/cases/${caseId}`)).status === 200)

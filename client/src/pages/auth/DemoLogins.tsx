@@ -79,7 +79,7 @@ export function DemoLogins() {
         </div>
       )}
       <ul className="mt-4 flex flex-col gap-2">
-        {[...accounts.filter((a) => a.key !== 'admin'), CLIENT, ...accounts.filter((a) => a.key === 'admin')].map((a) => {
+        {[...accounts, CLIENT].map((a) => {
           const Icon = ICONS[a.key] ?? Briefcase
           return (
             <li key={a.key}>

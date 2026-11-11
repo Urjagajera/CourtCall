@@ -75,29 +75,6 @@ const shared = {
 } satisfies Record<string, TourStep>
 
 export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false): TourStep[] {
-  if (role === 'admin') {
-    return [
-      welcome(firstName),
-      {
-        id: 'verify-tabs',
-        target: 'verify-tabs',
-        route: '/admin',
-        title: 'Verification queue',
-        body: 'This page belongs to the CourtCall team, not a law firm. New senior lawyers wait here until their Bar Council number is checked. Switch between pending, verified and rejected.',
-      },
-      {
-        id: 'verify-list',
-        target: 'verify-list',
-        route: '/admin',
-        optional: true,
-        title: 'Check and approve',
-        body: 'Compare the Bar Council enrolment number before tapping Verify. Only verified lawyers can use courtrooms and add clients.',
-      },
-      shared.settings,
-      finish,
-    ]
-  }
-
   if (role === 'junior') {
     return [
       welcome(firstName),

@@ -26,7 +26,7 @@ export default function Settings() {
           <p className="text-h2">{user!.name}</p>
           <p className="text-label text-ink-muted">
             {user!.email} ·{' '}
-            {{ lawyer: 'Senior lawyer', junior: 'Junior lawyer', staff: 'Office staff', admin: 'CourtCall team' }[user!.role]}
+            {{ lawyer: 'Senior lawyer', junior: 'Junior lawyer', staff: 'Office staff', admin: 'Admin' }[user!.role]}
             {user!.isFirmAdmin && ' · Firm admin'}
             {office && ` · ${office.name}`}
           </p>

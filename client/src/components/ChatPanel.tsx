@@ -27,6 +27,9 @@ interface Props {
   emptyText?: string
 }
 
+/** Oldest at the top, newest at the bottom, whatever order the server or socket delivers them in. */
+const byTime = (list: Message[]) => [...list].sort((a, b) => a.sentTime - b.sentTime)
+
 /** Real-time chat for one Nexconn channel: history, live messages, structured progress cards. */
 export function ChatPanel({ kind, channelId, names, placeholder = 'Message', readOnly, className, emptyText = 'No messages yet.' }: Props) {
   const chat = useChat()
@@ -42,7 +45,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
     let cancelled = false
     setLoading(true)
     loadHistory(kind, channelId)
-      .then((h) => !cancelled && setMessages(h))
+      .then((h) => !cancelled && setMessages(byTime(h)))
       .catch(() => !cancelled && setError('Could not load messages'))
       .finally(() => !cancelled && setLoading(false))
     markRead(kind, channelId)
@@ -54,7 +57,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
   const onIncoming = useCallback(
     (m: Message) => {
       if (!channelId || !isFromChannel(m, kind, channelId)) return
-      setMessages((prev) => (prev.some((p) => p.messageId === m.messageId) ? prev : [...prev, m]))
+      setMessages((prev) => (prev.some((p) => p.messageId === m.messageId) ? prev : byTime([...prev, m])))
       markRead(kind, channelId)
     },
     [kind, channelId],
@@ -73,7 +76,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
     setError(null)
     try {
       const m = await sendText(kind, channelId, t)
-      setMessages((prev) => [...prev, m])
+      setMessages((prev) => byTime([...prev, m]))
       setText('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Message not sent')

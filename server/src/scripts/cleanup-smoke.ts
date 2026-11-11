@@ -14,6 +14,10 @@ if (ids.length) {
 }
 // Clients created by interrupted smoke runs ("Smoke Client…"); their cases and links go with them.
 await db.delete(schema.clients).where(dsql`${schema.clients.name} like 'Smoke Client%'`)
+// Firms founded during the smoke test (must go before their founders).
+await db
+  .delete(schema.offices)
+  .where(dsql`${schema.offices.ownerId} in (select id from users where email like '%@smoke.test')`)
 // People who signed up during the smoke test (never own data, so a plain delete is safe).
 const people = await db.delete(schema.users).where(dsql`${schema.users.email} like '%@smoke.test'`).returning({ id: schema.users.id })
 console.log(`Removed ${ids.length} smoke-test courtroom(s) and ${people.length} smoke-test account(s).`)

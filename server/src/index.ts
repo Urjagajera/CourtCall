@@ -4,7 +4,6 @@ import express from 'express'
 import { config, nexconnEnabled } from './config.js'
 import { sql } from './db/index.js'
 import { errorHandler } from './lib/http.js'
-import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { casesRouter } from './routes/cases.js'
 import { chatRouter } from './routes/chat.js'
@@ -33,7 +32,6 @@ app.get('/api/health', async (_req, res) => {
 })
 
 app.use('/api/auth', authRouter)
-app.use('/api/admin', adminRouter)
 app.use('/api/office', officeRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/cases', casesRouter)

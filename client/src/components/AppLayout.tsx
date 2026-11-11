@@ -1,4 +1,4 @@
-import { Briefcase, CalendarDays, LayoutDashboard, MessageCircle, Settings, ShieldCheck, Users, type LucideIcon } from 'lucide-react'
+import { Briefcase, CalendarDays, LayoutDashboard, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -16,7 +16,6 @@ interface NavItem {
 }
 
 function navFor(role: string): NavItem[] {
-  if (role === 'admin') return [{ to: '/admin', label: 'Verify', icon: ShieldCheck }]
   const items: NavItem[] = [
     { to: '/', label: 'Today', icon: LayoutDashboard },
     { to: '/cases', label: 'Cases', icon: CalendarDays },
@@ -88,7 +87,7 @@ export function AppLayout() {
           <p className="flex items-center gap-2 font-semibold text-ink">
             {user!.name} {chatDot}
           </p>
-          <p className="text-ink-muted">{office?.name ?? (user!.role === 'admin' ? 'CourtCall team' : '')}</p>
+          <p className="text-ink-muted">{office?.name}</p>
         </div>
       </aside>
 

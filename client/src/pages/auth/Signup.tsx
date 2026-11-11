@@ -58,7 +58,7 @@ export default function Signup() {
 
       <p className="mb-4 text-label text-ink-muted">
         {mode === 'create'
-          ? 'For the senior lawyer starting the firm. You become its first firm admin. CourtCall checks your Bar Council number first.'
+          ? 'For the senior lawyer starting the firm. You become its first firm admin and can start right away.'
           : 'Ask a firm admin for the 6-character invite code. They approve you after you sign up.'}
       </p>
 
@@ -70,7 +70,7 @@ export default function Signup() {
             const common = { name: v.name, email: v.email, phone: v.phone, password: v.password }
             const { user } =
               mode === 'create'
-                ? await api<{ user: User }>('/auth/register/lawyer', { body: { ...common, barCouncilNo: v.barCouncilNo, officeName: v.officeName } })
+                ? await api<{ user: User }>('/auth/register/lawyer', { body: { ...common, barCouncilNo: v.barCouncilNo || undefined, officeName: v.officeName } })
                 : await api<{ user: User }>('/auth/register/member', {
                     body: { ...common, role, inviteCode: v.inviteCode, barCouncilNo: role === 'staff' ? undefined : v.barCouncilNo || undefined },
                   })
@@ -111,7 +111,7 @@ export default function Signup() {
 
         {mode === 'create' ? (
           <>
-            <Input label="Bar Council enrolment no." required hint="CourtCall checks this before you can use courtrooms" {...field('barCouncilNo')} />
+            <Input label="Bar Council enrolment no. (optional)" hint="Shown on your profile to your firm" {...field('barCouncilNo')} />
             <Input label="Firm / chamber name" required placeholder="e.g. Mehta & Associates" {...field('officeName')} />
           </>
         ) : (
@@ -127,8 +127,7 @@ export default function Signup() {
             />
             {role !== 'staff' && (
               <Input
-                label={role === 'lawyer' ? 'Bar Council enrolment no.' : 'Bar Council enrolment no. (optional)'}
-                required={role === 'lawyer'}
+                label="Bar Council enrolment no. (optional)"
                 {...field('barCouncilNo')}
               />
             )}

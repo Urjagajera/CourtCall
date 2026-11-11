@@ -205,7 +205,7 @@ export default function Landing() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <TrustCard icon={History} title="Full update history">Every report and undo is kept.</TrustCard>
           <TrustCard icon={Clock} title="Stale progress is flagged">No report for 20 minutes? Clearly marked.</TrustCard>
-          <TrustCard icon={ShieldCheck} title="Verified reporters only">Bar Council checked. Juniors approved by the firm.</TrustCard>
+          <TrustCard icon={ShieldCheck} title="Approved reporters only">Every person is approved by their firm admin.</TrustCard>
           <TrustCard icon={EyeOff} title="Office data stays private">Other firms only share courtroom progress.</TrustCard>
           <TrustCard icon={Link2} title="Device-bound client links">Locked to one device. Revoke anytime.</TrustCard>
           <TrustCard icon={Lock} title="No time predictions">Latest reported progress, clearly labelled.</TrustCard>

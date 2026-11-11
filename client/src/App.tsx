@@ -8,7 +8,6 @@ import { PageSpinner } from './components/ui'
 import type { Role } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
 import { useTheme } from './lib/theme'
-import Verify from './pages/admin/Verify'
 import Login from './pages/auth/Login'
 import Pending from './pages/auth/Pending'
 import Signup from './pages/auth/Signup'
@@ -46,8 +45,7 @@ function GuestOnly({ children }: { children: ReactNode }) {
 }
 
 function Home() {
-  const { user } = useAuth()
-  return user!.role === 'admin' ? <Navigate to="/admin" replace /> : <Today />
+  return <Today />
 }
 
 function ThemeBoot() {
@@ -77,7 +75,6 @@ export default function App() {
             <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Cases /></RoleOnly>} />
             <Route path="clients" element={<RoleOnly roles={['lawyer', 'staff']}><Clients /></RoleOnly>} />
             <Route path="team" element={<RoleOnly roles={['lawyer', 'staff']}><Team /></RoleOnly>} />
-            <Route path="admin" element={<RoleOnly roles={['admin']}><Verify /></RoleOnly>} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

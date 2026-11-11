@@ -55,7 +55,8 @@ async function client(officeId: string, name: string, language: 'en' | 'hi' | 'g
   return c
 }
 
-await user(acc('admin').email, acc('admin').name, 'admin', null)
+// The old platform admin demo account is no longer used.
+await db.delete(schema.users).where(eq(schema.users.email, 'admin@courtcall.demo'))
 
 const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associates', 'MEHTA4')
 const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
@@ -137,7 +138,6 @@ writeFileSync(
   [
     'CourtCall demo accounts (local only, do not commit)',
     `password: ${password}`,
-    'admin@courtcall.demo   - CourtCall team (verifies firm founders)',
     'mehta@courtcall.demo   - firm admin + senior lawyer, Mehta & Associates (invite code MEHTA4)',
     'anil@courtcall.demo    - senior lawyer, Mehta & Associates',
     'priya@courtcall.demo   - junior, Mehta & Associates',

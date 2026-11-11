@@ -43,14 +43,7 @@ export const DEMO_ACCOUNTS = [
     name: 'Arjun Trivedi',
     label: 'Junior lawyer (2nd office)',
     description: 'Reports in the same shared Court 4 room from another office',
-  },
-  {
-    key: 'admin',
-    email: 'admin@courtcall.demo',
-    name: 'CourtCall Admin',
-    label: 'CourtCall team',
-    description: 'Not a firm role: checks new lawyers’ Bar Council numbers before they can join',
-  },
+  }
 ] as const
 
 export type DemoKey = (typeof DEMO_ACCOUNTS)[number]['key']

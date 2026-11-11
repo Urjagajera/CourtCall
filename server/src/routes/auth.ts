@@ -27,7 +27,8 @@ const base = {
 
 const lawyerSignup = z.object({
   ...base,
-  barCouncilNo: z.string().trim().min(3).max(40),
+  // Optional profile detail: there is no public Bar Council lookup to check it against.
+  barCouncilNo: z.string().trim().max(40).optional(),
   officeName: z.string().trim().min(2).max(100),
 })
 
@@ -38,10 +39,7 @@ const memberSignup = z
     barCouncilNo: z.string().trim().max(40).optional(),
     inviteCode: z.string().trim().toUpperCase().length(6),
   })
-  .refine((b) => b.role !== 'lawyer' || (b.barCouncilNo?.length ?? 0) >= 3, {
-    path: ['barCouncilNo'],
-    message: 'Senior lawyers need a Bar Council enrolment number',
-  })
+
 
 async function ensureEmailFree(email: string) {
   const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email))
@@ -49,7 +47,6 @@ async function ensureEmailFree(email: string) {
 }
 
 // Senior lawyer founding a firm: creates the account + the firm, and becomes its first firm admin.
-// Needs CourtCall verification (Bar Council check) before using the app.
 authRouter.post('/register/lawyer', async (req, res) => {
   const body = parse(lawyerSignup, req.body)
   await ensureEmailFree(body.email)
@@ -64,8 +61,10 @@ authRouter.post('/register/lawyer', async (req, res) => {
         email: body.email,
         phone: body.phone,
         passwordHash,
-        barCouncilNo: body.barCouncilNo,
+        barCouncilNo: body.barCouncilNo || null,
         isFirmAdmin: true,
+        // The founder can start straight away; everyone else is approved by a firm admin.
+        verificationStatus: 'verified',
       })
       .returning()
     const [office] = await tx
