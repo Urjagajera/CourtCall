@@ -47,7 +47,7 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
       <g>
         <rect x="76" y="58" width="128" height="86" rx="8" fill="#1B1B22" />
         <rect x="82" y="64" width="116" height="74" rx="5" fill="#26262F" />
-        <text x="92" y="82" fontSize="11" fontWeight="700" fill="#F5B69E" letterSpacing="1.5">
+        <text x="92" y="82" fontSize="11" fontWeight="700" fill="#A7B2FF" letterSpacing="1.5">
           COURT NO. 4
         </text>
         <circle cx="186" cy="78" r="4" fill={status === 'hearing' ? '#8FDCA9' : '#F3C673'} className="cc-blink" />
@@ -64,7 +64,7 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
           textAnchor="end"
           fontSize="30"
           fontWeight="800"
-          fill="#F5B69E"
+          fill="#A7B2FF"
           className="cc-flip tabular"
           style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
         >
@@ -98,7 +98,7 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
       </g>
 
       {/* Judge's chair + judge */}
-      <rect x="266" y="138" width="68" height="84" rx="14" className="fill-base-strong" />
+      <rect x="266" y="138" width="68" height="84" rx="14" fill="#2F3DA8" />
       <circle cx="300" cy="166" r="13" fill={SKIN} />
       <path d="M287 160 Q300 148 313 160" stroke={ROBE} strokeWidth="5" fill="none" strokeLinecap="round" />
       <path d="M278 210 Q280 184 300 182 Q320 184 322 210 Z" fill={ROBE} />
@@ -106,10 +106,10 @@ export function CourtroomScene({ item, status }: { item: number; status: 'hearin
       <rect x="300.5" y="183" width="3.5" height="10" fill="#FFFFFF" />
 
       {/* Bench */}
-      <rect x="140" y="204" width="320" height="10" rx="3" className="fill-surface-raised stroke-line" strokeWidth="2" />
-      <rect x="150" y="214" width="300" height="66" className="fill-base-strong" />
+      <rect x="140" y="204" width="320" height="10" rx="3" fill="#8A5A3B" />
+      <rect x="150" y="214" width="300" height="66" fill="#6B4430" />
       {[190, 250, 350, 410].map((x) => (
-        <rect key={x} x={x - 22} y="224" width="44" height="46" rx="3" className="stroke-surface" strokeWidth="2" fill="none" opacity="0.5" />
+        <rect key={x} x={x - 22} y="224" width="44" height="46" rx="3" stroke="#8A5A3B" strokeWidth="2" fill="none" />
       ))}
       <rect x="268" y="232" width="64" height="22" rx="4" className="fill-accent" />
       <text x="300" y="247" textAnchor="middle" fontSize="10" fontWeight="700" className="fill-accent-ink">

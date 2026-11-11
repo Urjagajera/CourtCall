@@ -12,6 +12,12 @@ import { useForm } from '../../lib/useForm'
 
 type TodaySession = SessionState & { courtroom: Courtroom; myCases: MyCase[] }
 
+/** "Adv. Rakesh Mehta" -> "Rakesh" (skips honorifics common in Indian legal practice). */
+function firstName(name: string) {
+  const honorifics = /^(adv|advocate|dr|mr|mrs|ms|shri|smt|sri|kum)\.?$/i
+  return name.split(/\s+/).find((w) => !honorifics.test(w)) ?? name
+}
+
 // Day view: every courtroom I follow today, with live progress and my office's cases in it.
 export default function Today() {
   const { user } = useAuth()
@@ -36,7 +42,7 @@ export default function Today() {
   return (
     <>
       <PageHeader
-        title={`Good day, ${user!.name.split(' ')[0]}`}
+        title={`Good day, ${firstName(user!.name)}`}
         subtitle={data ? formatDate(data.date) : undefined}
         action={
           <Button variant="secondary" onClick={() => setJoinOpen(true)} icon={<LogIn className="size-5" strokeWidth={1.75} />}>

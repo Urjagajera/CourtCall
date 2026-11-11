@@ -160,7 +160,7 @@ export function LiveDemo() {
           </div>
           <div className="relative mt-2 h-2 rounded-full bg-line">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-base-strong transition-all duration-500"
+              className="absolute inset-y-0 left-0 rounded-full bg-ink-muted transition-all duration-500"
               style={{ width: `${Math.min(100, Math.max(4, ((item - 10) / (CLIENT_ITEM - 10)) * 100))}%` }}
             />
             <span className="absolute -top-1 right-0 size-4 rounded-full border-2 border-surface bg-accent" />

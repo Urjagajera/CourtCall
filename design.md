@@ -6,13 +6,19 @@ Every screen in CourtCall follows this file. Colors, fonts, spacing and componen
 
 | Share | Role | Light | Dark | Used for |
 |---|---|---|---|---|
-| **50%** | Base | Powder blue `#8DB9F0` | Night blue `#14233B` | Page background behind everything |
-| **35%** | Surface | Soft lavender white `#E9E8F8` | Deep lavender `#232539` | Cards, sheets, nav bars, inputs, lists, chat bubbles |
-| **15%** | Accent | Warm sunset peach `#F5B69E` | Sunset peach `#F5B69E` | Primary buttons, active tab, the client's own item number, unread badges, focus rings |
+Theme: **Indigo Ink**. It is calm and trustworthy, and its accent never looks like a courtroom status (green, amber or red).
 
-How to check a screen: squint at it. It should read as mostly blue with lavender panels on top and a few peach highlights. If peach covers more than one main button and a couple of small badges per screen, the 15% is overused.
+| Share | Role | Light | Dark | Used for |
+|---|---|---|---|---|
+| **50%** | Base | Indigo mist `#E4E7F5` | Midnight indigo `#11142A` | Page background behind everything |
+| **35%** | Surface | Near-white `#FAFAFE` | Deep indigo `#1B1F3A` | Cards, sheets, nav bars, inputs, lists, chat bubbles |
+| **15%** | Accent | Indigo `#3B4CCA` | Soft indigo `#8C9BFF` | Primary buttons, active tab, the client's own item number, unread badges, focus rings |
 
-Text is **charcoal `#2B2B2B`** in light mode and **`#ECEBF5`** in dark mode. It is never white on blue.
+How to check a screen: squint at it. It should read as a soft misty background with white panels on top and a few indigo highlights. If indigo covers more than one main button and a couple of small badges per screen, the 15% is overused.
+
+Text is **ink `#1A1D2E`** in light mode and **`#ECEDF7`** in dark mode.
+
+The landing page illustration may use fixed "real world" colors that are not tokens: wood (`#6B4430`, `#8A5A3B`) for the bench and gavel, skin tones, advocates' black robes and white bands, and light-indigo LED digits (`#A7B2FF`) on the dark display boards.
 
 ## 2. Color tokens
 
@@ -22,16 +28,16 @@ All colors are CSS variables in `client/src/index.css` and exposed to Tailwind a
 
 | Token | Light | Dark | Notes |
 |---|---|---|---|
-| `--base` | `#8DB9F0` | `#14233B` | 50% background |
-| `--base-strong` | `#6FA3E6` | `#0E1A2E` | Header strip, pressed state on base |
-| `--surface` | `#E9E8F8` | `#232539` | 35% cards and panels |
-| `--surface-raised` | `#F6F5FD` | `#2D3048` | Inputs, a card nested inside a card, hover |
-| `--line` | `#C9C7E6` | `#3A3D58` | Borders and dividers on surface |
-| `--accent` | `#F5B69E` | `#F5B69E` | 15% action color |
-| `--accent-strong` | `#EE9A7B` | `#F7C4B0` | Accent hover/pressed |
-| `--accent-ink` | `#2B2B2B` | `#2B2B2B` | Text on peach. Always charcoal, in both modes |
-| `--ink` | `#2B2B2B` | `#ECEBF5` | Main text |
-| `--ink-muted` | `#55576B` | `#A9ABC4` | Secondary text and labels |
+| `--base` | `#E4E7F5` | `#11142A` | 50% background |
+| `--base-strong` | `#CDD3EE` | `#0B0D1E` | Header strip, pressed state on base |
+| `--surface` | `#FAFAFE` | `#1B1F3A` | 35% cards and panels |
+| `--surface-raised` | `#FFFFFF` | `#252A4A` | Inputs, a card nested inside a card, hover |
+| `--line` | `#D5D9EE` | `#323862` | Borders and dividers on surface |
+| `--accent` | `#3B4CCA` | `#8C9BFF` | 15% action color |
+| `--accent-strong` | `#2F3DA8` | `#A7B2FF` | Accent hover/pressed |
+| `--accent-ink` | `#FFFFFF` | `#0F1230` | Text on the accent (white in light mode, dark indigo in dark mode) |
+| `--ink` | `#1A1D2E` | `#ECEDF7` | Main text |
+| `--ink-muted` | `#4E5470` | `#A6ABC9` | Secondary text and labels |
 
 ### Status (outside the palette, on purpose)
 
@@ -47,18 +53,19 @@ Courtroom events have to be told apart instantly, so they use standard status co
 
 ### Contrast (checked against WCAG AA)
 
-- Charcoal on powder blue: about 7:1 ✅
-- Charcoal on lavender white: about 11.6:1 ✅
-- Charcoal on peach: about 8:1 ✅
-- White on powder blue: about 2:1 ❌ (never use)
-- Peach next to powder blue: similar brightness, so a peach button sitting directly on the blue background gets a `--line`-colored 1px border. Prefer placing buttons on surface cards.
+- Ink on indigo mist: about 13:1 ✅
+- Ink on near-white surface: about 16:1 ✅
+- Muted ink on indigo mist: about 6:1 ✅
+- White on indigo button: about 6.8:1 ✅
+- Indigo button against the mist background: about 5.5:1, so buttons stand out anywhere ✅
+- Dark mode: light text on midnight indigo is about 15:1, and dark-indigo text on the soft indigo button is about 7:1 ✅
 
 ## 3. Light and dark mode
 
 - The app follows the phone or system setting by default (`prefers-color-scheme`).
 - A toggle in settings (System / Light / Dark) stores the choice in `localStorage` and sets `data-theme` on `<html>`.
-- Peach stays the same in both modes, so the accent looks consistent. Text on peach is always charcoal.
-- The browser `theme-color` meta tag is `#8DB9F0` in light mode and `#14233B` in dark mode, so the phone status bar blends in.
+- The accent lightens in dark mode (`#3B4CCA` becomes `#8C9BFF`) so buttons stay bright. Its text flips from white to dark indigo to keep contrast.
+- The browser `theme-color` meta tag is `#E4E7F5` in light mode and `#11142A` in dark mode, so the phone status bar blends in.
 
 ## 4. Typography
 
@@ -105,11 +112,11 @@ Courtroom events have to be told apart instantly, so they use standard status co
 ## 7. Components
 
 **Buttons**
-- **Primary:** peach background, charcoal text, 10px radius, 48px tall (56px in the junior UI). One primary button per screen area.
+- **Primary:** indigo background, white text, 10px radius, 48px tall (56px in the junior UI). One primary button per screen area.
 - **Secondary:** `--surface-raised` background, `--line` border, ink text.
 - **Ghost:** transparent background, ink text. Used for toolbar actions.
 - **Danger:** status red tint background with red text. Used for revoke link, delete, adjourn confirmation.
-- **Focus:** 2px peach outline plus a 2px offset.
+- **Focus:** 2px indigo outline plus a 2px offset.
 
 **Cards:** `--surface` background, 12px radius, 16px padding, `--line` border.
 
@@ -117,10 +124,10 @@ Courtroom events have to be told apart instantly, so they use standard status co
 
 **Status badge:** pill shape, status tint background, icon + word, caption size.
 
-**Item progress bar** (client and lawyer views): a horizontal track that shows the current item against the client's own item, for example "Now 12 → Yours 15". The client's own item is the only peach marker on the screen.
+**Item progress bar** (client and lawyer views): a horizontal track that shows the current item against the client's own item, for example "Now 12 → Yours 15". The client's own item is the only indigo marker on the screen.
 
 **Navigation:**
-- Phone: bottom tab bar on `--surface`, with the active tab marked by a peach indicator.
+- Phone: bottom tab bar on `--surface`, with the active tab marked by an indigo indicator.
 - Laptop (lawyer): left sidebar on `--surface`.
 
 **Toasts and banners:** surface card with a status-colored left border of 4px.
@@ -130,7 +137,7 @@ Courtroom events have to be told apart instantly, so they use standard status co
 Juniors report while standing in a courtroom, holding a phone in one hand. Every common action should take **one tap**.
 
 1. **Top:** courtroom name, status badge, and the current item in `display` size, with "updated 2 min ago" (or "Stale" in grey).
-2. **Main action:** a full-width **"Now hearing: Item 13"** peach button (64px tall). It is pre-filled with current item + 1, which is the most likely next event.
+2. **Main action:** a full-width **"Now hearing: Item 13"** indigo button (64px tall). It is pre-filled with current item + 1, which is the most likely next event.
 3. **Stepper:** large **−1** and **+1** buttons on either side of the number change the pre-filled value. Tapping the number itself opens the numeric keypad for a direct jump.
 4. **Secondary grid:** a 2-column grid of 56px buttons for Passed over, Recalled, Adjourned, Break / Resume, Not sitting and Court risen. Each uses its status tint.
 5. **Confirmations:** moving backward or jumping more than 5 items opens a bottom sheet: "Item 30 is 17 ahead of Item 13. Confirm?" with a large Confirm button. If someone else reported in the meantime, the sheet shows the newer state and asks again.
@@ -143,7 +150,7 @@ Juniors report while standing in a courtroom, holding a phone in one hand. Every
 - **Hero card:** "Your case: Item 15, Court 4" with the progress bar and a big current-item number.
 - The latest update is written in a full sentence, for example: "Latest reported progress: Item 12 is being heard (2 min ago)".
 - The fixed disclaimer is always visible in small text: *"CourtCall shows the latest reported courtroom progress. It does not predict hearing time."*
-- Peach **Chat with lawyer** button. Family links don't show it.
+- Indigo **Chat with lawyer** button. Family links don't show it.
 - **Enable alerts** card for Web Push permission. It appears once and is easy to dismiss.
 
 ## 10. Lawyer dashboard

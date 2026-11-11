@@ -39,7 +39,7 @@ export function DisplayBoard() {
   return (
     <div className="overflow-hidden rounded-lg border-4 border-[#1B1B22] bg-[#1B1B22] shadow-sheet">
       <div className="flex items-center justify-between gap-2 bg-[#26262F] px-4 py-3">
-        <p className="text-label font-bold tracking-[0.2em] text-[#F5B69E]">CAUSE LIST BOARD</p>
+        <p className="text-label font-bold tracking-[0.2em] text-[#A7B2FF]">CAUSE LIST BOARD</p>
         <span className="flex items-center gap-1.5 text-caption font-semibold text-[#8FDCA9]">
           <Radio className="cc-blink size-3.5" strokeWidth={2} /> LIVE · DEMO
         </span>
@@ -57,7 +57,7 @@ export function DisplayBoard() {
           >
             <span className="tabular text-h2 font-bold text-[#ECEBF5]">{r.court}</span>
             <span className="overflow-hidden [perspective:400px]">
-              <span key={r.item} className="cc-flip tabular inline-block text-[1.75rem] font-extrabold leading-none text-[#F5B69E]">
+              <span key={r.item} className="cc-flip tabular inline-block text-[1.75rem] font-extrabold leading-none text-[#A7B2FF]">
                 {r.item}
               </span>
             </span>
