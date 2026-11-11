@@ -42,7 +42,11 @@ async function user(email: string, name: string, role: Role, officeId: string | 
 
 async function office(ownerEmail: string, ownerName: string, officeName: string, code: string) {
   const owner = await user(ownerEmail, ownerName, 'lawyer', null, { barCouncilNo: `G/${code}/2015`, isFirmAdmin: true })
-  if (owner.officeId) return { owner, officeId: owner.officeId }
+  if (owner.officeId) {
+    // Restore the demo invite code (a test or a demo may have rotated it).
+    await db.update(schema.offices).set({ inviteCode: code }).where(eq(schema.offices.id, owner.officeId))
+    return { owner, officeId: owner.officeId }
+  }
   const [o] = await db.insert(schema.offices).values({ name: officeName, ownerId: owner.id, inviteCode: code }).returning()
   await db.update(schema.users).set({ officeId: o.id }).where(eq(schema.users.id, owner.id))
   return { owner, officeId: o.id }
@@ -62,14 +66,21 @@ const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associa
 const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
 const juniorA = await user(acc('junior').email, acc('junior').name, 'junior', a.officeId)
 await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
-await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId, { barCouncilNo: 'G/2211/2018' })
-await user(acc('staff').email, acc('staff').name, 'staff', a.officeId)
+const anil = await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId, { barCouncilNo: 'G/2211/2018' })
+const neha = await user(acc('staff').email, acc('staff').name, 'staff', a.officeId)
 
 const court4 = await upsertCourtroom(COMPLEX, '4')
 const court7 = await upsertCourtroom(COMPLEX, '7')
 
 const ramesh = await client(a.officeId, 'Ramesh Patel', 'gu')
 const sunita = await client(a.officeId, 'Sunita Joshi', 'hi')
+// Who looks after whom (firm admin Mehta sees everyone): Anil + Neha look after Ramesh, Neha alone looks after Sunita.
+await db.delete(schema.clientAssignments).where(inArray(schema.clientAssignments.clientId, [ramesh.id, sunita.id]))
+await db.insert(schema.clientAssignments).values([
+  { clientId: ramesh.id, userId: anil.id },
+  { clientId: ramesh.id, userId: neha.id },
+  { clientId: sunita.id, userId: neha.id },
+])
 const kiran = await client(b.officeId, 'Kiran Desai', 'en')
 
 // Fresh cases for today (old demo cases for these offices are replaced).

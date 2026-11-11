@@ -165,6 +165,22 @@ export const clients = pgTable(
   (t) => [index('clients_office_idx').on(t.officeId)],
 )
 
+// Who looks after a client. Firm admins see every client; other lawyers and staff only see clients
+// assigned to them (set when a client link is shared, or by a firm admin on the Clients page).
+export const clientAssignments = pgTable(
+  'client_assignments',
+  {
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => clients.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.clientId, t.userId] })],
+)
+
 export const cases = pgTable(
   'cases',
   {

@@ -5,6 +5,7 @@ import { db, schema } from '../db/index.js'
 import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
 import { badRequest, notFound, parse } from '../lib/http.js'
+import { clientScope, inScope } from '../lib/visibility.js'
 
 // Cases map an office's client to a courtroom + date + item number. Private to the office.
 export const casesRouter = Router()
@@ -21,11 +22,11 @@ const caseInput = z.object({
   assignedJuniorId: z.uuid().nullable().optional(),
 })
 
-async function assertOfficeClient(officeId: string, clientId: string) {
+async function assertOfficeClient(officeId: string, clientId: string, scope: string[] | null) {
   const [c] = await db
     .select({ id: schema.clients.id })
     .from(schema.clients)
-    .where(and(eq(schema.clients.id, clientId), eq(schema.clients.officeId, officeId)))
+    .where(and(eq(schema.clients.id, clientId), eq(schema.clients.officeId, officeId), inScope(schema.clients.id, scope)))
   if (!c) throw badRequest('Client not found in your office')
 }
 
@@ -45,9 +46,10 @@ async function assertOfficeJunior(officeId: string, juniorId: string | null | un
   if (!j) throw badRequest('Junior must be a verified member of your office')
 }
 
-// Lawyers see all office cases; juniors see the same list (they work the courtrooms for the office).
+// Firm admins and juniors see all firm cases; other lawyers and staff see their assigned clients' cases.
 casesRouter.get('/', requireRole('lawyer', 'junior', 'staff'), async (req, res) => {
   const date = req.query.date ? parse(z.iso.date(), req.query.date) : undefined
+  const scope = await clientScope(req.user!)
   const rows = await db
     .select({
       ...getTableColumns(schema.cases),
@@ -62,6 +64,7 @@ casesRouter.get('/', requireRole('lawyer', 'junior', 'staff'), async (req, res) 
       and(
         eq(schema.cases.officeId, req.user!.officeId!),
         date ? eq(schema.cases.hearingDate, date) : undefined,
+        inScope(schema.cases.clientId, scope),
       ),
     )
     .orderBy(asc(schema.cases.hearingDate), asc(schema.courtrooms.roomNo), asc(schema.cases.itemNo))
@@ -71,7 +74,8 @@ casesRouter.get('/', requireRole('lawyer', 'junior', 'staff'), async (req, res) 
 casesRouter.post('/', requireRole('lawyer', 'staff'), async (req, res) => {
   const body = parse(caseInput, req.body)
   const officeId = req.user!.officeId!
-  await assertOfficeClient(officeId, body.clientId)
+  const scope = await clientScope(req.user!)
+  await assertOfficeClient(officeId, body.clientId, scope)
   await assertOfficeJunior(officeId, body.assignedJuniorId)
   const room = await upsertCourtroom(body.courtComplex, body.roomNo)
 
@@ -94,7 +98,8 @@ casesRouter.post('/', requireRole('lawyer', 'staff'), async (req, res) => {
 casesRouter.patch('/:id', requireRole('lawyer', 'staff'), async (req, res) => {
   const body = parse(caseInput.partial(), req.body)
   const officeId = req.user!.officeId!
-  if (body.clientId) await assertOfficeClient(officeId, body.clientId)
+  const scope = await clientScope(req.user!)
+  if (body.clientId) await assertOfficeClient(officeId, body.clientId, scope)
   await assertOfficeJunior(officeId, body.assignedJuniorId)
 
   const { courtComplex, roomNo, ...rest } = body
@@ -107,16 +112,17 @@ casesRouter.patch('/:id', requireRole('lawyer', 'staff'), async (req, res) => {
   const [updated] = await db
     .update(schema.cases)
     .set(update)
-    .where(and(eq(schema.cases.id, String(req.params.id)), eq(schema.cases.officeId, officeId)))
+    .where(and(eq(schema.cases.id, String(req.params.id)), eq(schema.cases.officeId, officeId), inScope(schema.cases.clientId, scope)))
     .returning()
   if (!updated) throw notFound('Case not found')
   res.json({ case: updated })
 })
 
 casesRouter.delete('/:id', requireRole('lawyer', 'staff'), async (req, res) => {
+  const scope = await clientScope(req.user!)
   const [deleted] = await db
     .delete(schema.cases)
-    .where(and(eq(schema.cases.id, String(req.params.id)), eq(schema.cases.officeId, req.user!.officeId!)))
+    .where(and(eq(schema.cases.id, String(req.params.id)), eq(schema.cases.officeId, req.user!.officeId!), inScope(schema.cases.clientId, scope)))
     .returning({ id: schema.cases.id })
   if (!deleted) throw notFound('Case not found')
   res.json({ ok: true })

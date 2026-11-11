@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { Router } from 'express'
 import { z } from 'zod'
 import { db, schema } from '../db/index.js'
@@ -53,6 +53,22 @@ async function colleague(adminId: string, officeId: string, id: string) {
 }
 
 /** Approve a new member, decline them, deactivate or reactivate an existing one. */
+/** Approved senior lawyers and staff in my firm: who a client can be assigned to. Any member may read it. */
+officeRouter.get('/people', async (req, res) => {
+  const people = await db
+    .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role, isFirmAdmin: schema.users.isFirmAdmin })
+    .from(schema.users)
+    .where(
+      and(
+        eq(schema.users.officeId, req.user!.officeId!),
+        eq(schema.users.verificationStatus, 'verified'),
+        inArray(schema.users.role, ['lawyer', 'staff']),
+      ),
+    )
+    .orderBy(asc(schema.users.role), asc(schema.users.name))
+  res.json({ people })
+})
+
 officeRouter.post('/members/:id/verification', requireFirmAdmin, async (req, res) => {
   const admin = req.user!
   const { status } = parse(z.object({ status: z.enum(['verified', 'rejected']) }), req.body)

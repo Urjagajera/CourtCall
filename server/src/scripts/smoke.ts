@@ -20,6 +20,7 @@ class Session {
   get = (p: string) => this.req('GET', p)
   post = (p: string, b?: unknown) => this.req('POST', p, b ?? {})
   patch = (p: string, b: unknown) => this.req('PATCH', p, b)
+  put = (p: string, b: unknown) => this.req('PUT', p, b)
   del = (p: string) => this.req('DELETE', p)
 }
 
@@ -167,7 +168,11 @@ check('lawyer creates a client link (token returned once)', mk.status === 201 &&
 const linkToken = mk.body.token
 check('junior cannot create links', (await junior.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 403)
 check('other firm cannot see my links', (await lawyer2.get(`/cases/${caseId}/links`)).status === 404)
-check('staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 201)
+check("staff can't share links for clients not assigned to them", (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 404)
+const staffId = (await staff.get('/auth/me')).body.user?.id
+const viaShare = await lawyer.post(`/cases/${caseId}/links`, { kind: 'family', assignTo: [staffId] })
+check('sharing a link assigns the chosen people', viaShare.status === 201 && ((await staff.get('/clients')).body.clients ?? []).some((k: any) => k.id === clientId))
+check('assigned staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 201)
 const phoneA = 'device-aaaaaaaaaaaaaaaa'
 const phoneB = 'device-bbbbbbbbbbbbbbbb'
 const clientA = new Session('clientA')
@@ -218,6 +223,27 @@ const fin = (await junior.get(`/sessions/${sid}`)).body.session
 await junior.post(`/sessions/${sid}/events`, { type: 'break_end', baseVersion: fin.version })
 check('push key is available for phone alerts', (await clientNew.get('/c/push-key')).body.publicKey?.length > 20)
 check('other firm cannot revoke my links', (await lawyer2.post(`/links/${re.body.link?.id}/revoke`)).status === 404)
+// ---- who sees which clients ----
+const names = async (s: Session) => ((await s.get('/clients')).body.clients ?? []).map((c: any) => c.name)
+const mehtaSees = await names(lawyer)
+const anilSees = await names(lawyer3)
+check('firm admin sees every client', mehtaSees.includes('Ramesh Patel') && mehtaSees.includes('Sunita Joshi'), mehtaSees)
+check('lawyer sees only assigned clients', anilSees.includes('Ramesh Patel') && !anilSees.includes('Sunita Joshi'), anilSees)
+const anilCases = ((await lawyer3.get('/cases')).body.cases ?? []).map((c: any) => c.clientName)
+check("lawyer doesn't see unassigned clients' cases", anilCases.length > 0 && !anilCases.includes('Sunita Joshi'), anilCases)
+const juniorCases = ((await junior.get('/cases')).body.cases ?? []).map((c: any) => c.clientName)
+check('juniors still see every firm case (they cover courtrooms)', juniorCases.includes('Sunita Joshi'))
+const sunitaId = ((await lawyer.get('/clients')).body.clients ?? []).find((c: any) => c.name === 'Sunita Joshi')?.id
+const sunitaCase = ((await lawyer.get('/cases')).body.cases ?? []).find((c: any) => c.clientId === sunitaId)
+check("lawyer can't share a link for an unassigned client", (await lawyer3.post(`/cases/${sunitaCase?.id}/links`, { kind: 'family' })).status === 404)
+check('only firm admins change assignments', (await lawyer3.put(`/clients/${sunitaId}/assignees`, { userIds: [] })).status === 403)
+const anilId = (await lawyer3.get('/auth/me')).body.user?.id
+check('firm admin assigns a client', (await lawyer.put(`/clients/${sunitaId}/assignees`, { userIds: [anilId] })).status === 200 && (await names(lawyer3)).includes('Sunita Joshi'))
+const famSunita = await lawyer.post(`/cases/${sunitaCase?.id}/links`, { kind: 'family', assignTo: [] })
+check('sharing a link keeps assignments', famSunita.status === 201 && (await names(lawyer3)).includes('Sunita Joshi'))
+await lawyer.post(`/links/${famSunita.body.link?.id}/revoke`)
+check('people list for the picker', ((await staff.get('/office/people')).body.people ?? []).length >= 3)
+
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
 const rameshMe = (await demoClient.get('/c/me')).body

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, ne } from 'drizzle-orm'
+import { and, desc, eq, inArray, ne, or } from 'drizzle-orm'
 import { Router } from 'express'
 import { z } from 'zod'
 import { config, nexconnEnabled } from '../config.js'
@@ -204,6 +204,14 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
         eq(schema.users.officeId, ctx.office.id),
         eq(schema.users.verificationStatus, 'verified'),
         inArray(schema.users.role, ['lawyer', 'staff']),
+        // Only the people who look after this client, plus the firm admins.
+        or(
+          eq(schema.users.isFirmAdmin, true),
+          inArray(
+            schema.users.id,
+            db.select({ id: schema.clientAssignments.userId }).from(schema.clientAssignments).where(eq(schema.clientAssignments.clientId, ctx.client.id)),
+          ),
+        ),
       ),
     )
   const first = ctx.link.createdBy ?? ctx.office.ownerId
