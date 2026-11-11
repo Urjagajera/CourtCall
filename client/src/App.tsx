@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/landing/Landing'
 import { AppLayout } from './components/AppLayout'
+import { DesktopModeNotice } from './components/DesktopModeNotice'
 import { TourProvider } from './components/Tour'
 import { PageSpinner } from './components/ui'
 import type { Role } from './lib/api'
@@ -61,6 +62,7 @@ export default function App() {
       <ThemeBoot />
       <BrowserRouter>
         <TourProvider>
+        <DesktopModeNotice />
         <Routes>
           {/* Clients: no account, opened from a WhatsApp link */}
           <Route path="/c/:token" element={<OpenLink />} />

@@ -134,6 +134,7 @@ Each alert comes once. You'll never get a guessed time.
 
 | Problem | Fix |
 |---|---|
+| Everything looks tiny on your phone, with cards side by side | Chrome is showing the **desktop site**. In Chrome tap **⋮** and untick **Desktop site**. For the installed app: Chrome → **⋮ → Settings → Site settings → Desktop site** → off, then reopen CourtCall. |
 | "This link is already in use on another phone" | The link opened on a different phone first. Ask your lawyer for a **New link**. |
 | "This link was turned off" | Your lawyer turned it off. Ask for a new one. |
 | No **Install app** option on Android | Use Chrome (not an in-app browser such as WhatsApp's). Open the link, tap **⋮ → Open in Chrome**, then install. |
