@@ -297,7 +297,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     chat: ['Chat with your lawyer', 'Message your firm privately. Type, or tap the microphone and speak. Your lawyer sees it in CourtCall straight away.'],
     cases: ['All your cases', 'Your other cases with this firm, upcoming and past. Tap one to see its progress and history.'],
     history: ['History', 'What happened on earlier court days for this case: when it was heard, adjourned or passed over.'],
-    menu: ['Language, tour and sign out', 'Switch between English, Hindi and Gujarati (your alerts change too), replay this tour, or sign out of this phone.'],
+    menu: ['Settings', 'Switch between English, Hindi and Gujarati (your alerts change too), choose light or dark, replay this tour, or sign out of this phone. On a phone, Settings is the gear at the top.'],
     finish: ["You're all set", 'Keep this page open on court days, or turn on alerts and put your phone away. We will let you know.'],
   },
   hi: {
@@ -308,7 +308,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     chat: ['अपने वकील से चैट', 'अपनी फ़र्म को निजी संदेश भेजें। लिखें, या माइक दबाकर बोलें। वकील इसे तुरंत CourtCall में देखते हैं।'],
     cases: ['आपके सभी केस', 'इस फ़र्म के साथ आपके दूसरे केस, आगामी और पिछले। प्रगति और इतिहास देखने के लिए किसी पर टैप करें।'],
     history: ['इतिहास', 'इस केस की पिछली तारीखों पर क्या हुआ: कब सुनवाई हुई, स्थगित हुआ या पास ओवर हुआ।'],
-    menu: ['भाषा, टूर और साइन आउट', 'English, हिन्दी और ગુજરાતી में बदलें (आपके अलर्ट की भाषा भी बदलेगी), टूर दोबारा देखें, या इस फ़ोन से साइन आउट करें।'],
+    menu: ['सेटिंग', 'English, हिन्दी और ગુજરાતી में बदलें (आपके अलर्ट की भाषा भी बदलेगी), लाइट या डार्क चुनें, टूर दोबारा देखें, या इस फ़ोन से साइन आउट करें। फ़ोन पर सेटिंग ऊपर गियर में है।'],
     finish: ['सब तैयार है', 'सुनवाई के दिन यह पेज खुला रखें, या अलर्ट चालू करके फ़ोन रख दें। हम आपको बता देंगे।'],
   },
   gu: {
@@ -319,7 +319,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     chat: ['તમારા વકીલ સાથે ચેટ', 'તમારી ફર્મને ખાનગી સંદેશ મોકલો. લખો, અથવા માઇક દબાવીને બોલો. વકીલ તેને તરત CourtCallમાં જુએ છે.'],
     cases: ['તમારા બધા કેસ', 'આ ફર્મ સાથેના તમારા બીજા કેસ, આગામી અને પાછલા. પ્રગતિ અને ઇતિહાસ જોવા કોઈ પર ટેપ કરો.'],
     history: ['ઇતિહાસ', 'આ કેસની પાછલી તારીખોએ શું થયું: ક્યારે સુનાવણી થઈ, મુલતવી રહ્યો કે પાસ ઓવર થયો.'],
-    menu: ['ભાષા, ટૂર અને સાઇન આઉટ', 'English, हिन्दी અને ગુજરાતીમાં બદલો (તમારા અલર્ટની ભાષા પણ બદલાશે), ટૂર ફરી જુઓ, અથવા આ ફોનમાંથી સાઇન આઉટ કરો.'],
+    menu: ['સેટિંગ', 'English, हिन्दी અને ગુજરાતીમાં બદલો (તમારા અલર્ટની ભાષા પણ બદલાશે), લાઇટ કે ડાર્ક પસંદ કરો, ટૂર ફરી જુઓ, અથવા આ ફોનમાંથી સાઇન આઉટ કરો. ફોન પર સેટિંગ ઉપર ગિયરમાં છે.'],
     finish: ['બધું તૈયાર છે', 'સુનાવણીના દિવસે આ પેજ ખુલ્લું રાખો, અથવા અલર્ટ ચાલુ કરીને ફોન મૂકી દો. અમે તમને જણાવીશું.'],
   },
 }
@@ -327,16 +327,20 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
 /** Tour for a client opening their case page (no account; opened from a WhatsApp link). */
 export function clientTourSteps(firstName: string, kind: 'client' | 'family', lang: ClientLang = 'en'): TourStep[] {
   const T = CLIENT_TOUR[lang]
-  const step = (id: string, [title, body]: T2, target?: string, optional?: boolean): TourStep => ({ id: `client-${id}`, title, body, target, optional })
+  // Each section is its own tab (/case, /case/cases, /case/history, /case/chat, /case/settings).
+  const step = (id: string, [title, body]: T2, target?: string, route?: string, optional?: boolean): TourStep => ({ id: `client-${id}`, title, body, target, route, optional })
   const steps: TourStep[] = [
-    step('welcome', T.welcome(firstName)),
-    step('progress', T.progress, 'client-progress'),
-    step('updates', T.updates, 'client-updates', true),
-    step('alerts', T.alerts, 'client-alerts', true),
+    step('welcome', T.welcome(firstName), undefined, '/case'),
+    step('progress', T.progress, 'client-progress', '/case'),
+    step('updates', T.updates, 'client-updates', '/case', true),
   ]
-  if (kind === 'client') {
-    steps.push(step('chat', T.chat, 'client-chat', true), step('cases', T.cases, 'client-cases', true), step('history', T.history, 'client-history', true))
-  }
-  steps.push(step('menu', T.menu, 'client-menu'), step('finish', T.finish))
+  if (kind === 'client') steps.push(step('cases', T.cases, 'client-cases', '/case/cases', true))
+  steps.push(step('history', T.history, 'client-history', '/case/history', true))
+  if (kind === 'client') steps.push(step('chat', T.chat, 'client-chat', '/case/chat', true))
+  steps.push(
+    step('alerts', T.alerts, 'client-alerts', '/case/settings', true),
+    step('menu', T.menu, 'client-language', '/case/settings'),
+    step('finish', T.finish, undefined, '/case'),
+  )
   return steps
 }

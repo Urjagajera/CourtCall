@@ -67,6 +67,7 @@ export default function App() {
           {/* Clients: no account, opened from a WhatsApp link */}
           <Route path="/c/:token" element={<OpenLink />} />
           <Route path="/case" element={<ClientCase />} />
+          <Route path="/case/:tab" element={<ClientCase />} />
           {/* Where the installed app opens */}
           <Route path="/app" element={<AppStart />} />
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />

@@ -142,16 +142,16 @@ Open **Chat**:
 ## 5. For clients
 
 1. Your lawyer sends you a link on WhatsApp. **Tap it.** There's no app to download, no password and no code.
-2. Your case opens:
-   - **Now**: the item the court is hearing.
-   - **Your item**: your case's number on today's list.
-   - How many cases are before yours, and when it was last reported.
-3. Tap **Turn on** under **Get alerts on this phone** to get notifications.
+2. CourtCall opens with the same layout lawyers use: a menu on the left on a laptop, tabs at the bottom on a phone, and **Settings** (the gear at the top on a phone).
+   - **My case**: **Now** (the item the court is hearing), **Your item** (your number on today's list), how many cases are before yours, when it was last reported, the next hearing date and the latest updates.
+   - **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
+   - **History**: earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it).
+   - **Chat**: message the people at the firm who look after you. Type, or tap the **mic** and speak (in your page language).
+   - **Settings**: language (English, हिन्दी, ગુજરાતી; your alerts switch too), **Get alerts on this phone**, light or dark, **Take the tour again**, and **Sign out**.
+3. In **Settings**, tap **Turn on** under **Get alerts on this phone** to get notifications.
 4. Install it (section 1) so it opens from your home screen next time.
-5. **Chat with your firm** at the bottom of the page. Type, or tap the **mic** and speak (in the page's language).
-6. **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
-7. **History**: what happened on earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it). The top of the page always shows the **next hearing date**.
-8. At the top: **EN / हिं / ગુ** switches the page language (English, Hindi, Gujarati). Your alerts switch to that language too. **Tour** replays the guided tour (it also runs on your first visit), and **Sign out** removes your case and alerts from this phone. To come back, open the WhatsApp link again.
+5. The guided tour runs on your first visit. **Sign out** removes your case and alerts from this phone; to come back, open the WhatsApp link again.
+6. A **family link** shows only **My case**, **History** and **Settings** (no chat, no other cases).
 
 The link works on **your phone only**. If you change phones, ask your lawyer for a new link.
 
