@@ -165,6 +165,7 @@ Done (in order):
 - Firm can **revoke** and **reissue** links. **Family links** are status-only (no chat).
 - Client case page: "Now 12 → Yours 15 (3 away)", court, status, latest updates, **Chat with lawyer** (Nexconn direct channel with the firm; client Nexconn ID `c<clientId>`).
 - Alerts after each accepted courtroom event: first update of the day, then distance ≤10, ≤5, ≤2, now hearing; plus passed over / recalled / adjourned for that case. Deduplicate with `alert_logs`. Send as `CC:Alert` from the bot + Web Push. Fixed templates; never predict times.
+- **Requirement (Urja, 12 Nov 2026): the client must be told when their turn is 2 cases away.** Built: the `within_2` alert ("Your case is close: Court 4 is at Item 9, yours is Item 11 (2 away). Be near the courtroom.", `close` template in `server/src/lib/alertText.ts`, en/hi/gu). It fires once per hearing day, even if the court jumps straight to 2 or fewer away. Keep it when changing alert rules (unit test in `alertRules.test.ts`).
 - Add a **Client** demo button that opens Ramesh Patel's case page; add smoke-test checks; add tour/README sections.
 
 **Module 10 as built** (files: `server/src/lib/clientAccess.ts`, `server/src/routes/links.ts`, `server/src/routes/client.ts`, `client/src/components/LinkSheet.tsx`, `client/src/pages/client/*`):
