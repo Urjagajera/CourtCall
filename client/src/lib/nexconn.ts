@@ -22,7 +22,7 @@ export const MSG_TEXT = 'RC:TxtMsg'
 export interface TeamInfo {
   groupId: string
   name: string
-  members: { ncId: string; name: string; role: string }[]
+  members: { ncId: string; name: string; role: string; isFirmAdmin?: boolean }[]
 }
 export interface ChatContact {
   ncId: string

@@ -222,6 +222,16 @@ check('push key is available for phone alerts', (await clientNew.get('/c/push-ke
 check('other firm cannot revoke my links', (await lawyer2.post(`/links/${re.body.link?.id}/revoke`)).status === 404)
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
+const rameshMe = (await demoClient.get('/c/me')).body
+check('client sees all their cases (today and past)', rameshMe.cases?.length >= 3 && rameshMe.cases.some((k: any) => k.hearingDate < rameshMe.today), rameshMe.cases)
+check('client sees earlier court days in history', rameshMe.history?.some((h: any) => h.date < rameshMe.today && /adjourned/.test(h.message)))
+const pastCase = rameshMe.cases?.find((k: any) => k.hearingDate < rameshMe.today)
+check('client opens one of their other cases', (await demoClient.get(`/c/me?case=${pastCase?.id}`)).body.case?.title === pastCase?.title)
+const cases2 = (await clientNew.get('/c/me')).body.cases ?? []
+check('client sees their own cases list', cases2.some((k: any) => k.id === caseId && k.current), cases2)
+check('client cannot open another client’s case', (await clientNew.get(`/c/me?case=${rameshMe.caseId}`)).status === 404)
+check('family link sees only the shared case', (await famPhone.get(`/c/me?case=${rameshMe.caseId}`)).status === 404 && ((await famPhone.get('/c/me')).body.cases ?? []).length === 0)
+check('client signs out of this phone', (await clientNew.post('/c/signout')).status === 200 && (await clientNew.get('/c/me')).status === 401)
 
 // ---- chat + admin ----
 const tok = await junior.post('/chat/token')

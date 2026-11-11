@@ -20,11 +20,11 @@ chatRouter.post('/token', requireAuth, requireVerified, requireRole('lawyer', 'j
   const ncId = ncStaffId(user.id)
   const token = await issueToken(ncId, user.name)
 
-  let team: { groupId: string; name: string; members: { ncId: string; name: string; role: string }[] } | null = null
+  let team: { groupId: string; name: string; members: { ncId: string; name: string; role: string; isFirmAdmin: boolean }[] } | null = null
   if (user.officeId) {
     const [office] = await db.select().from(schema.offices).where(eq(schema.offices.id, user.officeId))
     const staff = await db
-      .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role })
+      .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role, isFirmAdmin: schema.users.isFirmAdmin })
       .from(schema.users)
       .where(and(eq(schema.users.officeId, user.officeId), eq(schema.users.verificationStatus, 'verified')))
     const groupId = ncOfficeGroupId(user.officeId)
@@ -35,7 +35,7 @@ chatRouter.post('/token', requireAuth, requireVerified, requireRole('lawyer', 'j
       }
       await joinGroup(groupId, [ncId])
     })
-    team = { groupId, name: office.name, members: staff.map((s) => ({ ncId: ncStaffId(s.id), name: s.name, role: s.role })) }
+    team = { groupId, name: office.name, members: staff.map((s) => ({ ncId: ncStaffId(s.id), name: s.name, role: s.role, isFirmAdmin: s.isFirmAdmin })) }
   }
 
   const today = await db

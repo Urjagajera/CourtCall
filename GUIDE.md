@@ -100,6 +100,15 @@ Your firm's clients and cases are **never** visible to other firms. Only courtro
 
 Juniors from **different firms** in the same courtroom see and update the **same progress**. Use **Room chat** to coordinate.
 
+### Everyone: chat inside the firm
+
+Open **Chat**:
+- **Team room** (at the top): one room for everyone in the firm.
+- **Lawyers** tab: a private chat with each colleague, senior lawyers first, then junior lawyers. The firm admin is marked.
+- **Staff** tab: office staff.
+- **Clients** tab (senior lawyers and staff): a private chat with each client.
+- Use the search box to find someone. A dot on a tab means unread messages there.
+
 ### Lawyers: watch from anywhere
 
 **Today** shows every courtroom your firm has cases in: the latest item, the status (hearing, break, stale) and how far each case is ("3 away"). Cards update on their own.
@@ -116,6 +125,9 @@ Juniors from **different firms** in the same courtroom see and update the **same
 3. Tap **Turn on** under **Get alerts on this phone** to get notifications.
 4. Install it (section 1) so it opens from your home screen next time.
 5. **Chat with your firm** at the bottom of the page.
+6. **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
+7. **History**: what happened on earlier court days for the case, such as when it was heard, adjourned or passed over.
+8. At the top: **Tour** replays the guided tour (it also runs on your first visit), and **Sign out** removes your case and alerts from this phone. To come back, open the WhatsApp link again.
 
 The link works on **your phone only**. If you change phones, ask your lawyer for a new link.
 
