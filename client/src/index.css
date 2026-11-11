@@ -7,55 +7,58 @@
 
 :root {
   color-scheme: light;
-  /* Indigo Ink: 50% mist, 35% near-white, 15% indigo */
-  --base: #e4e7f5;
-  --base-strong: #cdd3ee;
-  --surface: #fafafe;
+  /* Warm legal: 50% warm ivory, 35% near-white, 15% maroon. Espresso text, taupe details. */
+  --base: #f4eeea;
+  --base-strong: #e8ddd6;
+  --surface: #fbf8f6;
   --surface-raised: #ffffff;
-  --line: #d5d9ee;
-  --accent: #3b4cca;
-  --accent-strong: #2f3da8;
+  --line: #e3d6cd;
+  --accent: #7b3b36;
+  --accent-strong: #632e2a;
   --accent-ink: #ffffff;
-  --ink: #1a1d2e;
-  --ink-muted: #4e5470;
+  --ink: #463b36;
+  --ink-muted: #6e5f57;
+  --detail: #b4907c;
 
   --hearing-bg: #ddf1e4;
   --hearing-fg: #1f6b3f;
   --waiting-bg: #fcebcf;
   --waiting-fg: #8a5300;
-  --stopped-bg: #f9dedc;
-  --stopped-fg: #a1261e;
-  --stale-bg: #e4e4ea;
-  --stale-fg: #55576b;
+  /* Brighter red than the maroon accent, so "adjourned" never looks like a button. */
+  --stopped-bg: #fde2e0;
+  --stopped-fg: #b42318;
+  --stale-bg: #ece7e3;
+  --stale-fg: #6e5f57;
   --info-bg: #dce8fb;
   --info-fg: #1e4f99;
 
-  --shadow-card: 0 1px 2px rgb(26 29 46 / 0.06);
-  --shadow-sheet: 0 8px 24px rgb(26 29 46 / 0.14);
+  --shadow-card: 0 1px 2px rgb(70 59 54 / 0.06);
+  --shadow-sheet: 0 8px 24px rgb(70 59 54 / 0.16);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --base: #11142a;
-  --base-strong: #0b0d1e;
-  --surface: #1b1f3a;
-  --surface-raised: #252a4a;
-  --line: #323862;
-  /* Lighter indigo on dark backgrounds, with dark text on it */
-  --accent: #8c9bff;
-  --accent-strong: #a7b2ff;
-  --accent-ink: #0f1230;
-  --ink: #ecedf7;
-  --ink-muted: #a6abc9;
+  --base: #2a2220;
+  --base-strong: #211a18;
+  --surface: #463b36;
+  --surface-raised: #54473f;
+  --line: #5e4f47;
+  /* Taupe buttons with espresso text on dark backgrounds */
+  --accent: #b4907c;
+  --accent-strong: #c7a895;
+  --accent-ink: #2a2220;
+  --ink: #f4eeea;
+  --ink-muted: #cdbfb5;
+  --detail: #b4907c;
 
   --hearing-bg: #1f3a2a;
   --hearing-fg: #8fdca9;
   --waiting-bg: #3d2f14;
   --waiting-fg: #f3c673;
-  --stopped-bg: #45201e;
-  --stopped-fg: #f2a49e;
-  --stale-bg: #30323f;
-  --stale-fg: #a9abc4;
+  --stopped-bg: #4a1f1c;
+  --stopped-fg: #f7a49b;
+  --stale-bg: #3a302c;
+  --stale-fg: #cdbfb5;
   --info-bg: #1c2e4d;
   --info-fg: #a8c8f5;
 
@@ -74,6 +77,7 @@
   --color-accent-ink: var(--accent-ink);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
+  --color-detail: var(--detail);
 
   --color-hearing-bg: var(--hearing-bg);
   --color-hearing-fg: var(--hearing-fg);

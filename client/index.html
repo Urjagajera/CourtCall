@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#E4E7F5" />
+    <meta name="theme-color" content="#F4EEEA" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,7 +19,7 @@
         try { pref = localStorage.getItem('cc-theme-v2') || 'light' } catch (e) {}
         var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-        document.querySelector('meta[name="theme-color"]').content = dark ? '#11142A' : '#E4E7F5'
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#2A2220' : '#F4EEEA'
       })()
     </script>
   </head>
