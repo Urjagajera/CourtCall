@@ -83,7 +83,7 @@ export function tourStepsFor(role: Role, firstName: string): TourStep[] {
         target: 'verify-tabs',
         route: '/admin',
         title: 'Verification queue',
-        body: 'New senior lawyers wait here. Switch between pending, verified and rejected accounts.',
+        body: 'This page belongs to the CourtCall team, not a law firm. New senior lawyers wait here until their Bar Council number is checked. Switch between pending, verified and rejected.',
       },
       {
         id: 'verify-list',

@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   BellRing,
-  Briefcase,
   CheckCircle2,
   Clock,
   EyeOff,
@@ -13,39 +12,62 @@ import {
   PhoneCall,
   ShieldCheck,
   Smartphone,
-  UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
 import { cx } from '../../components/ui'
 import { prefersReducedMotion, useReveal } from '../../lib/useReveal'
-import { HeroScreens } from './HeroScreens'
+import { FirmNetwork } from './FirmNetwork'
+import { HeroScreens, type HeroStatus } from './HeroScreens'
 import { DisplayBoard } from './DisplayBoard'
 import { LiveDemo } from './LiveDemo'
 
 export default function Landing() {
   useReveal()
 
-  // Hero simulation: Court 4 advances through the cause list.
+  // Hero simulation: Court 4 advances through the cause list by itself.
+  // When the visitor taps a junior button, auto-play pauses and resumes after 12s of no taps.
   const [item, setItem] = useState(10)
-  const [status, setStatus] = useState<'hearing' | 'break'>('hearing')
+  const [status, setStatus] = useState<HeroStatus>('hearing')
+  const [controlled, setControlled] = useState(false)
+  const idle = useRef<number | undefined>(undefined)
   useEffect(() => {
-    if (prefersReducedMotion()) return
+    if (controlled || prefersReducedMotion()) return
     const t = setInterval(() => {
       setStatus('hearing')
       setItem((i) => (i >= 17 ? 10 : i + 1))
     }, 3200)
     return () => clearInterval(t)
-  }, [])
+  }, [controlled])
   useEffect(() => {
-    if (item === 13) {
-      const t = setTimeout(() => setStatus('break'), 1600)
-      return () => clearTimeout(t)
-    }
-  }, [item])
+    if (controlled || item !== 13) return
+    const t = setTimeout(() => setStatus('break'), 1600)
+    return () => clearTimeout(t)
+  }, [item, controlled])
+  useEffect(() => () => clearTimeout(idle.current), [])
+  const takeControl = () => {
+    setControlled(true)
+    clearTimeout(idle.current)
+    idle.current = window.setTimeout(() => setControlled(false), 12000)
+  }
+  const hero = {
+    onNext: () => {
+      takeControl()
+      setStatus('hearing')
+      setItem((i) => (i >= 20 ? 10 : i + 1))
+    },
+    onPassed: () => {
+      takeControl()
+      setStatus('passed')
+    },
+    onBreak: () => {
+      takeControl()
+      setStatus((s) => (s === 'break' ? 'hearing' : 'break'))
+    },
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -80,8 +102,7 @@ export default function Landing() {
             Know how far the court has reached. <span className="underline decoration-accent decoration-[6px] underline-offset-[6px]">Without the calls.</span>
           </h1>
           <p className="mt-4 max-w-xl text-body sm:text-[1.125rem] sm:leading-7">
-            Junior lawyers report courtroom progress with a single tap. CourtCall checks every update and alerts
-            each client about <b>their</b> case, on WhatsApp-shared links that need no app.
+            Juniors tap. Clients get alerted about <b>their</b> case. No app needed.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -103,7 +124,7 @@ export default function Landing() {
           </ul>
         </div>
 
-        <HeroScreens item={item} status={status} />
+        <HeroScreens item={item} status={status} controlled={controlled} {...hero} />
       </section>
 
       {/* Quote strip */}
@@ -119,13 +140,13 @@ export default function Landing() {
         <SectionTitle eyebrow="The problem" title="Court days run on phone calls and guesswork" />
         <div className="grid gap-4 md:grid-cols-3">
           <ProblemCard icon={PhoneCall} title="Endless “has my case come up?” calls">
-            Clients call and message the lawyer again and again, while the lawyer is busy in another courtroom.
+            While the lawyer is busy in another courtroom.
           </ProblemCard>
           <ProblemCard icon={Clock} title="Hours lost waiting outside court">
-            Clients arrive too early, or step out at the wrong moment, because they cannot see how far the list has moved.
+            Nobody can see how far the list has moved.
           </ProblemCard>
           <ProblemCard icon={MessageCircle} title="Updates scattered across WhatsApp">
-            Juniors relay progress manually. When cases are passed over or recalled, the news reaches people late or not at all.
+            Passed over or recalled? The news arrives late.
           </ProblemCard>
         </div>
       </section>
@@ -137,16 +158,16 @@ export default function Landing() {
             <SectionTitle eyebrow="How it works" title="One shared courtroom. Private everything else." align="left" />
             <ol className="flex flex-col gap-4">
               <Step n={1} icon={Smartphone} title="Juniors report with one tap">
-                “Now hearing Item 13”, passed over, recalled, adjourned, break. Big buttons built for a phone held in one hand.
+                Big buttons, one hand, ten-second undo.
               </Step>
               <Step n={2} icon={Users} title="Rooms are shared across offices">
-                Verified lawyers and juniors from different chambers in Court 4 all see and improve the same progress.
+                Every firm in Court 4 sees the same progress.
               </Step>
               <Step n={3} icon={GitCompareArrows} title="Every update is checked">
-                Server timestamps and versions mean a late update never overwrites newer progress. Big jumps need confirmation.
+                A late update never overwrites newer progress.
               </Step>
               <Step n={4} icon={BellRing} title="Each client hears about their own case">
-                CourtCall matches progress to every office's private case list and alerts only the clients it concerns.
+                Only the clients it concerns are alerted.
               </Step>
             </ol>
           </div>
@@ -162,40 +183,32 @@ export default function Landing() {
         <SectionTitle
           eyebrow="Live demo"
           title="Tap as the junior. Watch the client's phone."
-          subtitle="This runs right here in your browser. Try the delayed update to see conflict protection."
+          subtitle="Try the delayed update to see conflict protection."
         />
         <div data-reveal>
           <LiveDemo />
         </div>
       </section>
 
-      {/* Roles */}
+      {/* Firm network */}
       <section id="roles" className="bg-surface/50 py-16">
         <div className="mx-auto max-w-[1440px] px-4 lg:px-8">
-          <SectionTitle eyebrow="Who it's for" title="Built for everyone outside and inside the courtroom" />
-          <div className="grid gap-4 md:grid-cols-3">
-            <RoleCard icon={Briefcase} title="Senior lawyers" points={['See every courtroom you have cases in today', 'Add clients and map cases to rooms', 'Send and revoke private client links', 'Chat privately with each client']} />
-            <RoleCard
-              icon={Users}
-              title="Junior lawyers"
-              highlight
-              points={['Join shared courtroom rooms', 'Report progress in one tap, undo in one tap', 'Confirm big jumps, recall passed-over items', 'Stay in sync with your senior']}
-            />
-            <RoleCard icon={UserRound} title="Clients & family" points={['Open a link from WhatsApp, no app needed', 'See only your own case progress', 'Get alerts as the court gets close', 'Family links: status only, no chat']} />
+          <SectionTitle eyebrow="Who it's for" title="Your whole firm, connected" subtitle="Tap a person to see who they work with." />
+          <div data-reveal>
+            <FirmNetwork />
           </div>
         </div>
       </section>
-
       {/* Trust */}
       <section id="trust" className="mx-auto max-w-[1440px] px-4 py-16 lg:px-8">
         <SectionTitle eyebrow="Reliability & privacy" title="Honest about what it knows" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <TrustCard icon={History} title="Full update history">Every report, correction and undo is kept. Nothing is silently overwritten.</TrustCard>
-          <TrustCard icon={Clock} title="Stale progress is flagged">If no one has reported for 20 minutes, the room is clearly marked as possibly out of date.</TrustCard>
-          <TrustCard icon={ShieldCheck} title="Verified reporters only">Lawyers are verified by Bar Council enrolment. Juniors are approved by their senior.</TrustCard>
-          <TrustCard icon={EyeOff} title="Office data stays private">Client names and case mapping never leave your office. Other offices only share progress.</TrustCard>
-          <TrustCard icon={Link2} title="Device-bound client links">Each link activates on the client's first device and can be revoked or reissued anytime.</TrustCard>
-          <TrustCard icon={Lock} title="No time predictions">CourtCall never promises a hearing time. It shows the latest reported progress, clearly labelled.</TrustCard>
+          <TrustCard icon={History} title="Full update history">Every report and undo is kept.</TrustCard>
+          <TrustCard icon={Clock} title="Stale progress is flagged">No report for 20 minutes? Clearly marked.</TrustCard>
+          <TrustCard icon={ShieldCheck} title="Verified reporters only">Bar Council checked. Juniors approved by the firm.</TrustCard>
+          <TrustCard icon={EyeOff} title="Office data stays private">Other firms only share courtroom progress.</TrustCard>
+          <TrustCard icon={Link2} title="Device-bound client links">Locked to one device. Revoke anytime.</TrustCard>
+          <TrustCard icon={Lock} title="No time predictions">Latest reported progress, clearly labelled.</TrustCard>
         </div>
       </section>
 
@@ -203,7 +216,7 @@ export default function Landing() {
       <section className="px-4 pb-16 lg:px-8">
         <div data-reveal className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 rounded-lg border border-line bg-surface px-6 py-12 text-center shadow-card">
           <h2 className="text-[1.75rem] font-bold leading-tight sm:text-[2.25rem]">Give your clients their time back.</h2>
-          <p className="max-w-xl text-body text-ink-muted">Set up your office in two minutes, invite your juniors, and share the first client link today.</p>
+          <p className="max-w-xl text-body text-ink-muted">Two minutes to set up your firm.</p>
           <Link to="/signup" className="flex h-12 items-center gap-2 rounded-md bg-accent px-6 text-body font-semibold text-accent-ink hover:bg-accent-strong">
             Create your office <ArrowRight className="size-5" strokeWidth={1.75} />
           </Link>
@@ -265,23 +278,6 @@ function Step({ n, icon: Icon, title, children }: { n: number; icon: LucideIcon;
   )
 }
 
-function RoleCard({ icon: Icon, title, points, highlight }: { icon: LucideIcon; title: string; points: string[]; highlight?: boolean }) {
-  return (
-    <div data-reveal className={cx('rounded-lg border bg-surface p-5 shadow-card', highlight ? 'border-accent ring-2 ring-accent/50' : 'border-line')}>
-      <span className={cx('flex size-11 items-center justify-center rounded-md', highlight ? 'bg-accent text-accent-ink' : 'bg-base text-ink')}>
-        <Icon className="size-5" strokeWidth={1.75} />
-      </span>
-      <p className="mt-3 text-h2">{title}</p>
-      <ul className="mt-3 flex flex-col gap-2">
-        {points.map((p) => (
-          <li key={p} className="flex gap-2 text-label">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} /> {p}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
 
 function TrustCard({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
   return (

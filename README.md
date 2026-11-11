@@ -205,7 +205,7 @@ npm --prefix server run db:migrate
 | Junior lawyer | `priya@courtcall.demo` | Junior lawyer | Mehta & Associates | n/a |
 | Senior lawyer (2nd office) | `desai@courtcall.demo` | Senior lawyer (office owner) | Desai Law Chambers | `DESAI7` |
 | Junior lawyer (2nd office) | `arjun@courtcall.demo` | Junior lawyer | Desai Law Chambers | n/a |
-| Platform admin | `admin@courtcall.demo` | Platform admin | none | n/a |
+| CourtCall team | `admin@courtcall.demo` | CourtCall staff (not a firm role) | none | n/a |
 
 All demo accounts are already verified, so they can use every feature straight away.
 
@@ -251,8 +251,10 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 **Junior lawyer (2nd office): Arjun Trivedi (Desai Law Chambers)**
 - Reports in the same **Court 4** room as Priya. Updates from either junior are shared with both offices.
 
-**Platform admin: CourtCall Admin**
-- **Verify:** approve or reject new senior lawyers after checking their Bar Council enrolment number. Tabs show pending, verified and rejected lawyers.
+**CourtCall team: CourtCall Admin**
+- This is **not** a law-firm admin. It is the CourtCall platform team, the gatekeeper that keeps fake lawyers out of shared courtrooms.
+- **CourtCall verification page:** when a senior lawyer signs up, they wait here until the team checks their Bar Council enrolment number and taps **Verify** or **Reject**. Tabs show pending, verified and rejected lawyers.
+- Juniors are never approved here: their own firm approves them on its **Team** page.
 
 **Client (coming next)**
 - The client's private WhatsApp link page (case progress, alerts, chat with the lawyer) is the next module. A client demo button will be added with it.
@@ -262,14 +264,14 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 The first time someone signs in, CourtCall starts a guided tour. It dims the page, zooms a spotlight onto one feature at a time, and explains what that feature does and how it works. The tour moves between pages by itself (for juniors, it opens a courtroom and walks through the reporting buttons).
 
 - **Next / Back** (or the arrow keys) move between steps. **End tour** (or Esc) stops it at any point.
-- Each role gets its own tour: senior lawyer (10 steps), junior lawyer (13), platform admin (5).
+- Each role gets its own tour: senior lawyer (10 steps), junior lawyer (13), CourtCall team (5).
 - **Real accounts** see it once; it's saved on the server, so it won't repeat on another device. **Demo accounts** remember it per browser, so every person trying a demo account gets the tour.
 - To see it again: **Settings → Take the tour again**.
 - To replay it on a demo account from scratch, clear the site's local storage, or open a private window.
 
 ### Suggested walkthrough (about 5 minutes, good for the demo video)
 
-1. **Landing page:** open http://localhost:5173 and scroll through it. Try the interactive demo, including **Simulate a delayed old update**.
+1. **Landing page:** open http://localhost:5173. In the hero, tap **Now hearing**, **Passed over** and **Break** to drive the dashboard and the client's phone (auto-play resumes after 12 seconds). Tap people in **Your whole firm, connected** to see their links. Try the live demo, including **Simulate a delayed old update**.
 2. **Window 1, Junior Priya:** tap **Junior lawyer** → **Today** → **Court 4** → **Open room**.
    - Set the item to **12** and tap **Now hearing: Item 12**. Then tap **Now hearing: Item 13**.
    - Tap **Passed over** (marks Item 13), then **Now hearing: Item 14**, then **Recalled** and choose **13**.
@@ -282,7 +284,7 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 4. **Senior lawyer Mehta** (sign out first, or use a third window): **Today** now shows Court 4's live item and "N away" for Ramesh (15) and Sunita (22). Open **Chat** for the office team room and the client list.
 5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
 6. **Sign-up and approvals:** sign out, choose **Create an account → Junior lawyer**, and use invite code **MEHTA4**. The new junior waits for approval. Sign in as **Mehta** → **Team** → **Approve**.
-7. **Platform admin:** sign up a new **Senior lawyer** account, then sign in as **Platform admin** → **Verify** to approve it.
+7. **CourtCall team:** sign up a new **Senior lawyer** account, then sign in as **CourtCall team** and approve it on the verification page.
 
 ---
 

@@ -19,7 +19,27 @@ export default function Verify() {
 
   return (
     <>
-      <PageHeader title="Lawyer verification" subtitle="Check Bar Council enrolment before approving" />
+      <PageHeader title="CourtCall verification" subtitle="For the CourtCall team, not for law firms" />
+      {/* Plain-language explanation: this page is the platform's gatekeeper, not a firm admin page. */}
+      <Card className="mb-5 grid gap-4 md:grid-cols-3">
+        {[
+          { n: 1, t: 'A senior lawyer signs up', d: 'They enter their Bar Council enrolment number.' },
+          { n: 2, t: 'You check the number', d: 'Compare it with the Bar Council roll before deciding.' },
+          { n: 3, t: 'Verify or reject', d: 'Only verified lawyers can open courtrooms, add clients and invite juniors.' },
+        ].map((s) => (
+          <div key={s.n} className="flex gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-label font-bold text-accent-ink">{s.n}</span>
+            <div>
+              <p className="text-label font-semibold">{s.t}</p>
+              <p className="text-caption text-ink-muted">{s.d}</p>
+            </div>
+          </div>
+        ))}
+        <p className="flex items-center gap-2 text-caption text-ink-muted md:col-span-3">
+          <ShieldCheck className="size-4 shrink-0 text-detail" strokeWidth={1.75} />
+          Juniors are approved by their own firm on its Team page, not here. This keeps fake lawyers out of shared courtrooms.
+        </p>
+      </Card>
       <div data-tour="verify-tabs" className="mb-4 inline-flex gap-1 rounded-md border border-line bg-surface p-1">
         {(['pending', 'verified', 'rejected'] as const).map((s) => (
           <button

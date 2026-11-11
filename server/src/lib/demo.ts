@@ -34,8 +34,8 @@ export const DEMO_ACCOUNTS = [
     key: 'admin',
     email: 'admin@courtcall.demo',
     name: 'CourtCall Admin',
-    label: 'Platform admin',
-    description: 'Verifies new lawyers by Bar Council number',
+    label: 'CourtCall team',
+    description: 'Not a firm role: checks new lawyers’ Bar Council numbers before they can join',
   },
 ] as const
 

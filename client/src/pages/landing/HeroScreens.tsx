@@ -1,21 +1,40 @@
-import { BellRing, Clock, Coffee, Landmark, MessageCircle, UserRound } from 'lucide-react'
+import { BellRing, Clock, Coffee, Hand, Landmark, MessageCircle, SkipForward, UserRound } from 'lucide-react'
 import { Logo } from '../../components/Logo'
 import { cx } from '../../components/ui'
 
 // Hero visual built from CourtCall's own screens (lawyer dashboard + client's phone), not an illustration.
-// Numbers update live with subtle motion only.
+// It plays by itself, and visitors can take over with the junior's buttons.
 
-const CLIENT_ITEM = 15
+export const CLIENT_ITEM = 15
+export type HeroStatus = 'hearing' | 'break' | 'passed'
 
-type Status = 'hearing' | 'break'
+interface Props {
+  item: number
+  status: HeroStatus
+  controlled: boolean
+  onNext: () => void
+  onPassed: () => void
+  onBreak: () => void
+}
 
-export function HeroScreens({ item, status }: { item: number; status: Status }) {
+export function HeroScreens({ item, status, controlled, onNext, onPassed, onBreak }: Props) {
   const away = CLIENT_ITEM - item
   const rooms = [
     { court: '4', complex: 'Gujarat High Court', item, status, updated: 'just now', cases: [{ n: 15, who: 'Ramesh Patel' }, { n: 22, who: 'Sunita Joshi' }] },
     { court: '7', complex: 'Gujarat High Court', item: 6, status: 'hearing' as const, updated: '4 min ago', cases: [{ n: 9, who: 'Ramesh Patel' }] },
     { court: '12', complex: 'City Civil Court', item: 31, status: 'stale' as const, updated: '26 min ago', cases: [{ n: 40, who: 'Kiran Shah' }] },
   ]
+
+  const alert =
+    status === 'break'
+      ? 'Court 4 is on a short break.'
+      : status === 'passed'
+        ? `Item ${item} was passed over.`
+        : away > 0
+          ? `Item ${item} is being heard. ${away} before yours.`
+          : away === 0
+            ? 'Your case is being heard now.'
+            : 'Progress has passed your item.'
 
   return (
     // Phone screens: dashboard, then the client's phone below it. Wider: the phone overlaps the corner.
@@ -28,7 +47,14 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
         </div>
         <div className="grid gap-3 bg-base p-3 sm:grid-cols-2 sm:p-4">
           {rooms.map((r, i) => (
-            <div key={r.court} className={cx('rounded-md border border-line bg-surface p-3', i === 2 && 'hidden sm:block')}>
+            <div
+              key={r.court}
+              className={cx(
+                'rounded-md border bg-surface p-3 transition-colors',
+                i === 0 && controlled ? 'border-accent ring-2 ring-accent/30' : 'border-line',
+                i === 2 && 'hidden sm:block',
+              )}
+            >
               <div className="flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-label font-semibold">
                   <Landmark className="size-4 text-detail" strokeWidth={1.75} /> Court {r.court}
@@ -60,7 +86,25 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
           ))}
           <div className="hidden rounded-md border border-dashed border-line p-3 text-caption text-ink-muted sm:flex sm:flex-col sm:justify-center">
             <p className="font-semibold text-ink">Shared rooms</p>
-            <p>Court 4 progress is reported by juniors from 3 offices.</p>
+            <p>Court 4 is reported by juniors from 3 firms.</p>
+          </div>
+        </div>
+
+        {/* Visitor controls: act as the junior in Court 4 */}
+        {/* Right padding keeps the buttons clear of the overlapping client phone on wider screens. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line bg-surface-raised px-3 py-2.5 sm:pr-[9rem]">
+          <span className="flex items-center gap-1.5 text-caption font-semibold">
+            <Hand className={cx('size-4 text-accent', !controlled && 'cc-nudge')} strokeWidth={1.75} />
+            {controlled ? "You're the junior. Auto-play paused." : 'Try it: report from Court 4'}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            <HeroButton primary onClick={onNext} icon={<SkipForward className="size-3.5" strokeWidth={2} />}>
+              Now hearing {item >= 20 ? 10 : item + 1}
+            </HeroButton>
+            <HeroButton onClick={onPassed}>Passed over</HeroButton>
+            <HeroButton onClick={onBreak} icon={<Coffee className="size-3.5" strokeWidth={2} />}>
+              {status === 'break' ? 'Resume' : 'Break'}
+            </HeroButton>
           </div>
         </div>
       </div>
@@ -91,15 +135,7 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
           </div>
           <div key={item + status} className="cc-pop mt-2 flex gap-1.5 rounded-md bg-base p-2 text-[11px] leading-snug">
             <BellRing className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.75} />
-            <span>
-              {status === 'break'
-                ? 'Court 4 is on a short break.'
-                : away > 0
-                  ? `Item ${item} is being heard. ${away} before yours.`
-                  : away === 0
-                    ? 'Your case is being heard now.'
-                    : 'Progress has passed your item.'}
-            </span>
+            <span>{alert}</span>
           </div>
           <div className="mt-2 flex h-8 items-center justify-center gap-1 rounded-md bg-accent text-[11px] font-semibold text-accent-ink">
             <MessageCircle className="size-3.5" strokeWidth={1.75} /> Chat with lawyer
@@ -110,7 +146,22 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
   )
 }
 
-function StatusChip({ status }: { status: Status | 'stale' }) {
+function HeroButton({ children, onClick, primary, icon }: { children: React.ReactNode; onClick: () => void; primary?: boolean; icon?: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cx(
+        'flex h-8 items-center gap-1 rounded-md px-2.5 text-caption font-semibold transition-transform active:scale-95',
+        primary ? 'bg-accent text-accent-ink hover:bg-accent-strong' : 'border border-line bg-surface hover:bg-base',
+      )}
+    >
+      {icon}
+      {children}
+    </button>
+  )
+}
+
+function StatusChip({ status }: { status: HeroStatus | 'stale' }) {
   if (status === 'stale')
     return (
       <span className="flex items-center gap-1 rounded-full bg-stale-bg px-2 py-0.5 text-[11px] font-semibold text-stale-fg">
@@ -121,6 +172,12 @@ function StatusChip({ status }: { status: Status | 'stale' }) {
     return (
       <span className="flex items-center gap-1 rounded-full bg-waiting-bg px-2 py-0.5 text-[11px] font-semibold text-waiting-fg">
         <Coffee className="size-3" strokeWidth={2} /> Break
+      </span>
+    )
+  if (status === 'passed')
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-waiting-bg px-2 py-0.5 text-[11px] font-semibold text-waiting-fg">
+        <SkipForward className="size-3" strokeWidth={2} /> Passed over
       </span>
     )
   return (

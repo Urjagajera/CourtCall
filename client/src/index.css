@@ -192,6 +192,20 @@ body {
 .cc-blink {
   animation: cc-blink 1.2s steps(2) infinite;
 }
+@keyframes cc-nudge {
+  0%, 70%, 100% {
+    transform: translateY(0);
+  }
+  80% {
+    transform: translateY(-3px);
+  }
+  90% {
+    transform: translateY(1px);
+  }
+}
+.cc-nudge {
+  animation: cc-nudge 2.4s ease-in-out infinite;
+}
 
 /* Scroll reveal: elements start hidden and slide in when [data-shown] is set. */
 [data-reveal] {
