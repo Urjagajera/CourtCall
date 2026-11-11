@@ -34,7 +34,7 @@ export default function Clients() {
       {loading && !data ? (
         <PageSpinner />
       ) : data?.clients.length ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {data.clients.map((c) => (
             <Card key={c.id} className="flex items-center gap-3">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-base text-ink">

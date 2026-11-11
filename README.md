@@ -136,21 +136,9 @@ This creates an admin, two law offices that share Court 4, juniors, clients and 
 npm --prefix server run seed:demo
 ```
 
-**Demo login:** with `DEMO_LOGIN=true` in `server/.env` (the default), the sign-in page shows a **Try a demo account** panel. One tap signs you in as any of these, with no password:
+All demo users, their data and a step-by-step walkthrough are in **[Part 3: Demo guide](#part-3-demo-guide)**.
 
-| Demo button | Account | What you can try |
-|---|---|---|
-| Senior lawyer | `mehta@courtcall.demo` | Today dashboard, clients, cases, team approvals, client chat |
-| Junior lawyer | `priya@courtcall.demo` | Report live progress in Court 4 and Court 7, room chat |
-| Senior lawyer (2nd office) | `desai@courtcall.demo` | Same shared Court 4 room, different private office data |
-| Junior lawyer (2nd office) | `arjun@courtcall.demo` | Reports in Court 4 from another office |
-| Platform admin | `admin@courtcall.demo` | Verify new lawyers |
-
-The shared password for normal email sign-in is written to `server/.demo-credentials.txt`. That file is git-ignored. Set `DEMO_LOGIN=false` to hide the demo panel.
-
-**Tip:** to see two offices working in the same courtroom, open one browser normally and a second in a private/incognito window, then sign in as two different demo users.
-
-If you want your own admin account instead:
+If you want your own admin account as well:
 
 ```bash
 npm --prefix server run create-admin -- you@example.com YourStrongPassword "Your Name"
@@ -198,6 +186,93 @@ npm run setup
 ```bash
 npm --prefix server run db:migrate
 ```
+
+---
+
+## Part 3: Demo guide
+
+### How to sign in as a demo user
+
+- **One tap (easiest):** open http://localhost:5173/login and tap a card under **Try a demo account**. No password is needed. This panel appears when `DEMO_LOGIN=true` is set in `server/.env` (the default). Set it to `false` to hide the panel, for example in a real deployment.
+- **Email and password:** every demo account shares one password. `npm --prefix server run seed:demo` generates it and writes it to `server/.demo-credentials.txt`. That file is git-ignored, so the password is never in the repository.
+- **Two people at once:** sign-in uses a browser cookie, so one browser window = one user. To watch two users interact, open a second window in **private / incognito mode** (or a different browser) and sign in as another demo user there.
+
+### Demo users
+
+| Demo button | Email | Role | Office | Invite code |
+|---|---|---|---|---|
+| Senior lawyer | `mehta@courtcall.demo` | Senior lawyer (office owner) | Mehta & Associates | `MEHTA4` |
+| Junior lawyer | `priya@courtcall.demo` | Junior lawyer | Mehta & Associates | n/a |
+| Senior lawyer (2nd office) | `desai@courtcall.demo` | Senior lawyer (office owner) | Desai Law Chambers | `DESAI7` |
+| Junior lawyer (2nd office) | `arjun@courtcall.demo` | Junior lawyer | Desai Law Chambers | n/a |
+| Platform admin | `admin@courtcall.demo` | Platform admin | none | n/a |
+
+All demo accounts are already verified, so they can use every feature straight away.
+
+### Demo data (created by `seed:demo`)
+
+Everything is in **Gujarat High Court**, dated **today** (India time):
+
+| Office | Client | Case | Court | Item | Assigned junior |
+|---|---|---|---|---|---|
+| Mehta & Associates | Ramesh Patel | Patel vs State of Gujarat (`CR.MA/1452/2026`) | 4 | 15 | Priya Shah |
+| Mehta & Associates | Sunita Joshi | Joshi vs Joshi (`FA/388/2025`) | 4 | 22 | Priya Shah |
+| Mehta & Associates | Ramesh Patel | Patel Textiles vs GSFC (`SCA/9021/2026`) | 7 | 9 | none |
+| Desai Law Chambers | Kiran Desai | Desai vs Municipal Corporation (`SCA/7710/2026`) | 4 | 18 | none |
+
+**Court 4 is shared by both offices.** Both offices see the same live progress there, but each office sees only its own clients and cases.
+
+Re-running `seed:demo` moves these cases to today's date and keeps the same password (it only creates `server/.demo-credentials.txt` if the file is missing). Courtroom progress already reported today is kept. A new day starts with fresh courtroom rooms.
+
+### What each demo user can do
+
+**Senior lawyer: Adv. Rakesh Mehta (Mehta & Associates)**
+- **Today:** live cards for Court 4 and Court 7 showing the latest reported item, status (hearing, break, stale) and how far each of the office's cases is ("3 away").
+- **Cases:** add, edit or delete cases (client, court, date, item number, assigned junior).
+- **Clients:** add, edit or delete clients (name, WhatsApp number, alert language).
+- **Team:** see the invite code `MEHTA4`, and approve or decline juniors who sign up with it.
+- **Chat:** the private office team room, plus a private chat with each client.
+- **Courtroom rooms:** open any room to see progress, history and room chat. Lawyers can report too.
+
+**Junior lawyer: Priya Shah (Mehta & Associates)**
+- **Today:** the courtrooms where the office has cases (Court 4 and Court 7).
+- **Report progress** in a room:
+  - Tap **Now hearing: Item N**. It is pre-filled with the next item; use **−1 / +1** or type a number.
+  - Tap **Passed over**, **Adjourned** (applies to the item being heard), **Recalled** (pick from passed-over items), **Break / Resume**, **Not sitting** or **Court risen**.
+  - **Undo** stays on screen for 10 seconds after every report.
+  - Jumping more than 5 items ahead, or moving backward, asks for confirmation.
+- **Room chat:** message every verified lawyer and junior in the courtroom, from any office. Every accepted update also appears there as a progress card, sent through Nexconn.
+- **Chat:** the office team room.
+
+**Senior lawyer (2nd office): Adv. Nisha Desai (Desai Law Chambers)**
+- The same screens as Mehta, for her own office.
+- In **Court 4** she sees the same live progress as Mehta & Associates, but only her own case (Kiran Desai, Item 18). Mehta's clients are never visible to her.
+
+**Junior lawyer (2nd office): Arjun Trivedi (Desai Law Chambers)**
+- Reports in the same **Court 4** room as Priya. Updates from either junior are shared with both offices.
+
+**Platform admin: CourtCall Admin**
+- **Verify:** approve or reject new senior lawyers after checking their Bar Council enrolment number. Tabs show pending, verified and rejected lawyers.
+
+**Client (coming next)**
+- The client's private WhatsApp link page (case progress, alerts, chat with the lawyer) is the next module. A client demo button will be added with it.
+
+### Suggested walkthrough (about 5 minutes, good for the demo video)
+
+1. **Landing page:** open http://localhost:5173 and scroll through it. Try the interactive demo, including **Simulate a delayed old update**.
+2. **Window 1, Junior Priya:** tap **Junior lawyer** → **Today** → **Court 4** → **Open room**.
+   - Set the item to **12** and tap **Now hearing: Item 12**. Then tap **Now hearing: Item 13**.
+   - Tap **Passed over** (marks Item 13), then **Now hearing: Item 14**, then **Recalled** and choose **13**.
+   - Type **25** and tap **Now hearing** to see the **jump confirmation**. Cancel it.
+   - Tap **Break**, then **Resume**. Use **Undo** on any toast.
+   - Send a message in **Room chat**.
+3. **Window 2 (private window), Junior Arjun:** tap **Junior lawyer (2nd office)** → **Court 4**. The same progress and the same room chat appear, but **Your cases here** shows only Item 18 (Kiran Desai).
+   - Report **Now hearing** from Arjun's window. Priya's window updates within seconds.
+   - **Conflict protection:** report from one window, then immediately report from the other without waiting. The older update is rejected with "Someone else just reported a newer update".
+4. **Senior lawyer Mehta** (sign out first, or use a third window): **Today** now shows Court 4's live item and "N away" for Ramesh (15) and Sunita (22). Open **Chat** for the office team room and the client list.
+5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
+6. **Sign-up and approvals:** sign out, choose **Create an account → Junior lawyer**, and use invite code **MEHTA4**. The new junior waits for approval. Sign in as **Mehta** → **Team** → **Approve**.
+7. **Platform admin:** sign up a new **Senior lawyer** account, then sign in as **Platform admin** → **Verify** to approve it.
 
 ---
 

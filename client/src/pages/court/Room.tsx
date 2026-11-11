@@ -216,7 +216,9 @@ export default function Room() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[480px] flex-col gap-4">
+    // Phone: one column. Laptop: reporting controls on the left, room chat + history on the right.
+    <div className="mx-auto grid w-full max-w-[1280px] gap-4 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+      <div className="flex min-w-0 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center gap-2">
         <Link to="/" aria-label="Back" className="flex size-11 items-center justify-center rounded-md hover:bg-surface">
@@ -357,6 +359,9 @@ export default function Room() {
         </Card>
       )}
 
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-4">
       {/* Shared courtroom chat (all verified members of this room, any office) */}
       <section aria-label="Courtroom chat">
         <p className="mb-2 flex items-center justify-between text-h2">
@@ -368,7 +373,7 @@ export default function Room() {
           channelId={data.chatGroupId}
           names={Object.fromEntries(members.map((m) => [m.ncId, m.officeName ? `${m.name} · ${m.officeName}` : m.name]))}
           placeholder="Message the courtroom"
-          className="h-96"
+          className="h-96 lg:h-[30rem]"
           emptyText="Progress updates and messages from this courtroom appear here."
         />
       </section>
@@ -418,6 +423,7 @@ export default function Room() {
       <p className="pb-2 text-center text-caption text-ink">
         Updates are shared with verified lawyers and juniors in this courtroom. Client details stay private to your office.
       </p>
+      </div>
 
       {/* Confirmation (server-requested or for court-level events) */}
       <Sheet open={!!confirm} title="Please confirm" onClose={() => setConfirm(null)}>

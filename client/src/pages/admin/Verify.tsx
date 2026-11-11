@@ -35,7 +35,7 @@ export default function Verify() {
       {loading && !data ? (
         <PageSpinner />
       ) : data?.lawyers.length ? (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.lawyers.map((l) => (
             <Card key={l.id}>
               <p className="text-body font-semibold">{l.name}</p>

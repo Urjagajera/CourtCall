@@ -37,14 +37,14 @@ export function DisplayBoard() {
   }, [])
 
   return (
-    <div className="overflow-hidden rounded-lg border-4 border-[#1B1B22] bg-[#1B1B22] shadow-sheet">
-      <div className="flex items-center justify-between gap-2 bg-[#26262F] px-4 py-3">
-        <p className="text-label font-bold tracking-[0.2em] text-[#A7B2FF]">CAUSE LIST BOARD</p>
+    <div className="overflow-hidden rounded-lg border-4 border-[#2A2220] bg-[#2A2220] shadow-sheet">
+      <div className="flex items-center justify-between gap-2 bg-[#3A302C] px-4 py-3">
+        <p className="text-label font-bold tracking-[0.2em] text-[#E8C9A9]">CAUSE LIST BOARD</p>
         <span className="flex items-center gap-1.5 text-caption font-semibold text-[#8FDCA9]">
           <Radio className="cc-blink size-3.5" strokeWidth={2} /> LIVE · DEMO
         </span>
       </div>
-      <div className="grid grid-cols-[4.5rem_1fr_auto] gap-x-3 border-b border-white/10 px-4 py-2 text-caption tracking-widest text-[#A9ABC4]">
+      <div className="grid grid-cols-[4.5rem_1fr_auto] gap-x-3 border-b border-white/10 px-4 py-2 text-caption tracking-widest text-[#CDBFB5]">
         <span>COURT</span>
         <span>ITEM</span>
         <span>STATUS</span>
@@ -55,9 +55,9 @@ export function DisplayBoard() {
             key={r.court}
             className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-x-3 border-b border-white/5 px-4 py-2.5 last:border-0"
           >
-            <span className="tabular text-h2 font-bold text-[#ECEBF5]">{r.court}</span>
+            <span className="tabular text-h2 font-bold text-[#F4EEEA]">{r.court}</span>
             <span className="overflow-hidden [perspective:400px]">
-              <span key={r.item} className="cc-flip tabular inline-block text-[1.75rem] font-extrabold leading-none text-[#A7B2FF]">
+              <span key={r.item} className="cc-flip tabular inline-block text-[1.75rem] font-extrabold leading-none text-[#E8C9A9]">
                 {r.item}
               </span>
             </span>
@@ -67,7 +67,7 @@ export function DisplayBoard() {
                   ? 'flex items-center gap-1 text-caption font-semibold text-[#8FDCA9]'
                   : r.status === 'break'
                     ? 'flex items-center gap-1 text-caption font-semibold text-[#F3C673]'
-                    : 'flex items-center gap-1 text-caption font-semibold text-[#A9ABC4]'
+                    : 'flex items-center gap-1 text-caption font-semibold text-[#CDBFB5]'
               }
             >
               {r.status === 'hearing' ? (

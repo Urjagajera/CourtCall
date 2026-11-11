@@ -22,11 +22,9 @@ import { Link } from 'react-router-dom'
 import { Logo } from '../../components/Logo'
 import { cx } from '../../components/ui'
 import { prefersReducedMotion, useReveal } from '../../lib/useReveal'
-import { CourtroomScene } from './CourtroomScene'
+import { HeroScreens } from './HeroScreens'
 import { DisplayBoard } from './DisplayBoard'
 import { LiveDemo } from './LiveDemo'
-
-const CLIENT_ITEM = 15
 
 export default function Landing() {
   useReveal()
@@ -49,13 +47,11 @@ export default function Landing() {
     }
   }, [item])
 
-  const away = CLIENT_ITEM - item
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-line/60 bg-base/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 lg:px-8">
           <Logo />
           <nav className="hidden items-center gap-6 text-label font-medium md:flex">
             <a href="#how" className="hover:underline underline-offset-4">How it works</a>
@@ -75,7 +71,7 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 pb-16 pt-10 lg:grid-cols-[1fr_1.1fr] lg:px-8 lg:pt-16">
+      <section className="mx-auto grid max-w-[1440px] items-center gap-10 px-4 pb-16 pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:px-12 lg:pt-16 xl:gap-16">
         <div className="cc-pop">
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-caption font-semibold">
             <span className="cc-blink size-2 rounded-full bg-hearing-fg" /> Real-time courtroom communication
@@ -107,43 +103,19 @@ export default function Landing() {
           </ul>
         </div>
 
-        <div className="relative">
-          <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-sheet">
-            <CourtroomScene item={item} status={status} />
-          </div>
-          {/* Floating client alert */}
-          <div className="cc-float absolute -bottom-6 left-3 right-3 sm:left-auto sm:right-[-12px] sm:w-80">
-            <div key={item + status} className="cc-pop flex gap-3 rounded-lg border border-line bg-surface p-3 shadow-sheet">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink">
-                <BellRing className="size-5" strokeWidth={1.75} />
-              </span>
-              <div className="min-w-0 text-label">
-                <p className="font-semibold">CourtCall · Court 4</p>
-                <p className="text-ink-muted">
-                  {status === 'break'
-                    ? 'Court is on a short break. Latest progress unchanged.'
-                    : away > 0
-                      ? `Item ${item} is being heard. Your case is Item ${CLIENT_ITEM} (${away} away).`
-                      : away === 0
-                        ? `Your case, Item ${CLIENT_ITEM}, is being heard now.`
-                        : `Progress has moved past Item ${CLIENT_ITEM}. Your lawyer will update you.`}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeroScreens item={item} status={status} />
       </section>
 
       {/* Quote strip */}
       <section className="border-y border-line bg-surface">
-        <p className="mx-auto max-w-[1200px] px-4 py-6 text-center text-h2 lg:px-8">
+        <p className="mx-auto max-w-[1440px] px-4 py-6 text-center text-h2 lg:px-8">
           “eCourts tells you <span className="font-bold">which day</span>. CourtCall tells you the{' '}
           <span className="font-bold">latest reported courtroom progress</span>.”
         </p>
       </section>
 
       {/* Problem */}
-      <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8">
+      <section className="mx-auto max-w-[1440px] px-4 py-16 lg:px-8">
         <SectionTitle eyebrow="The problem" title="Court days run on phone calls and guesswork" />
         <div className="grid gap-4 md:grid-cols-3">
           <ProblemCard icon={PhoneCall} title="Endless “has my case come up?” calls">
@@ -160,7 +132,7 @@ export default function Landing() {
 
       {/* How it works + board */}
       <section id="how" className="bg-surface/50 py-16">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid max-w-[1440px] items-center gap-10 px-4 lg:grid-cols-2 lg:px-8">
           <div>
             <SectionTitle eyebrow="How it works" title="One shared courtroom. Private everything else." align="left" />
             <ol className="flex flex-col gap-4">
@@ -186,7 +158,7 @@ export default function Landing() {
       </section>
 
       {/* Live demo */}
-      <section id="demo" className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8">
+      <section id="demo" className="mx-auto max-w-[1440px] px-4 py-16 lg:px-8">
         <SectionTitle
           eyebrow="Live demo"
           title="Tap as the junior. Watch the client's phone."
@@ -199,7 +171,7 @@ export default function Landing() {
 
       {/* Roles */}
       <section id="roles" className="bg-surface/50 py-16">
-        <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
+        <div className="mx-auto max-w-[1440px] px-4 lg:px-8">
           <SectionTitle eyebrow="Who it's for" title="Built for everyone outside and inside the courtroom" />
           <div className="grid gap-4 md:grid-cols-3">
             <RoleCard icon={Briefcase} title="Senior lawyers" points={['See every courtroom you have cases in today', 'Add clients and map cases to rooms', 'Send and revoke private client links', 'Chat privately with each client']} />
@@ -215,7 +187,7 @@ export default function Landing() {
       </section>
 
       {/* Trust */}
-      <section id="trust" className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8">
+      <section id="trust" className="mx-auto max-w-[1440px] px-4 py-16 lg:px-8">
         <SectionTitle eyebrow="Reliability & privacy" title="Honest about what it knows" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <TrustCard icon={History} title="Full update history">Every report, correction and undo is kept. Nothing is silently overwritten.</TrustCard>
@@ -229,7 +201,7 @@ export default function Landing() {
 
       {/* CTA */}
       <section className="px-4 pb-16 lg:px-8">
-        <div data-reveal className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 rounded-lg border border-line bg-surface px-6 py-12 text-center shadow-card">
+        <div data-reveal className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 rounded-lg border border-line bg-surface px-6 py-12 text-center shadow-card">
           <h2 className="text-[1.75rem] font-bold leading-tight sm:text-[2.25rem]">Give your clients their time back.</h2>
           <p className="max-w-xl text-body text-ink-muted">Set up your office in two minutes, invite your juniors, and share the first client link today.</p>
           <Link to="/signup" className="flex h-12 items-center gap-2 rounded-md bg-accent px-6 text-body font-semibold text-accent-ink hover:bg-accent-strong">
@@ -239,7 +211,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-line bg-surface">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-3 px-4 py-8 text-label lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-8 text-label lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <Logo />
           <p className="max-w-2xl text-caption text-ink-muted">
             CourtCall shows the latest courtroom progress reported by verified lawyers and juniors. It does not predict hearing

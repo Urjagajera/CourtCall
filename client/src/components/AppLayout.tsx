@@ -88,7 +88,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-5 lg:px-8 lg:pb-10 lg:pt-8">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pb-28 pt-5 lg:px-10 lg:pb-10 lg:pt-8">
           <Outlet />
         </main>
 

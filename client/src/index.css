@@ -142,24 +142,8 @@ body {
   outline-offset: 2px;
 }
 
-/* ---------- Landing page motion ---------- */
+/* ---------- Motion (kept subtle: number flips, card pops, live dot, signal ring) ---------- */
 
-@keyframes cc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes cc-gavel {
-  0%, 70%, 100% {
-    transform: rotate(0deg);
-  }
-  78% {
-    transform: rotate(-28deg);
-  }
-  86% {
-    transform: rotate(6deg);
-  }
-}
 @keyframes cc-ring {
   0% {
     transform: scale(0.6);
@@ -168,14 +152,6 @@ body {
   100% {
     transform: scale(2.4);
     opacity: 0;
-  }
-}
-@keyframes cc-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
   }
 }
 @keyframes cc-flip {
@@ -203,31 +179,9 @@ body {
     opacity: 0.25;
   }
 }
-@keyframes cc-dash {
-  to {
-    stroke-dashoffset: -24;
-  }
-}
-@keyframes cc-sway {
-  0%, 100% {
-    transform: rotate(-2deg);
-  }
-  50% {
-    transform: rotate(2deg);
-  }
-}
 
-.cc-spin {
-  animation: cc-spin 1.6s linear infinite;
-}
-.cc-gavel {
-  animation: cc-gavel 4s ease-in-out infinite;
-}
 .cc-ring {
   animation: cc-ring 2s ease-out infinite;
-}
-.cc-float {
-  animation: cc-float 5s ease-in-out infinite;
 }
 .cc-flip {
   animation: cc-flip 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -237,13 +191,6 @@ body {
 }
 .cc-blink {
   animation: cc-blink 1.2s steps(2) infinite;
-}
-.cc-dash {
-  stroke-dasharray: 6 6;
-  animation: cc-dash 0.8s linear infinite;
-}
-.cc-sway {
-  animation: cc-sway 3s ease-in-out infinite;
 }
 
 /* Scroll reveal: elements start hidden and slide in when [data-shown] is set. */

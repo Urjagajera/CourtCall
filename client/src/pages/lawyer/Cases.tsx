@@ -55,7 +55,7 @@ export default function Cases() {
                 <CalendarDays className="size-5" strokeWidth={1.75} />
                 {date === todayISO() ? 'Today' : formatDate(date)}
               </h2>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                 {list.map((c) => (
                   <Card key={c.id} className="flex items-start gap-3">
                     <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-md bg-accent text-accent-ink">

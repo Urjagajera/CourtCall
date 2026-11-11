@@ -188,8 +188,8 @@ export function LiveDemo() {
 function Phone({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <figure className="mx-auto w-full max-w-[300px]">
-      <div className="rounded-[2rem] border-[6px] border-[#1B1B22] bg-surface p-4 shadow-sheet">
-        <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-[#1B1B22]/30" />
+      <div className="rounded-[2rem] border-[6px] border-[#2A2220] bg-surface p-4 shadow-sheet">
+        <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-[#2A2220]/30" />
         {children}
       </div>
       <figcaption className="mt-2 text-center text-label font-semibold text-ink">{label}</figcaption>

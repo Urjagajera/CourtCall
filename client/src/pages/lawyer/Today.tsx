@@ -54,7 +54,7 @@ export default function Today() {
       {!data ? (
         !error && <PageSpinner />
       ) : data.sessions.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {data.sessions.map((s) => (
             <RoomCard key={s.id} s={s} now={now} />
           ))}
