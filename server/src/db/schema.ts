@@ -83,7 +83,10 @@ export const courtSessions = pgTable(
       .notNull()
       .references(() => courtrooms.id),
     date: date('date').notNull(),
+    // Progress pointer through the cause list (only moves via "now hearing").
     currentItem: integer('current_item'),
+    // Item actually before the judge right now; differs from currentItem when a passed-over item is recalled.
+    hearingItem: integer('hearing_item'),
     status: sessionStatus('status').notNull().default('not_started'),
     // Incremented on every accepted event; reporters send the version they last saw.
     version: integer('version').notNull().default(0),
@@ -128,6 +131,10 @@ export const courtEvents = pgTable(
     confirmed: boolean('confirmed').notNull().default(false),
     correctsEventId: uuid('corrects_event_id').references((): AnyPgColumn => courtEvents.id),
     note: text('note'),
+    // Session state just before this event, so an undo can restore it exactly.
+    prevCurrentItem: integer('prev_current_item'),
+    prevHearingItem: integer('prev_hearing_item'),
+    prevStatus: sessionStatus('prev_status').notNull(),
     createdAt: createdAt(),
   },
   (t) => [unique('event_session_version').on(t.sessionId, t.version)],
@@ -222,4 +229,6 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
 })
 
 export type User = typeof users.$inferSelect
+export type CourtSession = typeof courtSessions.$inferSelect
+export type CourtEvent = typeof courtEvents.$inferSelect
 export type Office = typeof offices.$inferSelect

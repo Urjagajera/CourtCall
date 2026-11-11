@@ -61,6 +61,9 @@ CREATE TABLE "court_events" (
 	"confirmed" boolean DEFAULT false NOT NULL,
 	"corrects_event_id" uuid,
 	"note" text,
+	"prev_current_item" integer,
+	"prev_hearing_item" integer,
+	"prev_status" "session_status" NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "event_session_version" UNIQUE("session_id","version")
 );
@@ -78,6 +81,7 @@ CREATE TABLE "court_sessions" (
 	"courtroom_id" uuid NOT NULL,
 	"date" date NOT NULL,
 	"current_item" integer,
+	"hearing_item" integer,
 	"status" "session_status" DEFAULT 'not_started' NOT NULL,
 	"version" integer DEFAULT 0 NOT NULL,
 	"last_event_at" timestamp with time zone,

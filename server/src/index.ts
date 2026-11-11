@@ -8,6 +8,7 @@ import { adminRouter } from './routes/admin.js'
 import { authRouter } from './routes/auth.js'
 import { casesRouter } from './routes/cases.js'
 import { clientsRouter } from './routes/clients.js'
+import { courtroomsRouter } from './routes/courtrooms.js'
 import { officeRouter } from './routes/office.js'
 
 export const app = express()
@@ -31,6 +32,7 @@ app.use('/api/admin', adminRouter)
 app.use('/api/office', officeRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/cases', casesRouter)
+app.use('/api', courtroomsRouter)
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Not found' })
