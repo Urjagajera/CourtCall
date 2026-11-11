@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { db, schema } from '../db/index.js'
 import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { notFound, parse } from '../lib/http.js'
+import { ncClientId } from '../lib/nexconn.js'
 
 // Clients are private to an office. Only the senior lawyer manages them.
 export const clientsRouter = Router()
@@ -21,7 +22,8 @@ clientsRouter.get('/', async (req, res) => {
     .from(schema.clients)
     .where(eq(schema.clients.officeId, req.user!.officeId!))
     .orderBy(asc(schema.clients.name))
-  res.json({ clients: rows })
+  // ncId = the client's Nexconn user ID, used by the lawyer's browser to open a direct chat.
+  res.json({ clients: rows.map((c) => ({ ...c, ncId: ncClientId(c.id) })) })
 })
 
 clientsRouter.post('/', async (req, res) => {

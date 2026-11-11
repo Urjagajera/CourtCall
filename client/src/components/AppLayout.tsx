@@ -1,6 +1,8 @@
-import { Briefcase, CalendarDays, LayoutDashboard, Settings, ShieldCheck, Users, type LucideIcon } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Briefcase, CalendarDays, LayoutDashboard, MessageCircle, Settings, ShieldCheck, Users, type LucideIcon } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { startChat, useChat } from '../lib/nexconn'
 import { Logo } from './Logo'
 import { cx } from './ui'
 
@@ -11,26 +13,37 @@ interface NavItem {
 }
 
 function navFor(role: string): NavItem[] {
-  if (role === 'admin') {
-    return [
-      { to: '/admin', label: 'Verify', icon: ShieldCheck },
-      { to: '/settings', label: 'Settings', icon: Settings },
-    ]
-  }
+  if (role === 'admin') return [{ to: '/admin', label: 'Verify', icon: ShieldCheck }]
   const items: NavItem[] = [
     { to: '/', label: 'Today', icon: LayoutDashboard },
     { to: '/cases', label: 'Cases', icon: CalendarDays },
+    { to: '/chats', label: 'Chat', icon: MessageCircle },
   ]
   if (role === 'lawyer') {
     items.push({ to: '/clients', label: 'Clients', icon: Briefcase }, { to: '/team', label: 'Team', icon: Users })
   }
-  items.push({ to: '/settings', label: 'Settings', icon: Settings })
   return items
 }
 
 export function AppLayout() {
   const { user, office } = useAuth()
+  const chat = useChat()
   const items = navFor(user!.role)
+
+  // Lawyers and juniors stay connected to Nexconn while signed in (live rooms + chat).
+  useEffect(() => {
+    if (user!.role !== 'admin') startChat()
+  }, [user])
+
+  const chatDot = user!.role !== 'admin' && (
+    <span
+      title={chat.status === 'ready' ? 'Live' : chat.status === 'error' ? (chat.error ?? 'Chat offline') : 'Connecting'}
+      className={cx(
+        'size-2.5 rounded-full',
+        chat.status === 'ready' ? 'bg-hearing-fg' : chat.status === 'error' ? 'bg-stopped-fg' : 'cc-blink bg-waiting-fg',
+      )}
+    />
+  )
 
   return (
     <div className="min-h-screen lg:flex">
@@ -38,7 +51,7 @@ export function AppLayout() {
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface p-4 lg:flex">
         <Logo />
         <nav className="flex flex-col gap-1">
-          {items.map(({ to, label, icon: Icon }) => (
+          {[...items, { to: '/settings', label: 'Settings', icon: Settings }].map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -55,16 +68,24 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="mt-auto text-label">
-          <p className="font-semibold text-ink">{user!.name}</p>
+          <p className="flex items-center gap-2 font-semibold text-ink">
+            {user!.name} {chatDot}
+          </p>
           <p className="text-ink-muted">{office?.name ?? (user!.role === 'admin' ? 'Platform admin' : '')}</p>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Phone top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-line bg-surface px-4 lg:hidden">
           <Logo />
-          <span className="truncate pl-4 text-label text-ink-muted">{office?.name}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            {chatDot}
+            <span className="truncate text-label text-ink-muted">{office?.name}</span>
+            <Link to="/settings" aria-label="Settings" className="flex size-10 shrink-0 items-center justify-center rounded-md hover:bg-surface-raised">
+              <Settings className="size-5" strokeWidth={1.75} />
+            </Link>
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-5 lg:px-8 lg:pb-10 lg:pt-8">

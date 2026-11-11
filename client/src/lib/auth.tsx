@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api, ApiError, type Office, type User } from './api'
+import { stopChat } from './nexconn'
 
 interface AuthState {
   user: User | null
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await api('/auth/logout', { method: 'POST' })
+    await stopChat()
     setUser(null)
     setOffice(null)
   }, [])

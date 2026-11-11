@@ -1,4 +1,4 @@
-﻿import { eq } from 'drizzle-orm'
+﻿import { and, eq } from 'drizzle-orm'
 import { Router } from 'express'
 import { z } from 'zod'
 import { db, schema } from '../db/index.js'
@@ -8,11 +8,14 @@ import { EVENT_TYPES, courtDate } from '../lib/engine.js'
 import { forbidden, notFound, parse } from '../lib/http.js'
 import {
   activeReporterCount,
+  announceEvent,
   applyEvent,
+  sessionMembers,
   getOrCreateSession,
   isMember,
   joinSession,
   officeCasesIn,
+  officeCasesOn,
   recentEvents,
   sessionView,
   sessionsForUser,
@@ -27,14 +30,15 @@ const staff = [requireAuth, requireVerified, requireRole('lawyer', 'junior')]
 courtroomsRouter.get('/courtrooms/today', ...staff, async (req, res) => {
   const user = req.user!
   const date = courtDate()
-  const rows = await sessionsForUser(user, date)
-  const sessions = await Promise.all(
-    rows.map(async ({ session, courtroom }) => ({
-      ...sessionView(session),
-      courtroom: { id: courtroom.id, courtComplex: courtroom.courtComplex, roomNo: courtroom.roomNo },
-      myCases: user.officeId ? await officeCasesIn(user.officeId, courtroom.id, date) : [],
-    })),
-  )
+  const [rows, officeCases] = await Promise.all([
+    sessionsForUser(user, date),
+    user.officeId ? officeCasesOn(user.officeId, date) : Promise.resolve([]),
+  ])
+  const sessions = rows.map(({ session, courtroom }) => ({
+    ...sessionView(session),
+    courtroom: { id: courtroom.id, courtComplex: courtroom.courtComplex, roomNo: courtroom.roomNo },
+    myCases: officeCases.filter((c) => c.courtroomId === courtroom.id),
+  }))
   res.json({ date, sessions })
 })
 
@@ -57,13 +61,18 @@ courtroomsRouter.get('/courtrooms', ...staff, async (_req, res) => {
 })
 
 async function loadMemberSession(sessionId: string, userId: string) {
+  // One query: the session, its courtroom, and whether this user is a member.
   const [row] = await db
-    .select({ session: schema.courtSessions, courtroom: schema.courtrooms })
+    .select({ session: schema.courtSessions, courtroom: schema.courtrooms, memberId: schema.courtSessionMembers.userId })
     .from(schema.courtSessions)
     .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.courtSessions.courtroomId))
+    .leftJoin(
+      schema.courtSessionMembers,
+      and(eq(schema.courtSessionMembers.sessionId, schema.courtSessions.id), eq(schema.courtSessionMembers.userId, userId)),
+    )
     .where(eq(schema.courtSessions.id, sessionId))
   if (!row) throw notFound('Courtroom not found')
-  if (!(await isMember(sessionId, userId))) throw forbidden('Join this courtroom first')
+  if (!row.memberId) throw forbidden('Join this courtroom first')
   return row
 }
 
@@ -71,10 +80,11 @@ courtroomsRouter.get('/sessions/:id', ...staff, async (req, res) => {
   const user = req.user!
   const id = parse(z.uuid(), req.params.id)
   const { session, courtroom } = await loadMemberSession(id, user.id)
-  const [events, activeReporters, myCases] = await Promise.all([
+  const [events, activeReporters, myCases, members] = await Promise.all([
     recentEvents(id),
     activeReporterCount(id),
     user.officeId ? officeCasesIn(user.officeId, courtroom.id, session.date) : [],
+    sessionMembers(id),
   ])
   res.json({
     session: sessionView(session),
@@ -82,6 +92,8 @@ courtroomsRouter.get('/sessions/:id', ...staff, async (req, res) => {
     events,
     activeReporters,
     myCases,
+    members,
+    chatGroupId: session.nexconnGroupId,
   })
 })
 
@@ -102,7 +114,8 @@ courtroomsRouter.post('/sessions/:id/events', ...staff, async (req, res) => {
   const result = await applyEvent(id, user, body)
   switch (result.kind) {
     case 'applied':
-      // Hook point: Nexconn room message + client alerts are sent from here (next modules).
+      // Awaited (not fire-and-forget) so it also completes on serverless hosts. Failures are logged, never thrown.
+      await announceEvent(result.session, result.event, user)
       res.status(201).json({ session: sessionView(result.session), event: result.event })
       return
     case 'conflict':

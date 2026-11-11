@@ -16,6 +16,7 @@ import Clients from './pages/lawyer/Clients'
 import Team from './pages/lawyer/Team'
 import Today from './pages/lawyer/Today'
 import Settings from './pages/Settings'
+import Chats from './pages/Chats'
 
 /** Signed-in, verified staff only. Unverified users see the waiting screen. */
 function Protected({ children }: { children: ReactNode }) {
@@ -60,6 +61,7 @@ export default function App() {
           <Route element={<Protected><AppLayout /></Protected>}>
             <Route index element={<Home />} />
             <Route path="room/:id" element={<RoleOnly roles={['lawyer', 'junior']}><Room /></RoleOnly>} />
+            <Route path="chats" element={<RoleOnly roles={['lawyer', 'junior']}><Chats /></RoleOnly>} />
             <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior']}><Cases /></RoleOnly>} />
             <Route path="clients" element={<RoleOnly roles={['lawyer']}><Clients /></RoleOnly>} />
             <Route path="team" element={<RoleOnly roles={['lawyer']}><Team /></RoleOnly>} />

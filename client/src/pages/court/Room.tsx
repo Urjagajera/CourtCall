@@ -17,7 +17,9 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ChatPanel } from '../../components/ChatPanel'
 import { Sheet } from '../../components/Sheet'
+import { MSG_PROGRESS, isFromChannel, useChat, useIncomingMessages, type Message } from '../../lib/nexconn'
 import { Toast, type ToastData } from '../../components/Toast'
 import { Badge, Banner, Button, Card, PageSpinner, cx, type Tone } from '../../components/ui'
 import { api, ApiError } from '../../lib/api'
@@ -41,6 +43,8 @@ interface RoomData {
   events: CourtEventRow[]
   activeReporters: number
   myCases: MyCase[]
+  members: { id: string; ncId: string; name: string; role: string; officeName: string | null }[]
+  chatGroupId: string | null
 }
 
 interface ReportInput {
@@ -89,7 +93,19 @@ export default function Room() {
   useEffect(() => {
     load()
   }, [load])
-  usePolling(load, 5000)
+
+  // Live: Nexconn pushes a CC:Progress message into this room on every accepted update.
+  // Polling stays as a slow safety net (fast only while chat is not connected).
+  const chat = useChat()
+  const groupId = data?.chatGroupId ?? null
+  const onIncoming = useCallback(
+    (m: Message) => {
+      if (m.messageType === MSG_PROGRESS && groupId && isFromChannel(m, 'group', groupId)) load()
+    },
+    [groupId, load],
+  )
+  useIncomingMessages(onIncoming)
+  usePolling(load, chat.status === 'ready' && groupId ? 20000 : 5000)
 
   const version = data?.session.version
   const currentItem = data?.session.currentItem
@@ -186,7 +202,7 @@ export default function Room() {
     )
   }
 
-  const { session, courtroom, events, activeReporters, myCases } = data
+  const { session, courtroom, events, activeReporters, myCases, members } = data
   const st = statusMeta(session)
   const onBreak = session.status === 'break'
   const closed = session.status === 'risen' || session.status === 'not_sitting'
@@ -340,6 +356,22 @@ export default function Room() {
           </ul>
         </Card>
       )}
+
+      {/* Shared courtroom chat (all verified members of this room, any office) */}
+      <section aria-label="Courtroom chat">
+        <p className="mb-2 flex items-center justify-between text-h2">
+          Room chat
+          <span className="text-caption font-normal text-ink-muted">{members.length} members · all offices</span>
+        </p>
+        <ChatPanel
+          kind="group"
+          channelId={data.chatGroupId}
+          names={Object.fromEntries(members.map((m) => [m.ncId, m.officeName ? `${m.name} · ${m.officeName}` : m.name]))}
+          placeholder="Message the courtroom"
+          className="h-96"
+          emptyText="Progress updates and messages from this courtroom appear here."
+        />
+      </section>
 
       {/* History */}
       <Card className="p-0">

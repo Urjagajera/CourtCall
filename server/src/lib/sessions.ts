@@ -3,6 +3,7 @@ import { db, schema } from '../db/index.js'
 import type { CourtEvent, CourtSession, User } from '../db/schema.js'
 import { ACTIVE_REPORTER_MS, decide, isStale, type CorrectionTarget, type EventInput } from './engine.js'
 import { notFound } from './http.js'
+import { MSG_PROGRESS, createGroup, joinGroup, ncSessionGroupId, ncStaffId, safely, sendGroupMessage } from './nexconn.js'
 
 const { courtSessions, courtSessionMembers, courtEvents, courtrooms, cases, clients, users, offices } = schema
 
@@ -16,7 +17,100 @@ export async function getOrCreateSession(courtroomId: string, date: string) {
 }
 
 export async function joinSession(sessionId: string, userId: string) {
-  await db.insert(courtSessionMembers).values({ sessionId, userId }).onConflictDoNothing()
+  const inserted = await db
+    .insert(courtSessionMembers)
+    .values({ sessionId, userId })
+    .onConflictDoNothing()
+    .returning({ userId: courtSessionMembers.userId })
+  // Only talk to Nexconn on a real join (this runs on every dashboard refresh).
+  if (inserted.length) await syncChatMembership(sessionId, [userId])
+}
+
+/** Ensures the session's Nexconn group exists and the given staff users are in it. */
+export async function syncChatMembership(sessionId: string, userIds: string[]) {
+  await safely('room membership', async () => {
+    const [row] = await db
+      .select({ session: courtSessions, courtroom: courtrooms })
+      .from(courtSessions)
+      .innerJoin(courtrooms, eq(courtrooms.id, courtSessions.courtroomId))
+      .where(eq(courtSessions.id, sessionId))
+    if (!row) return
+    let groupId = row.session.nexconnGroupId
+    if (!groupId) {
+      groupId = ncSessionGroupId(sessionId)
+      await createGroup(groupId, `Court ${row.courtroom.roomNo} · ${row.courtroom.courtComplex} · ${row.session.date}`)
+      await db.update(courtSessions).set({ nexconnGroupId: groupId }).where(eq(courtSessions.id, sessionId))
+    }
+    await joinGroup(groupId, userIds.map(ncStaffId))
+  })
+}
+
+/** Posts a structured progress message into the shared courtroom room. */
+export async function announceEvent(session: CourtSession, event: CourtEvent, reporter: User) {
+  let groupId = session.nexconnGroupId
+  if (!groupId) {
+    await syncChatMembership(session.id, [reporter.id])
+    const [fresh] = await db
+      .select({ groupId: courtSessions.nexconnGroupId })
+      .from(courtSessions)
+      .where(eq(courtSessions.id, session.id))
+    groupId = fresh?.groupId ?? null
+  }
+  if (!groupId) return
+  const gid = groupId
+  await safely('progress message', () =>
+    sendGroupMessage(
+      gid,
+      MSG_PROGRESS,
+      {
+        sessionId: session.id,
+        version: event.version,
+        type: event.type,
+        item: event.item,
+        currentItem: session.currentItem,
+        hearingItem: session.hearingItem,
+        status: session.status,
+        reporterId: ncStaffId(reporter.id),
+        reporterName: reporter.name,
+        singleReporter: event.singleReporter,
+        at: event.createdAt,
+      },
+      progressText(event.type, event.item, session.currentItem),
+    ),
+  )
+}
+
+export function progressText(type: CourtEvent['type'], item: number | null, currentItem: number | null) {
+  switch (type) {
+    case 'now_hearing':
+      return `Item ${item} is now being heard`
+    case 'passed_over':
+      return `Item ${item} was passed over`
+    case 'recalled':
+      return `Item ${item} was recalled`
+    case 'adjourned':
+      return `Item ${item} was adjourned`
+    case 'break_start':
+      return 'Court is on a break'
+    case 'break_end':
+      return 'Court has resumed'
+    case 'court_not_sitting':
+      return 'Court is not sitting today'
+    case 'court_risen':
+      return 'Court has risen for the day'
+    case 'correction':
+      return `Last update was undone. Progress: Item ${currentItem ?? '-'}`
+  }
+}
+
+export async function sessionMembers(sessionId: string) {
+  const rows = await db
+    .select({ id: users.id, name: users.name, role: users.role, officeName: offices.name })
+    .from(courtSessionMembers)
+    .innerJoin(users, eq(users.id, courtSessionMembers.userId))
+    .leftJoin(offices, eq(offices.id, users.officeId))
+    .where(eq(courtSessionMembers.sessionId, sessionId))
+  return rows.map((r) => ({ ...r, ncId: ncStaffId(r.id) }))
 }
 
 export async function isMember(sessionId: string, userId: string) {
@@ -184,7 +278,10 @@ export async function applyEvent(
   })
 }
 
-/** Sessions shown on a staff member's day view: rooms with their office's cases + rooms they joined. */
+/**
+ * Sessions shown on a staff member's day view: rooms with their office's cases + rooms they joined.
+ * Batched (constant number of queries) because the database may be far from the API in development.
+ */
 export async function sessionsForUser(user: User, date: string) {
   const officeRooms = user.officeId
     ? await db
@@ -193,22 +290,47 @@ export async function sessionsForUser(user: User, date: string) {
         .where(and(eq(cases.officeId, user.officeId), eq(cases.hearingDate, date)))
     : []
 
-  for (const { courtroomId } of officeRooms) {
-    const s = await getOrCreateSession(courtroomId, date)
-    await joinSession(s.id, user.id)
+  if (officeRooms.length) {
+    const roomIds = officeRooms.map((r) => r.courtroomId)
+    await db
+      .insert(courtSessions)
+      .values(roomIds.map((courtroomId) => ({ courtroomId, date })))
+      .onConflictDoNothing()
+    const sessions = await db
+      .select({ id: courtSessions.id })
+      .from(courtSessions)
+      .where(and(inArray(courtSessions.courtroomId, roomIds), eq(courtSessions.date, date)))
+    const newlyJoined = await db
+      .insert(courtSessionMembers)
+      .values(sessions.map((s) => ({ sessionId: s.id, userId: user.id })))
+      .onConflictDoNothing()
+      .returning({ sessionId: courtSessionMembers.sessionId })
+    // Nexconn only for genuinely new memberships.
+    await Promise.all(newlyJoined.map((j) => syncChatMembership(j.sessionId, [user.id])))
   }
-
-  const joined = await db
-    .select({ id: courtSessions.id })
-    .from(courtSessionMembers)
-    .innerJoin(courtSessions, eq(courtSessions.id, courtSessionMembers.sessionId))
-    .where(and(eq(courtSessionMembers.userId, user.id), eq(courtSessions.date, date)))
-  if (!joined.length) return []
 
   return db
     .select({ session: courtSessions, courtroom: courtrooms })
-    .from(courtSessions)
+    .from(courtSessionMembers)
+    .innerJoin(courtSessions, eq(courtSessions.id, courtSessionMembers.sessionId))
     .innerJoin(courtrooms, eq(courtrooms.id, courtSessions.courtroomId))
-    .where(inArray(courtSessions.id, joined.map((j) => j.id)))
+    .where(and(eq(courtSessionMembers.userId, user.id), eq(courtSessions.date, date)))
     .orderBy(asc(courtrooms.courtComplex), asc(courtrooms.roomNo))
+}
+
+/** All of an office's cases on a date, for grouping by courtroom in one query. */
+export async function officeCasesOn(officeId: string, date: string) {
+  return db
+    .select({
+      id: cases.id,
+      title: cases.title,
+      itemNo: cases.itemNo,
+      clientName: clients.name,
+      assignedJuniorId: cases.assignedJuniorId,
+      courtroomId: cases.courtroomId,
+    })
+    .from(cases)
+    .innerJoin(clients, eq(clients.id, cases.clientId))
+    .where(and(eq(cases.officeId, officeId), eq(cases.hearingDate, date)))
+    .orderBy(asc(cases.itemNo))
 }

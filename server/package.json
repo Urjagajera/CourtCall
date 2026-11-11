@@ -12,7 +12,8 @@
     "create-admin": "tsx src/scripts/create-admin.ts",
     "test": "tsx --test src/**/*.test.ts",
     "db:check": "tsx src/scripts/db-check.ts",
-    "nexconn:check": "tsx src/scripts/nexconn-check.ts"
+    "nexconn:check": "tsx src/scripts/nexconn-check.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts"
   },
   "keywords": [],
   "author": "",
