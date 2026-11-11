@@ -319,7 +319,7 @@ After every accepted courtroom update, CourtCall checks every case in that court
 The first time someone signs in, CourtCall starts a guided tour. It dims the page, zooms a spotlight onto one feature at a time, and explains what that feature does and how it works. The tour moves between pages by itself (for juniors, it opens a courtroom and walks through the reporting buttons).
 
 - **Next / Back** (or the arrow keys) move between steps. **End tour** (or Esc) stops it at any point.
-- Each role gets its own tour: senior lawyer (11 steps, 12 for firm admins), junior lawyer (13), office staff (9, 10 for firm admins), client (9 steps, in English, Hindi or Gujarati).
+- Each role gets its own tour: senior lawyer (17 steps, 18 for firm admins), junior lawyer (14), office staff (15, 16 for firm admins), client (9 steps, in English, Hindi or Gujarati). Staff tours cover hearings to update, case and client pages, and the Calendar.
 - **Real accounts** see it once; it's saved on the server, so it won't repeat on another device. **Demo accounts** remember it per browser, so every person trying a demo account gets the tour.
 - To see it again: **Settings → Take the tour again**.
 - To replay it on a demo account from scratch, clear the site's local storage, or open a private window.

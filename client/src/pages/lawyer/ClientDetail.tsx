@@ -83,7 +83,7 @@ export default function ClientDetail() {
           )}
         </Card>
 
-        <div className="flex min-w-0 flex-col gap-3">
+        <div data-tour="client-detail-cases" className="flex min-w-0 flex-col gap-3">
           {data.cases.length === 0 && (
             <EmptyState icon={<CalendarDays className="size-6" strokeWidth={1.75} />} title="No cases yet">
               Add the first case for {client.name}.

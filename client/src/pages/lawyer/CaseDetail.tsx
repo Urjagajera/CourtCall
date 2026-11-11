@@ -90,7 +90,7 @@ export default function CaseDetail() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-4">
-          <Card>
+          <Card data-tour="case-details">
             <div className="flex items-center justify-between gap-2">
               <p className="text-h2">Case details</p>
               {c.status === 'closed' ? (
@@ -144,7 +144,7 @@ export default function CaseDetail() {
           </Card>
         </div>
 
-        <Card>
+        <Card data-tour="case-hearings">
           <p className="text-h2">Hearings</p>
           <ol className="mt-3 flex flex-col gap-4">
             {c.status === 'active' && (

@@ -18,6 +18,10 @@ export interface TourStep {
 /** The first courtroom card on Today links to its room. */
 const firstRoom = () => document.querySelector('[data-tour="room-card"]')?.getAttribute('href') ?? null
 
+/** First case / client link on the current page (Cases or Clients). */
+const firstCase = () => document.querySelector('main a[href^="/cases/"]')?.getAttribute('href') ?? null
+const firstClient = () => document.querySelector('main a[href^="/clients/"]')?.getAttribute('href') ?? null
+
 const welcome = (name: string): TourStep => ({
   id: 'welcome',
   title: `Welcome to CourtCall, ${name}`,
@@ -65,6 +69,36 @@ const shared = {
     target: 'live-dot',
     title: 'Live connection',
     body: 'Green means you are connected and updates arrive instantly. Amber means reconnecting; red means chat is offline (courtroom updates still work).',
+  },
+  hearings: {
+    id: 'hearings-to-update',
+    target: 'hearings-to-update',
+    route: '/',
+    optional: true,
+    title: 'Hearings to update',
+    body: 'After a hearing is over, it waits here for you. Tap Update: choose the next date (or that the case ended), write what happened, and note what to prepare. The client sees the next date and, if you allow it, what happened.',
+  },
+  caseDetails: {
+    id: 'case-details',
+    target: 'case-details',
+    route: firstCase,
+    optional: true,
+    title: 'Everything about a case',
+    body: 'Tap any case to open it: case number, court, next date and item, the junior in court, the client link and who looks after the client.',
+  },
+  caseHearings: {
+    id: 'case-hearings',
+    target: 'case-hearings',
+    optional: true,
+    title: 'Hearing history',
+    body: 'Every hearing with what happened (marked if the client can see it) and the firm-only notes on what to prepare. Edit notes with the pencil.',
+  },
+  calendar: {
+    id: 'calendar',
+    target: 'calendar-grid',
+    route: '/calendar',
+    title: 'Calendar',
+    body: 'Every hearing in one month view. Maroon dots are upcoming, taupe are held, amber still need an update. Tap a day to list its hearings, tap a hearing to open the case.',
   },
   settings: {
     id: 'settings',
@@ -117,6 +151,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         body: 'Every report, correction and undo is kept with the reporter’s name and time. Nothing is silently overwritten.',
       },
       shared.join,
+      shared.calendar,
       shared.chat,
       shared.live,
       shared.settings,
@@ -151,6 +186,15 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         },
       ]
 
+  const clientDetail: TourStep = {
+    id: 'client-detail',
+    target: 'client-detail-cases',
+    route: firstClient,
+    optional: true,
+    title: 'One client, all their cases',
+    body: 'Tap a client to see their phone, alert language, who looks after them, and every case (active and closed) with its latest note.',
+  }
+
   if (role === 'staff') {
     return [
       welcome(firstName),
@@ -159,12 +203,13 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         body: 'Every courtroom where your firm has a case today, with live progress. You watch courtrooms read-only; juniors report from inside.',
       },
       { ...shared.roomCard, body: 'The latest reported item in this courtroom, and how far away each of the firm’s cases is.' },
+      shared.hearings,
       {
         id: 'cases',
         target: 'add-case',
         route: '/cases',
         title: 'Keep the cause list updated',
-        body: 'Add each hearing: client, court complex, court number, date and item number, and assign the junior who will be in court.',
+        body: 'Add each case: client, case number, court complex, court number and next hearing date. Add the item number when the cause list is out, and assign the junior who will be in court.',
       },
       {
         id: 'client-link',
@@ -172,15 +217,19 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         route: '/cases',
         optional: true,
         title: 'Share the case with your client',
-        body: 'This button makes a private link for the client. Share it on WhatsApp: they see live progress for their own case and can chat with you. No app, no password. It locks to the first phone that opens it, and you can turn it off or make a new one anytime.',
+        body: 'This button makes a private link for the client (the case needs its case number first). Choose who looks after the client, then share it on WhatsApp: they see live progress, the next date and can chat with you. No app, no password. It locks to the first phone that opens it.',
       },
+      shared.caseDetails,
+      shared.caseHearings,
       {
         id: 'clients',
         target: 'add-client',
         route: '/clients',
         title: 'Clients',
-        body: 'Add clients with their WhatsApp number and alert language. They are private to your firm.',
+        body: 'Add clients with their WhatsApp number and alert language. You see the clients assigned to you (firm admins see all).',
       },
+      clientDetail,
+      shared.calendar,
       ...team,
       shared.chat,
       shared.settings,
@@ -193,13 +242,14 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
     welcome(firstName),
     shared.today,
     shared.roomCard,
+    shared.hearings,
     shared.join,
     {
       id: 'cases',
       target: 'add-case',
       route: '/cases',
       title: 'Cases',
-      body: 'Add each hearing from the cause list: client, court complex, court number, date and item number. You can also assign the junior who will be in court.',
+      body: 'Add each case: client, case number, court complex, court number and next hearing date. Add the item number when the cause list is out, and assign the junior who will be in court.',
     },
     {
       id: 'client-link',
@@ -207,15 +257,19 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
       route: '/cases',
       optional: true,
       title: 'Share the case with your client',
-      body: 'This button makes a private link for the client. Share it on WhatsApp: they see live progress for their own case and can chat with you. No app, no password. It locks to the first phone that opens it, and you can turn it off or make a new one anytime.',
+      body: 'This button makes a private link for the client (the case needs its case number first). Choose who looks after the client, then share it on WhatsApp: they see live progress, the next date and can chat with you. No app, no password. It locks to the first phone that opens it.',
     },
+    shared.caseDetails,
+    shared.caseHearings,
     {
       id: 'clients',
       target: 'add-client',
       route: '/clients',
       title: 'Clients',
-      body: 'Your clients are private to your office. Add their WhatsApp number and alert language; their private case link is shared from here.',
+      body: 'Add clients with their WhatsApp number and alert language. You see the clients assigned to you (firm admins see all).',
     },
+    clientDetail,
+    shared.calendar,
     ...team,
     {
       id: 'chat-list',
