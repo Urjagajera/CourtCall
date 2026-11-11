@@ -8,7 +8,10 @@ import { eq, inArray } from 'drizzle-orm'
 import { db, schema, sql } from '../db/index.js'
 import { hashPassword } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
+import { DEMO_ACCOUNTS, type DemoKey } from '../lib/demo.js'
 import { courtDate } from '../lib/engine.js'
+
+const acc = (k: DemoKey) => DEMO_ACCOUNTS.find((a) => a.key === k)!
 
 const CRED_FILE = new URL('../../.demo-credentials.txt', import.meta.url)
 const password = existsSync(CRED_FILE)
@@ -51,12 +54,12 @@ async function client(officeId: string, name: string, language: 'en' | 'hi' | 'g
   return c
 }
 
-await user('admin@courtcall.demo', 'CourtCall Admin', 'admin', null)
+await user(acc('admin').email, acc('admin').name, 'admin', null)
 
-const a = await office('mehta@courtcall.demo', 'Adv. Rakesh Mehta', 'Mehta & Associates', 'MEHTA4')
-const b = await office('desai@courtcall.demo', 'Adv. Nisha Desai', 'Desai Law Chambers', 'DESAI7')
-const juniorA = await user('priya@courtcall.demo', 'Priya Shah', 'junior', a.officeId)
-await user('arjun@courtcall.demo', 'Arjun Trivedi', 'junior', b.officeId)
+const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associates', 'MEHTA4')
+const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
+const juniorA = await user(acc('junior').email, acc('junior').name, 'junior', a.officeId)
+await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
 
 const court4 = await upsertCourtroom(COMPLEX, '4')
 const court7 = await upsertCourtroom(COMPLEX, '7')

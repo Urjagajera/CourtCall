@@ -136,15 +136,19 @@ This creates an admin, two law offices that share Court 4, juniors, clients and 
 npm --prefix server run seed:demo
 ```
 
-The demo logins and their shared password are written to `server/.demo-credentials.txt`. That file is git-ignored.
+**Demo login:** with `DEMO_LOGIN=true` in `server/.env` (the default), the sign-in page shows a **Try a demo account** panel. One tap signs you in as any of these, with no password:
 
-| Email | Role |
-|---|---|
-| `admin@courtcall.demo` | Platform admin (verifies lawyers) |
-| `mehta@courtcall.demo` | Senior lawyer, Mehta & Associates |
-| `priya@courtcall.demo` | Junior, Mehta & Associates |
-| `desai@courtcall.demo` | Senior lawyer, Desai Law Chambers |
-| `arjun@courtcall.demo` | Junior, Desai Law Chambers |
+| Demo button | Account | What you can try |
+|---|---|---|
+| Senior lawyer | `mehta@courtcall.demo` | Today dashboard, clients, cases, team approvals, client chat |
+| Junior lawyer | `priya@courtcall.demo` | Report live progress in Court 4 and Court 7, room chat |
+| Senior lawyer (2nd office) | `desai@courtcall.demo` | Same shared Court 4 room, different private office data |
+| Junior lawyer (2nd office) | `arjun@courtcall.demo` | Reports in Court 4 from another office |
+| Platform admin | `admin@courtcall.demo` | Verify new lawyers |
+
+The shared password for normal email sign-in is written to `server/.demo-credentials.txt`. That file is git-ignored. Set `DEMO_LOGIN=false` to hide the demo panel.
+
+**Tip:** to see two offices working in the same courtroom, open one browser normally and a second in a private/incognito window, then sign in as two different demo users.
 
 If you want your own admin account instead:
 
@@ -171,7 +175,7 @@ This starts both apps together:
 | Website (open this) | http://localhost:5173 |
 | API | http://localhost:4000 (health check: http://localhost:4000/api/health) |
 
-Open **http://localhost:5173** and sign in with a demo account. Stop everything with **Ctrl + C**.
+Open **http://localhost:5173**, click **Sign in**, and tap any **Try a demo account** button. Stop everything with **Ctrl + C**.
 
 Code changes reload automatically: the website hot-reloads and the API restarts on save.
 

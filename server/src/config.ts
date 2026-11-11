@@ -11,6 +11,8 @@ export const config = {
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+  // One-tap demo logins for judges and testers (accounts come from `npm run seed:demo`).
+  demoLogin: process.env.DEMO_LOGIN === 'true',
   nexconn: {
     appKey: process.env.NEXCONN_APP_KEY ?? '',
     appSecret: process.env.NEXCONN_APP_SECRET ?? '',

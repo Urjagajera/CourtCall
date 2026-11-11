@@ -94,9 +94,9 @@ export default function Landing() {
             >
               Start your office <ArrowRight className="size-5" strokeWidth={1.75} />
             </Link>
-            <a href="#demo" className="flex h-12 items-center gap-2 rounded-md border border-line bg-surface px-5 text-body font-semibold hover:bg-surface-raised">
-              Try the live demo
-            </a>
+            <Link to="/login" className="flex h-12 items-center gap-2 rounded-md border border-line bg-surface px-5 text-body font-semibold hover:bg-surface-raised">
+              Try a demo account
+            </Link>
           </div>
           <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-label">
             {['No app for clients', 'Works on any phone', 'Private per office'].map((t) => (

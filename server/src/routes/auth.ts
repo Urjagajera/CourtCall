@@ -2,7 +2,9 @@ import { randomBytes } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { Router } from 'express'
 import { z } from 'zod'
+import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
+import { DEMO_ACCOUNTS, type DemoKey } from '../lib/demo.js'
 import {
   checkPassword,
   clearSessionCookie,
@@ -107,6 +109,26 @@ authRouter.post('/login', async (req, res) => {
   if (!user || !(await checkPassword(body.password, user.passwordHash))) {
     throw unauthorized('Wrong email or password')
   }
+  setSessionCookie(res, user.id)
+  res.json({ user: publicUser(user) })
+})
+
+// ---- One-tap demo login (only when DEMO_LOGIN=true) ----
+
+authRouter.get('/demo', (_req, res) => {
+  res.json({
+    enabled: config.demoLogin,
+    accounts: config.demoLogin ? DEMO_ACCOUNTS.map(({ key, label, name, description }) => ({ key, label, name, description })) : [],
+  })
+})
+
+authRouter.post('/demo', async (req, res) => {
+  if (!config.demoLogin) throw new HttpError(404, 'Demo login is turned off')
+  const keys = DEMO_ACCOUNTS.map((a) => a.key) as [DemoKey, ...DemoKey[]]
+  const { account } = parse(z.object({ account: z.enum(keys) }), req.body)
+  const email = DEMO_ACCOUNTS.find((a) => a.key === account)!.email
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email))
+  if (!user) throw new HttpError(404, 'Demo data is missing. Run: npm --prefix server run seed:demo')
   setSessionCookie(res, user.id)
   res.json({ user: publicUser(user) })
 })

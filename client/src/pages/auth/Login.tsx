@@ -5,6 +5,7 @@ import { api, type User } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useForm } from '../../lib/useForm'
 import { AuthLayout } from './AuthLayout'
+import { DemoLogins } from './DemoLogins'
 
 export default function Login() {
   const { setSession } = useAuth()
@@ -12,7 +13,7 @@ export default function Login() {
   const { field, submit, submitting, formError } = useForm({ email: '', password: '' })
 
   return (
-    <AuthLayout title="Sign in" subtitle="For lawyers and junior lawyers">
+    <AuthLayout title="Sign in" subtitle="For lawyers and junior lawyers" before={<DemoLogins />}>
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {
