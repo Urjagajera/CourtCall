@@ -1,43 +1,69 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AppLayout } from './components/AppLayout'
+import { PageSpinner } from './components/ui'
+import type { Role } from './lib/api'
+import { AuthProvider, useAuth } from './lib/auth'
+import { useTheme } from './lib/theme'
+import Verify from './pages/admin/Verify'
+import Login from './pages/auth/Login'
+import Pending from './pages/auth/Pending'
+import Signup from './pages/auth/Signup'
+import Cases from './pages/lawyer/Cases'
+import Clients from './pages/lawyer/Clients'
+import Team from './pages/lawyer/Team'
+import Today from './pages/lawyer/Today'
+import Settings from './pages/Settings'
+
+/** Signed-in, verified staff only. Unverified users see the waiting screen. */
+function Protected({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return <PageSpinner />
+  if (!user) return <Navigate to="/login" replace />
+  if (user.verificationStatus !== 'verified') return <Pending />
+  return <>{children}</>
+}
+
+function RoleOnly({ roles, children }: { roles: Role[]; children: ReactNode }) {
+  const { user } = useAuth()
+  return roles.includes(user!.role) ? <>{children}</> : <Navigate to="/" replace />
+}
+
+function GuestOnly({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return <PageSpinner />
+  return user ? <Navigate to="/" replace /> : <>{children}</>
+}
 
 function Home() {
-  const [api, setApi] = useState<'checking' | 'ok' | 'down'>('checking')
+  const { user } = useAuth()
+  return user!.role === 'admin' ? <Navigate to="/admin" replace /> : <Today />
+}
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => setApi(r.ok ? 'ok' : 'down'))
-      .catch(() => setApi('down'))
-  }, [])
-
-  return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-4">
-      <div>
-        <h1 className="text-3xl font-bold text-brand-900">CourtCall</h1>
-        <p className="mt-2 text-slate-600">
-          Connecting courtroom progress with the people who need to know.
-        </p>
-      </div>
-      <p className="text-sm text-slate-500">
-        API:{' '}
-        <span
-          className={
-            api === 'ok' ? 'text-green-600' : api === 'down' ? 'text-red-600' : 'text-slate-400'
-          }
-        >
-          {api}
-        </span>
-      </p>
-    </main>
-  )
+function ThemeBoot() {
+  useTheme() // keeps the system theme listener active app-wide
+  return null
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <ThemeBoot />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
+          <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
+          <Route element={<Protected><AppLayout /></Protected>}>
+            <Route index element={<Home />} />
+            <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior']}><Cases /></RoleOnly>} />
+            <Route path="clients" element={<RoleOnly roles={['lawyer']}><Clients /></RoleOnly>} />
+            <Route path="team" element={<RoleOnly roles={['lawyer']}><Team /></RoleOnly>} />
+            <Route path="admin" element={<RoleOnly roles={['admin']}><Verify /></RoleOnly>} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

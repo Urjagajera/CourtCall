@@ -30,7 +30,8 @@ export function useTheme() {
     }
     if (pref !== 'system') return
     const mq = matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => apply('system')
+    // Re-read storage: another component may have switched to a fixed theme since.
+    const onChange = () => apply(readPref())
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [pref])
