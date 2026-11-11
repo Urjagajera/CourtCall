@@ -21,7 +21,6 @@ import Settings from './pages/Settings'
 import Chats from './pages/Chats'
 import AppStart from './pages/AppStart'
 import ClientCase from './pages/client/ClientCase'
-import Guide from './pages/Guide'
 import OpenLink from './pages/client/OpenLink'
 
 /** Signed-in, verified staff only. Unverified users see the waiting screen. */
@@ -67,8 +66,7 @@ export default function App() {
           {/* Clients: no account, opened from a WhatsApp link */}
           <Route path="/c/:token" element={<OpenLink />} />
           <Route path="/case" element={<ClientCase />} />
-          {/* Public help page, and where the installed app opens */}
-          <Route path="/guide" element={<Guide />} />
+          {/* Where the installed app opens */}
           <Route path="/app" element={<AppStart />} />
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />

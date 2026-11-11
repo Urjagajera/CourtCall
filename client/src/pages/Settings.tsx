@@ -1,5 +1,4 @@
-import { BookOpen, Compass, LogOut, Monitor, Moon, Sun } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Compass, LogOut, Monitor, Moon, Sun } from 'lucide-react'
 import { InstallApp } from '../components/InstallApp'
 import { useTour } from '../components/Tour'
 import { firstName, markTourSeen } from '../lib/tour'
@@ -67,9 +66,6 @@ export default function Settings() {
           </Button>
         </Card>
         <InstallApp />
-        <Link to="/guide" className="flex items-center gap-2 text-label font-semibold underline underline-offset-4">
-          <BookOpen className="size-4" strokeWidth={1.75} /> How to install and use CourtCall
-        </Link>
         <Button variant="secondary" onClick={logout} icon={<LogOut className="size-5" strokeWidth={1.75} />}>
           Sign out
         </Button>

@@ -38,9 +38,6 @@ export function AuthLayout({
           {subtitle && <p className="mt-1 text-label text-ink-muted">{subtitle}</p>}
           <div className="mt-5">{children}</div>
         </div>
-        <Link to="/guide" className="text-center text-label font-semibold underline underline-offset-4">
-          New here? Read the guide
-        </Link>
         <p className="text-center text-caption text-ink lg:hidden">
           eCourts tells you which day. CourtCall tells you the latest reported courtroom progress.
         </p>

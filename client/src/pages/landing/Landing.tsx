@@ -81,7 +81,6 @@ export default function Landing() {
             <a href="#demo" className="hover:underline underline-offset-4">Live demo</a>
             <a href="#roles" className="hover:underline underline-offset-4">Who it's for</a>
             <a href="#trust" className="hover:underline underline-offset-4">Reliability</a>
-            <Link to="/guide" className="hover:underline underline-offset-4">Guide</Link>
           </nav>
           <div className="flex items-center gap-2">
             <div className="hidden sm:block">
@@ -233,8 +232,7 @@ export default function Landing() {
           <Logo />
           <p className="max-w-2xl text-caption text-ink-muted">
             CourtCall shows the latest courtroom progress reported by verified lawyers and juniors. It does not predict hearing
-            times and is not affiliated with eCourts or any official court system.{' '}
-            <Link to="/guide" className="font-semibold text-ink underline underline-offset-4">How to install and use CourtCall</Link>
+            times and is not affiliated with eCourts or any official court system.
           </p>
         </div>
       </footer>
