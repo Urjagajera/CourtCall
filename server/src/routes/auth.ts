@@ -11,6 +11,7 @@ import {
   hashPassword,
   currentUser,
   publicUser,
+  requireAuth,
   setSessionCookie,
 } from '../lib/auth.js'
 import { HttpError, badRequest, parse, unauthorized } from '../lib/http.js'
@@ -130,6 +131,16 @@ authRouter.post('/demo', async (req, res) => {
   const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email))
   if (!user) throw new HttpError(404, 'Demo data is missing. Run: npm --prefix server run seed:demo')
   setSessionCookie(res, user.id)
+  res.json({ user: publicUser(user) })
+})
+
+/** Marks the first-login guided tour as seen (finished or ended early). */
+authRouter.post('/tour', requireAuth, async (req, res) => {
+  const [user] = await db
+    .update(schema.users)
+    .set({ tourCompletedAt: new Date() })
+    .where(eq(schema.users.id, req.user!.id))
+    .returning()
   res.json({ user: publicUser(user) })
 })
 

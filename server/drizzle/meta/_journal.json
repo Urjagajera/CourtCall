@@ -15,6 +15,13 @@
       "when": 1794375943202,
       "tag": "0001_courtroom_case_insensitive",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794376394691,
+      "tag": "0002_user_tour",
+      "breakpoints": true
     }
   ]
 }

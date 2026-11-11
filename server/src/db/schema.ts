@@ -48,6 +48,8 @@ export const users = pgTable('users', {
   barCouncilNo: text('bar_council_no'),
   verificationStatus: verificationStatus('verification_status').notNull().default('pending'),
   officeId: uuid('office_id').references((): AnyPgColumn => offices.id, { onDelete: 'set null' }),
+  // Set when the user finishes or ends the first-login guided tour.
+  tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
   createdAt: createdAt(),
 })
 
