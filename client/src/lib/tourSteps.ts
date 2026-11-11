@@ -1,0 +1,188 @@
+import type { Role } from './api'
+
+/**
+ * One stop of the guided tour.
+ * - target: value of a `data-tour="..."` attribute to spotlight. Omit for a centered card.
+ * - route: page to open first. A function resolves it from the current page (e.g. "the first courtroom").
+ * - optional: if the target isn't on screen (e.g. no courtroom today), the step is skipped.
+ */
+export interface TourStep {
+  id: string
+  title: string
+  body: string
+  target?: string
+  route?: string | (() => string | null)
+  optional?: boolean
+}
+
+/** The first courtroom card on Today links to its room. */
+const firstRoom = () => document.querySelector('[data-tour="room-card"]')?.getAttribute('href') ?? null
+
+const welcome = (name: string): TourStep => ({
+  id: 'welcome',
+  title: `Welcome to CourtCall, ${name}`,
+  body: 'Take a quick tour of where everything is. Use Next and Back to move, or End tour at any time. You can restart it later from Settings.',
+})
+
+const finish: TourStep = {
+  id: 'finish',
+  title: "You're all set",
+  body: 'That is everything you need for a court day. Restart this tour any time from Settings → Take the tour again.',
+}
+
+const shared = {
+  today: {
+    id: 'nav-today',
+    target: 'nav-today',
+    route: '/',
+    title: 'Today',
+    body: 'Your court day at a glance: every courtroom where your office has a case today, with live progress.',
+  },
+  roomCard: {
+    id: 'room-card',
+    target: 'room-card',
+    route: '/',
+    optional: true,
+    title: 'Live courtroom card',
+    body: 'The big number is the latest reported item in this courtroom. Below it are your office’s cases there and how far away each one is (for example "3 away"). Stale or break status shows on the badge.',
+  },
+  join: {
+    id: 'join',
+    target: 'join-courtroom',
+    route: '/',
+    title: 'Join any courtroom',
+    body: 'Covering a different courtroom today? Join it here. Courtroom progress is shared with verified lawyers and juniors from every office in that room.',
+  },
+  chat: {
+    id: 'nav-chat',
+    target: 'nav-chat',
+    route: '/chats',
+    title: 'Chat',
+    body: 'Private conversations powered by Nexconn: your office team room, and for senior lawyers, a private chat with every client.',
+  },
+  live: {
+    id: 'live-dot',
+    target: 'live-dot',
+    title: 'Live connection',
+    body: 'Green means you are connected and updates arrive instantly. Amber means reconnecting; red means chat is offline (courtroom updates still work).',
+  },
+  settings: {
+    id: 'settings',
+    target: 'nav-settings',
+    title: 'Settings',
+    body: 'Switch between light and dark mode, restart this tour, or sign out.',
+  },
+} satisfies Record<string, TourStep>
+
+export function tourStepsFor(role: Role, firstName: string): TourStep[] {
+  if (role === 'admin') {
+    return [
+      welcome(firstName),
+      {
+        id: 'verify-tabs',
+        target: 'verify-tabs',
+        route: '/admin',
+        title: 'Verification queue',
+        body: 'New senior lawyers wait here. Switch between pending, verified and rejected accounts.',
+      },
+      {
+        id: 'verify-list',
+        target: 'verify-list',
+        route: '/admin',
+        optional: true,
+        title: 'Check and approve',
+        body: 'Compare the Bar Council enrolment number before tapping Verify. Only verified lawyers can use courtrooms and add clients.',
+      },
+      shared.settings,
+      finish,
+    ]
+  }
+
+  if (role === 'junior') {
+    return [
+      welcome(firstName),
+      shared.today,
+      shared.roomCard,
+      {
+        id: 'room-progress',
+        target: 'room-progress',
+        route: firstRoom,
+        optional: true,
+        title: 'Inside a courtroom',
+        body: 'This is the shared progress for the whole courtroom. "Updated 2 min ago" tells everyone how fresh it is; after 20 minutes without updates it is marked stale.',
+      },
+      {
+        id: 'room-stepper',
+        target: 'room-report',
+        optional: true,
+        title: 'Report in one tap',
+        body: 'The button is already set to the next item. Use −1 / +1 or type a number, then tap Now hearing. Every update can be undone for 10 seconds.',
+      },
+      {
+        id: 'room-events',
+        target: 'room-events',
+        optional: true,
+        title: 'Other courtroom events',
+        body: 'Passed over and Adjourned apply to the item being heard. Recalled lets you pick a passed-over item. Break, Not sitting and Court risen describe the whole courtroom.',
+      },
+      {
+        id: 'room-chat',
+        target: 'room-chat',
+        optional: true,
+        title: 'Room chat',
+        body: 'Talk to everyone in this courtroom, from any office. Every accepted update also appears here automatically.',
+      },
+      {
+        id: 'room-history',
+        target: 'room-history',
+        optional: true,
+        title: 'Update history',
+        body: 'Every report, correction and undo is kept with the reporter’s name and time. Nothing is silently overwritten.',
+      },
+      shared.join,
+      shared.chat,
+      shared.live,
+      shared.settings,
+      finish,
+    ]
+  }
+
+  // Senior lawyer
+  return [
+    welcome(firstName),
+    shared.today,
+    shared.roomCard,
+    shared.join,
+    {
+      id: 'cases',
+      target: 'add-case',
+      route: '/cases',
+      title: 'Cases',
+      body: 'Add each hearing from the cause list: client, court complex, court number, date and item number. You can also assign the junior who will be in court.',
+    },
+    {
+      id: 'clients',
+      target: 'add-client',
+      route: '/clients',
+      title: 'Clients',
+      body: 'Your clients are private to your office. Add their WhatsApp number and alert language; their private case link is shared from here.',
+    },
+    {
+      id: 'team',
+      target: 'invite-code',
+      route: '/team',
+      title: 'Your team',
+      body: 'Juniors sign up with this invite code. They can use CourtCall only after you approve them on this page.',
+    },
+    {
+      id: 'chat-list',
+      target: 'chat-list',
+      route: '/chats',
+      title: 'Chats',
+      body: 'Your office team room and a private chat with each client, powered by Nexconn. Client messages arrive here in real time.',
+    },
+    shared.live,
+    shared.settings,
+    finish,
+  ]
+}

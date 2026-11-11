@@ -42,7 +42,7 @@ export default function Chats() {
       <PageHeader title="Chat" subtitle="Private to your office. Powered by Nexconn." />
       {chat.status === 'error' && <Banner tone="stopped">{chat.error}</Banner>}
       <div className="grid gap-4 lg:h-[calc(100vh-12rem)] lg:grid-cols-[20rem_1fr]">
-        <ul className={cx('flex flex-col gap-1 overflow-y-auto rounded-lg border border-line bg-surface p-2', active && 'hidden lg:flex')}>
+        <ul data-tour="chat-list" className={cx('flex flex-col gap-1 overflow-y-auto rounded-lg border border-line bg-surface p-2', active && 'hidden lg:flex')}>
           {convs.length === 0 && <li className="p-3 text-label text-ink-muted">{chat.status === 'ready' ? 'No conversations yet.' : 'Connecting…'}</li>}
           {convs.map((c) => (
             <li key={c.key}>

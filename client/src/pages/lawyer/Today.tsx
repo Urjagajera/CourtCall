@@ -8,15 +8,11 @@ import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { statusMeta, timeAgo, useNow, usePolling, type Courtroom, type MyCase, type SessionState } from '../../lib/court'
 import { formatDate } from '../../lib/dates'
+import { firstName } from '../../lib/tour'
 import { useForm } from '../../lib/useForm'
 
 type TodaySession = SessionState & { courtroom: Courtroom; myCases: MyCase[] }
 
-/** "Adv. Rakesh Mehta" -> "Rakesh" (skips honorifics common in Indian legal practice). */
-function firstName(name: string) {
-  const honorifics = /^(adv|advocate|dr|mr|mrs|ms|shri|smt|sri|kum)\.?$/i
-  return name.split(/\s+/).find((w) => !honorifics.test(w)) ?? name
-}
 
 // Day view: every courtroom I follow today, with live progress and my office's cases in it.
 export default function Today() {
@@ -45,7 +41,7 @@ export default function Today() {
         title={`Good day, ${firstName(user!.name)}`}
         subtitle={data ? formatDate(data.date) : undefined}
         action={
-          <Button variant="secondary" onClick={() => setJoinOpen(true)} icon={<LogIn className="size-5" strokeWidth={1.75} />}>
+          <Button data-tour="join-courtroom" variant="secondary" onClick={() => setJoinOpen(true)} icon={<LogIn className="size-5" strokeWidth={1.75} />}>
             Join courtroom
           </Button>
         }
@@ -76,7 +72,7 @@ function RoomCard({ s, now }: { s: TodaySession; now: number }) {
   const recall = s.hearingItem != null && s.currentItem != null && s.hearingItem !== s.currentItem
 
   return (
-    <Link to={`/room/${s.id}`} className="group block rounded-lg focus-visible:outline-none">
+    <Link to={`/room/${s.id}`} data-tour="room-card" className="group block rounded-lg focus-visible:outline-none">
       <Card className="h-full transition-colors group-hover:border-accent">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">

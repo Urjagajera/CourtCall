@@ -3,6 +3,7 @@ import {
   forwardRef,
   useId,
   type ButtonHTMLAttributes,
+  type HTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -47,8 +48,12 @@ export function Button({ variant = 'primary', size = 'md', loading, icon, classN
 
 // ---------- Card ----------
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cx('rounded-lg border border-line bg-surface p-4 shadow-card', className)}>{children}</div>
+export function Card({ className, children, ...rest }: HTMLAttributes<HTMLDivElement> & { 'data-tour'?: string }) {
+  return (
+    <div className={cx('rounded-lg border border-line bg-surface p-4 shadow-card', className)} {...rest}>
+      {children}
+    </div>
+  )
 }
 
 // ---------- Form fields ----------

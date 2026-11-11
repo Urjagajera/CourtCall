@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/landing/Landing'
 import { AppLayout } from './components/AppLayout'
+import { TourProvider } from './components/Tour'
 import { PageSpinner } from './components/ui'
 import type { Role } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
@@ -55,6 +56,7 @@ export default function App() {
     <AuthProvider>
       <ThemeBoot />
       <BrowserRouter>
+        <TourProvider>
         <Routes>
           <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
@@ -70,6 +72,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </TourProvider>
       </BrowserRouter>
     </AuthProvider>
   )

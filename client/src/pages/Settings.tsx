@@ -1,4 +1,7 @@
-import { LogOut, Monitor, Moon, Sun } from 'lucide-react'
+import { Compass, LogOut, Monitor, Moon, Sun } from 'lucide-react'
+import { useTour } from '../components/Tour'
+import { firstName, markTourSeen } from '../lib/tour'
+import { tourStepsFor } from '../lib/tourSteps'
 import { PageHeader } from '../components/AppLayout'
 import { Button, Card, cx } from '../components/ui'
 import { useAuth } from '../lib/auth'
@@ -13,6 +16,7 @@ const OPTIONS: [ThemePref, string, typeof Sun][] = [
 export default function Settings() {
   const { user, office, logout } = useAuth()
   const { pref, setPref } = useTheme()
+  const tour = useTour()
 
   return (
     <>
@@ -43,6 +47,20 @@ export default function Settings() {
               </button>
             ))}
           </div>
+        </Card>
+        <Card className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-h2">Guided tour</p>
+            <p className="text-label text-ink-muted">See where everything is and what each feature does.</p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Compass className="size-4" strokeWidth={1.75} />}
+            onClick={() => tour.start(tourStepsFor(user!.role, firstName(user!.name)), () => markTourSeen(user!))}
+          >
+            Take the tour again
+          </Button>
         </Card>
         <Button variant="secondary" onClick={logout} icon={<LogOut className="size-5" strokeWidth={1.75} />}>
           Sign out

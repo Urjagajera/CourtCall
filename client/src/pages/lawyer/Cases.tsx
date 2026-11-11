@@ -36,7 +36,7 @@ export default function Cases() {
         subtitle="Upcoming hearings by date"
         action={
           isLawyer && (
-            <Button onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
+            <Button data-tour="add-case" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
               Add case
             </Button>
           )

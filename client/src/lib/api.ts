@@ -38,6 +38,7 @@ export interface User {
   barCouncilNo: string | null
   verificationStatus: Verification
   officeId: string | null
+  tourCompletedAt: string | null
   createdAt: string
 }
 

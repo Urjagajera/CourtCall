@@ -3,6 +3,9 @@ import { useEffect } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { startChat, useChat } from '../lib/nexconn'
+import { firstName, markTourSeen, tourSeen } from '../lib/tour'
+import { tourStepsFor } from '../lib/tourSteps'
+import { useTour } from './Tour'
 import { Logo } from './Logo'
 import { cx } from './ui'
 
@@ -35,8 +38,21 @@ export function AppLayout() {
     if (user!.role !== 'admin') startChat()
   }, [user])
 
+  // First login: start the guided tour once the first page has rendered.
+  const tour = useTour()
+  const userId = user!.id
+  useEffect(() => {
+    const u = user!
+    if (tourSeen(u)) return
+    const t = setTimeout(() => tour.start(tourStepsFor(u.role, firstName(u.name)), () => markTourSeen(u)), 900)
+    return () => clearTimeout(t)
+    // Only once per signed-in user, not on every profile refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
+
   const chatDot = user!.role !== 'admin' && (
     <span
+      data-tour="live-dot"
       title={chat.status === 'ready' ? 'Live' : chat.status === 'error' ? (chat.error ?? 'Chat offline') : 'Connecting'}
       className={cx(
         'size-2.5 rounded-full',
@@ -56,6 +72,7 @@ export function AppLayout() {
               key={to}
               to={to}
               end={to === '/'}
+              data-tour={`nav-${label.toLowerCase()}`}
               className={({ isActive }) =>
                 cx(
                   'flex h-11 items-center gap-3 rounded-md px-3 text-body transition-colors',
@@ -82,7 +99,7 @@ export function AppLayout() {
           <div className="flex min-w-0 items-center gap-2">
             {chatDot}
             <span className="truncate text-label text-ink-muted">{office?.name}</span>
-            <Link to="/settings" aria-label="Settings" className="flex size-10 shrink-0 items-center justify-center rounded-md hover:bg-surface-raised">
+            <Link to="/settings" data-tour="nav-settings" aria-label="Settings" className="flex size-10 shrink-0 items-center justify-center rounded-md hover:bg-surface-raised">
               <Settings className="size-5" strokeWidth={1.75} />
             </Link>
           </div>
@@ -100,6 +117,7 @@ export function AppLayout() {
                 key={to}
                 to={to}
                 end={to === '/'}
+                data-tour={`nav-${label.toLowerCase()}`}
                 className={({ isActive }) =>
                   cx('relative flex h-16 flex-1 flex-col items-center justify-center gap-0.5 text-caption', isActive ? 'font-semibold text-ink' : 'text-ink-muted')
                 }

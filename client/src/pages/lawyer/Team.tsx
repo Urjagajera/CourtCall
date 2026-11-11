@@ -26,7 +26,7 @@ export default function Team() {
         <PageSpinner />
       ) : data ? (
         <div className="grid gap-4 lg:grid-cols-[22rem_1fr]">
-          <Card>
+          <Card data-tour="invite-code">
             <p className="flex items-center gap-2 text-h2">
               <KeyRound className="size-5" strokeWidth={1.75} /> Office invite code
             </p>

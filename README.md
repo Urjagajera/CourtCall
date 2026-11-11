@@ -257,6 +257,16 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 **Client (coming next)**
 - The client's private WhatsApp link page (case progress, alerts, chat with the lawyer) is the next module. A client demo button will be added with it.
 
+### Guided tour (first login)
+
+The first time someone signs in, CourtCall starts a guided tour. It dims the page, zooms a spotlight onto one feature at a time, and explains what that feature does and how it works. The tour moves between pages by itself (for juniors, it opens a courtroom and walks through the reporting buttons).
+
+- **Next / Back** (or the arrow keys) move between steps. **End tour** (or Esc) stops it at any point.
+- Each role gets its own tour: senior lawyer (10 steps), junior lawyer (13), platform admin (5).
+- **Real accounts** see it once; it's saved on the server, so it won't repeat on another device. **Demo accounts** remember it per browser, so every person trying a demo account gets the tour.
+- To see it again: **Settings → Take the tour again**.
+- To replay it on a demo account from scratch, clear the site's local storage, or open a private window.
+
 ### Suggested walkthrough (about 5 minutes, good for the demo video)
 
 1. **Landing page:** open http://localhost:5173 and scroll through it. Try the interactive demo, including **Simulate a delayed old update**.

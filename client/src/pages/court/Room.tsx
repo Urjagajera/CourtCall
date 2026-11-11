@@ -234,7 +234,7 @@ export default function Room() {
       </div>
 
       {/* Current progress */}
-      <Card className="text-center">
+      <Card data-tour="room-progress" className="text-center">
         <p className="text-label text-ink-muted">{recallActive ? 'Recalled item being heard' : 'Latest reported progress'}</p>
         <p className="tabular text-display text-ink">{(recallActive ? hearing : session.currentItem) ?? '—'}</p>
         {recallActive && <p className="text-label text-ink-muted">Cause list progress: Item {session.currentItem}</p>}
@@ -249,7 +249,7 @@ export default function Room() {
       </Card>
 
       {/* Main action: stepper + Now hearing */}
-      <Card className="flex flex-col gap-3">
+      <Card data-tour="room-report" className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <StepButton label="Previous item" icon={Minus} onClick={() => { touched.current = true; setDraft((d) => Math.max(1, d - 1)) }} />
           <input
@@ -278,7 +278,7 @@ export default function Room() {
       </Card>
 
       {/* Secondary events */}
-      <div className="grid grid-cols-2 gap-2">
+      <div data-tour="room-events" className="grid grid-cols-2 gap-2">
         <EventButton
           icon={SkipForward}
           tone="waiting"
@@ -363,7 +363,7 @@ export default function Room() {
 
       <div className="flex min-w-0 flex-col gap-4">
       {/* Shared courtroom chat (all verified members of this room, any office) */}
-      <section aria-label="Courtroom chat">
+      <section data-tour="room-chat" aria-label="Courtroom chat">
         <p className="mb-2 flex items-center justify-between text-h2">
           Room chat
           <span className="text-caption font-normal text-ink-muted">{members.length} members · all offices</span>
@@ -379,7 +379,7 @@ export default function Room() {
       </section>
 
       {/* History */}
-      <Card className="p-0">
+      <Card data-tour="room-history" className="p-0">
         <button
           onClick={() => setHistoryOpen((o) => !o)}
           aria-expanded={historyOpen}

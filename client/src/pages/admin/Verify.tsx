@@ -20,7 +20,7 @@ export default function Verify() {
   return (
     <>
       <PageHeader title="Lawyer verification" subtitle="Check Bar Council enrolment before approving" />
-      <div className="mb-4 inline-flex gap-1 rounded-md border border-line bg-surface p-1">
+      <div data-tour="verify-tabs" className="mb-4 inline-flex gap-1 rounded-md border border-line bg-surface p-1">
         {(['pending', 'verified', 'rejected'] as const).map((s) => (
           <button
             key={s}
@@ -35,7 +35,7 @@ export default function Verify() {
       {loading && !data ? (
         <PageSpinner />
       ) : data?.lawyers.length ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div data-tour="verify-list" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {data.lawyers.map((l) => (
             <Card key={l.id}>
               <p className="text-body font-semibold">{l.name}</p>

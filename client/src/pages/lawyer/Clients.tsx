@@ -23,7 +23,7 @@ export default function Clients() {
         title="Clients"
         subtitle="Private to your office"
         action={
-          <Button onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
+          <Button data-tour="add-client" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
             Add client
           </Button>
         }
