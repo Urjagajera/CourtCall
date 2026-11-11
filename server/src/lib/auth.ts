@@ -49,7 +49,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
   }
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId))
   if (!user) throw unauthorized()
-  req.user = user
+  req.user = withAdminRule(user)
   next()
 }
 
@@ -89,7 +89,13 @@ export function requireFirmAdmin(req: Request, _res: Response, next: NextFunctio
 }
 
 /** Strips secrets before sending a user to the browser. */
+/** Only senior lawyers can be firm admins: the flag is ignored for juniors and office staff. */
+export const isAdminRole = (role: string) => role === 'lawyer'
+export function withAdminRule<T extends { role: string; isFirmAdmin: boolean }>(u: T): T {
+  return isAdminRole(u.role) ? u : { ...u, isFirmAdmin: false }
+}
+
 export function publicUser(u: User) {
-  const { passwordHash: _omit, ...rest } = u
+  const { passwordHash: _omit, ...rest } = withAdminRule(u)
   return rest
 }

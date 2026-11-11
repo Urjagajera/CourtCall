@@ -173,7 +173,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
           target: 'team-members',
           route: '/team',
           title: 'Manage everyone',
-          body: 'Change anyone’s role, make another lawyer or staff member a firm admin, or deactivate someone who has left the firm.',
+          body: 'Change anyone’s role, make another senior lawyer a firm admin, or deactivate someone who has left the firm.',
         },
       ]
     : [

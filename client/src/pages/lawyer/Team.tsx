@@ -174,7 +174,7 @@ export default function Team() {
                                 </option>
                               ))}
                             </select>
-                            {m.role !== 'junior' && !founder && (
+                            {m.role === 'lawyer' && !founder && (
                               <Button
                                 size="sm"
                                 variant="secondary"

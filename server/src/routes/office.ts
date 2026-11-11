@@ -37,7 +37,7 @@ officeRouter.get('/', async (req, res) => {
       ? members.map(publicUser)
       : members
           .filter((m) => m.verificationStatus === 'verified')
-          .map((m) => ({ id: m.id, name: m.name, role: m.role, isFirmAdmin: m.isFirmAdmin, verificationStatus: m.verificationStatus })),
+          .map((m) => ({ id: m.id, name: m.name, role: m.role, isFirmAdmin: m.isFirmAdmin && m.role === 'lawyer', verificationStatus: m.verificationStatus })),
   })
 })
 
@@ -66,7 +66,7 @@ officeRouter.get('/people', async (req, res) => {
       ),
     )
     .orderBy(asc(schema.users.role), asc(schema.users.name))
-  res.json({ people })
+  res.json({ people: people.map((p) => ({ ...p, isFirmAdmin: p.isFirmAdmin && p.role === 'lawyer' })) })
 })
 
 officeRouter.post('/members/:id/verification', requireFirmAdmin, async (req, res) => {
@@ -97,14 +97,19 @@ officeRouter.patch('/members/:id', requireFirmAdmin, async (req, res) => {
   const m = await colleague(admin.id, office.id, String(req.params.id))
   if (m.id === office.ownerId && body.isFirmAdmin === false) throw badRequest('The firm founder always stays a firm admin')
   if (body.isFirmAdmin && m.verificationStatus !== 'verified') throw badRequest('Approve this person before making them a firm admin')
-  if (body.isFirmAdmin && (body.role ?? m.role) === 'junior') throw badRequest('Juniors cannot be firm admins')
+  // Only senior lawyers can be firm admins (never juniors or office staff).
+  if (body.isFirmAdmin && (body.role ?? m.role) !== 'lawyer') throw badRequest('Only senior lawyers can be firm admins')
   if (m.id === office.ownerId && body.role && body.role !== 'lawyer') throw badRequest('The firm founder must stay a senior lawyer')
   const [updated] = await db
     .update(schema.users)
     .set({
       ...(body.role ? { role: body.role } : {}),
-      // A person moved to junior loses admin rights.
-      ...(body.isFirmAdmin !== undefined ? { isFirmAdmin: body.isFirmAdmin } : body.role === 'junior' ? { isFirmAdmin: false } : {}),
+      // Moving someone to junior or staff removes admin rights.
+      ...(body.isFirmAdmin !== undefined
+        ? { isFirmAdmin: body.isFirmAdmin }
+        : body.role && body.role !== 'lawyer'
+          ? { isFirmAdmin: false }
+          : {}),
     })
     .where(eq(schema.users.id, m.id))
     .returning()

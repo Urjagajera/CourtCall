@@ -231,7 +231,7 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
         inArray(schema.users.role, ['lawyer', 'staff']),
         // Only the people who look after this client, plus the firm admins.
         or(
-          eq(schema.users.isFirmAdmin, true),
+          and(eq(schema.users.isFirmAdmin, true), eq(schema.users.role, 'lawyer')),
           inArray(
             schema.users.id,
             db.select({ id: schema.clientAssignments.userId }).from(schema.clientAssignments).where(eq(schema.clientAssignments.clientId, ctx.client.id)),

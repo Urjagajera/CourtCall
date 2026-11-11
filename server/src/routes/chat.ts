@@ -35,7 +35,7 @@ chatRouter.post('/token', requireAuth, requireVerified, requireRole('lawyer', 'j
       }
       await joinGroup(groupId, [ncId])
     })
-    team = { groupId, name: office.name, members: staff.map((s) => ({ ncId: ncStaffId(s.id), name: s.name, role: s.role, isFirmAdmin: s.isFirmAdmin })) }
+    team = { groupId, name: office.name, members: staff.map((s) => ({ ncId: ncStaffId(s.id), name: s.name, role: s.role, isFirmAdmin: s.isFirmAdmin && s.role === 'lawyer' })) }
   }
 
   const today = await db
