@@ -1,5 +1,4 @@
 import { Compass, LogOut, Monitor, Moon, Sun } from 'lucide-react'
-import { InstallApp } from '../components/InstallApp'
 import { useTour } from '../components/Tour'
 import { firstName, markTourSeen } from '../lib/tour'
 import { tourStepsFor } from '../lib/tourSteps'
@@ -65,7 +64,6 @@ export default function Settings() {
             Take the tour again
           </Button>
         </Card>
-        <InstallApp />
         <Button variant="secondary" onClick={logout} icon={<LogOut className="size-5" strokeWidth={1.75} />}>
           Sign out
         </Button>

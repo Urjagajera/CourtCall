@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { InstallApp } from '../../components/InstallApp'
 import { Logo } from '../../components/Logo'
 import { cx } from '../../components/ui'
 import { prefersReducedMotion, useReveal } from '../../lib/useReveal'
@@ -83,9 +82,6 @@ export default function Landing() {
             <a href="#trust" className="hover:underline underline-offset-4">Reliability</a>
           </nav>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:block">
-              <InstallApp compact />
-            </div>
             <Link to="/login" className="flex h-10 items-center rounded-md px-3 text-label font-semibold hover:bg-surface/60">
               Sign in
             </Link>

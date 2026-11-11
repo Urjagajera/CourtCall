@@ -15,7 +15,7 @@ CourtCall runs in the browser, so there's nothing to download from a store. Inst
 ### Android (Chrome)
 
 1. Open **https://courtcall-kappa.vercel.app** in **Chrome**.
-2. Tap **Install app** if CourtCall shows it, or open Chrome's **⋮** menu and tap **Install app** (on some phones it says **Add to Home screen**).
+2. Open Chrome's **⋮** menu and tap **Install app** (on some phones it says **Add to Home screen**).
 3. Tap **Install**. The CourtCall icon appears on your home screen and in your app drawer.
 4. Open CourtCall from the icon. It opens straight to your dashboard, or to your case if you're a client.
 

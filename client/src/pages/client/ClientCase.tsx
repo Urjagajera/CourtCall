@@ -1,7 +1,6 @@
 import { BellOff, BellRing, CalendarDays, Hash, Info, Landmark, MessageCircle, RefreshCw, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { ChatPanel } from '../../components/ChatPanel'
-import { InstallApp } from '../../components/InstallApp'
 import { Logo } from '../../components/Logo'
 import { Badge, Banner, Button, Card, PageSpinner, cx } from '../../components/ui'
 import { api } from '../../lib/api'
@@ -192,7 +191,6 @@ export default function ClientCase() {
 
         <div className="flex min-w-0 flex-col gap-4">
           <AlertsCard />
-          <InstallApp />
           {data.kind === 'client' ? (
             <ClientChat firm={data.firmName} />
           ) : (
