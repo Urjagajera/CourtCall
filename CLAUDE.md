@@ -143,7 +143,7 @@ Done (in order):
 **Not done yet:**
 
 11. Automatic client alerts: rules in `server/src/lib/alertRules.ts` (unit tested), sending in `alerts.ts` (dedupe via `alert_logs`, Nexconn bot DM `CC:Alert`, Web Push in `push.ts`), client page banner + "Turn on alerts" (`client/public/sw.js`, `client/src/lib/push.ts`)
-12. **Deploy** ← next: API near the Tokyo database on a long-running host (alerts run after the response), frontend on Vercel or similar, with demo data
+12. **Deploy** ← in progress: repo is ready for Vercel Hobby (free). `vercel.json` builds server + client, serves client/dist, rewrites /api/* to the function pi/index.js (imports server/dist), region hnd1 (Tokyo). Alerts use waitUntil on Vercel. Remaining: Urja imports the repo on vercel.com and sets env vars (README Part 4)
 13. Polish on real phones; family links; Gujarati/Hindi alert templates; PWA install
 14. Real-user testing with actual lawyers/juniors/clients (traction bonus); record usage numbers
 15. Demo video + PDF write-up + submit by 22 Nov
@@ -174,7 +174,7 @@ Done (in order):
 - Cases page: add a "Client link" button per case. It opens a sheet listing links (active / opened on a phone / revoked), with create, copy, **Share on WhatsApp** (`https://wa.me/91<10-digit phone>?text=…`), revoke and reissue. Warn: "Opening the link yourself locks it to your phone."
 - Seed: create a demo client link for "Patel vs State of Gujarat". Add a "Client" demo button that calls `/api/c/demo` and goes to `/case`.
 - The seeded demo link is never bound to a phone and is hidden from the firm's link list, so nobody can break the Client demo button.
-- Alerts run **after** the event response is sent (fire-and-forget) to keep the junior's tap fast. This needs a long-running API host. On a serverless host, await `alertClients` instead.
+- Alerts run **after** the event response is sent to keep the junior's tap fast. On Vercel, `waitUntil` (from `@vercel/functions`) keeps the function alive until they finish.
 - Silent bookkeeping rows in `alert_logs` (skipped thresholds) have an empty `message` and are never shown.
 
 ---

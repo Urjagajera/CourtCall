@@ -16,6 +16,8 @@ import { officeRouter } from './routes/office.js'
 
 export const app = express()
 
+// Behind Vercel's / a host's proxy: trust it so secure cookies and client IPs work.
+app.set('trust proxy', 1)
 app.use(cors({ origin: config.clientOrigin, credentials: true }))
 app.use(express.json({ limit: '100kb' }))
 app.use(cookieParser())

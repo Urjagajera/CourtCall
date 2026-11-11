@@ -350,6 +350,39 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 
 ---
 
+## Part 4: Deploy online for free (Vercel)
+
+The repo is ready for **Vercel's free Hobby plan**: one project serves the website (from Vercel's CDN) and the API (a serverless function in **Tokyo**, next to the Supabase database). It never sleeps and needs no card. Settings live in `vercel.json` and `api/index.js`.
+
+### First deploy (about 10 minutes)
+
+1. Go to https://vercel.com and choose **Sign up → Continue with GitHub** (Hobby plan).
+2. **Add New → Project**, then **Import** the `CourtCall` repository.
+3. Leave **Framework Preset: Other** and **Root Directory** as the repo root. The build and install commands come from `vercel.json`.
+4. Open **Environment Variables** and add each of these, copying values from your `server/.env`:
+
+| Name | Value |
+|---|---|
+| `DATABASE_URL` | Supabase transaction pooler string (port 6543) |
+| `JWT_SECRET` | same long random string |
+| `NEXCONN_APP_KEY`, `NEXCONN_APP_SECRET`, `NEXCONN_API_BASE` | Nexconn keys |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push keys |
+| `DEMO_LOGIN` | `true` (one-tap demo buttons for judges) |
+| `DB_POOL_MAX` | `3` |
+
+5. Click **Deploy**. When it finishes, Vercel shows your address, for example `https://courtcall.vercel.app`.
+6. Add one more variable, `CLIENT_ORIGIN` = that address, then **Deployments → ⋯ → Redeploy**.
+7. Check it: open `https://<your-address>/api/health`. It should show `"db":"connected","nexconn":"configured"`. Then open the site and tap a demo account.
+
+After that, **every push to `main` deploys automatically**.
+
+### Keeping it running
+
+- The live site uses the same Supabase database as your computer, so running `npm --prefix server run seed:demo` locally also refreshes the live demo data. Do this each morning before showing it, so the cases are dated today.
+- Database migrations are not run by Vercel. After adding one, run `npm --prefix server run db:migrate` from your computer before (or right after) pushing.
+- Phone alerts need HTTPS, which Vercel provides. Client links shared from the live site use the live address automatically.
+- Logs: Vercel project → **Logs** (filter by `/api`).
+
 ## Useful commands
 
 All commands run from the project root.

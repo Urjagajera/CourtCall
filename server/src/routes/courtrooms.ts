@@ -2,6 +2,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { db, schema } from '../db/index.js'
+import { waitUntil } from '@vercel/functions'
 import { alertClients } from '../lib/alerts.js'
 import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
@@ -118,9 +119,12 @@ courtroomsRouter.post('/sessions/:id/events', ...staff, async (req, res) => {
       // Awaited (not fire-and-forget) so it also completes on serverless hosts. Failures are logged, never thrown.
       await announceEvent(result.session, result.event, user)
       res.status(201).json({ session: sessionView(result.session), event: result.event })
-      // Client alerts run after the reply so the junior's tap stays fast (needs a long-running host;
-      // on serverless, await this instead).
-      alertClients(result.session, result.event).catch((e) => console.warn('[alerts]', e instanceof Error ? e.message : e))
+      // Client alerts run after the reply so the junior's tap stays fast. On Vercel, waitUntil keeps
+      // the function alive until they finish.
+      const alerting = alertClients(result.session, result.event).catch((e) =>
+        console.warn('[alerts]', e instanceof Error ? e.message : e),
+      )
+      if (process.env.VERCEL) waitUntil(alerting)
       return
     case 'conflict':
       res.status(409).json({
