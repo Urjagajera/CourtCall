@@ -11,8 +11,10 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // ---------- enums ----------
 
@@ -71,7 +73,8 @@ export const courtrooms = pgTable(
     roomNo: text('room_no').notNull(),
     createdAt: createdAt(),
   },
-  (t) => [unique('courtroom_complex_room').on(t.courtComplex, t.roomNo)],
+  // Case-insensitive: "Gujarat High Court" and "gujarat high court" must be the same shared room.
+  (t) => [uniqueIndex('courtroom_complex_room_ci').on(sql`lower(${t.courtComplex})`, t.roomNo)],
 )
 
 // One row per courtroom per day: the live, shared progress state.

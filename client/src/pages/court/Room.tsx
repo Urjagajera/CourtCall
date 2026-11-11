@@ -239,7 +239,7 @@ export default function Room() {
         <p className="tabular text-display text-ink">{(recallActive ? hearing : session.currentItem) ?? '—'}</p>
         {recallActive && <p className="text-label text-ink-muted">Cause list progress: Item {session.currentItem}</p>}
         <p className={cx('mt-1 text-label', session.stale ? 'font-semibold text-stale-fg' : 'text-ink-muted')}>
-          Updated {timeAgo(session.lastEventAt, now)}
+          {session.lastEventAt ? `Updated ${timeAgo(session.lastEventAt, now)}` : 'No updates yet today'}
           {session.stale && ' · may be out of date'}
         </p>
         <p className="mt-1 flex items-center justify-center gap-1 text-caption text-ink-muted">

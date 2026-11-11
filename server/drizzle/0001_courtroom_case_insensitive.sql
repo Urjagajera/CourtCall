@@ -1,0 +1,2 @@
+ALTER TABLE "courtrooms" DROP CONSTRAINT "courtroom_complex_room";--> statement-breakpoint
+CREATE UNIQUE INDEX "courtroom_complex_room_ci" ON "courtrooms" USING btree (lower("court_complex"),"room_no");

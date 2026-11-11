@@ -8,6 +8,13 @@
       "when": 1794372236166,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794375943202,
+      "tag": "0001_courtroom_case_insensitive",
+      "breakpoints": true
     }
   ]
 }

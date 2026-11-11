@@ -14,7 +14,9 @@
     "db:check": "tsx src/scripts/db-check.ts",
     "nexconn:check": "tsx src/scripts/nexconn-check.ts",
     "seed:demo": "tsx src/scripts/seed-demo.ts",
-    "db:ping": "tsx src/scripts/db-ping.ts"
+    "db:ping": "tsx src/scripts/db-ping.ts",
+    "smoke": "tsx src/scripts/smoke.ts",
+    "smoke:cleanup": "tsx src/scripts/cleanup-smoke.ts"
   },
   "keywords": [],
   "author": "",

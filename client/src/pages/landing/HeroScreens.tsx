@@ -18,7 +18,8 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
   ]
 
   return (
-    <div className="relative pb-10 sm:pb-0 sm:pr-24 lg:pr-28">
+    // Phone screens: dashboard, then the client's phone below it. Wider: the phone overlaps the corner.
+    <div className="relative sm:pr-24 lg:pr-28">
       {/* Lawyer dashboard window */}
       <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-sheet">
         <div className="flex items-center justify-between border-b border-line bg-surface-raised px-4 py-3">
@@ -65,7 +66,7 @@ export function HeroScreens({ item, status }: { item: number; status: Status }) 
       </div>
 
       {/* Client's phone */}
-      <div className="absolute -bottom-2 right-2 w-[46%] max-w-[230px] sm:-bottom-10 sm:right-0 sm:w-[230px]">
+      <div className="relative mx-auto mt-4 w-[230px] sm:absolute sm:-bottom-10 sm:right-0 sm:mt-0">
         <div className="rounded-[1.75rem] border-[5px] border-[#2a2220] bg-surface p-3 shadow-sheet">
           <div className="mx-auto mb-2 h-1 w-12 rounded-full bg-[#2a2220]/25" />
           <p className="text-caption text-ink-muted">Your case · Court 4</p>

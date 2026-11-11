@@ -53,6 +53,19 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
   next()
 }
 
+/** The signed-in staff user, or null (no error) when there is no valid session. */
+export async function currentUser(req: Request): Promise<User | null> {
+  const token = req.cookies?.[COOKIE]
+  if (!token) return null
+  try {
+    const userId = (jwt.verify(token, config.jwtSecret) as jwt.JwtPayload).sub as string
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId))
+    return user ?? null
+  } catch {
+    return null
+  }
+}
+
 export function requireRole(...roles: User['role'][]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) throw forbidden()

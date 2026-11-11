@@ -1,6 +1,7 @@
 import { Pencil, Phone, Plus, Trash2, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeader } from '../../components/AppLayout'
+import { ConfirmSheet } from '../../components/ConfirmSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
 import { api, type Client } from '../../lib/api'
@@ -13,11 +14,8 @@ export default function Clients() {
   const { data, error, loading, reload } = useApi<{ clients: Client[] }>('/clients')
   const [editing, setEditing] = useState<Client | 'new' | null>(null)
 
-  async function remove(c: Client) {
-    if (!confirm(`Delete ${c.name} and all their cases? This cannot be undone.`)) return
-    await api(`/clients/${c.id}`, { method: 'DELETE' })
-    reload()
-  }
+  const [deleting, setDeleting] = useState<Client | null>(null)
+  const remove = (c: Client) => setDeleting(c)
 
   return (
     <>
@@ -68,8 +66,20 @@ export default function Clients() {
         </Card>
       )}
 
+      <ConfirmSheet
+        open={!!deleting}
+        title="Delete client?"
+        message={`${deleting?.name} and all of their cases will be deleted. This cannot be undone.`}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          await api(`/clients/${deleting!.id}`, { method: 'DELETE' })
+          reload()
+        }}
+      />
+
       {editing && (
         <ClientForm
+          key={editing === 'new' ? 'new' : editing.id}
           client={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
           onSaved={() => {

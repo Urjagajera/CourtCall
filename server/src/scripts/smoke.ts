@@ -1,0 +1,150 @@
+// Usage: npm run smoke  (API must be running, DEMO_LOGIN=true, demo data seeded)
+// End-to-end check of every API flow as the demo users. Courtroom tests use an isolated
+// "Smoke Test Court / 99" room so demo courtrooms are not touched. Cleans up what it creates.
+const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4000/api'
+
+type Res = { status: number; body: any }
+class Session {
+  cookie = ''
+  constructor(public label: string) {}
+  async req(method: string, path: string, body?: unknown): Promise<Res> {
+    const r = await fetch(BASE + path, {
+      method,
+      headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(this.cookie ? { Cookie: this.cookie } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    const set = r.headers.get('set-cookie')
+    if (set) this.cookie = set.split(';')[0]
+    return { status: r.status, body: await r.json().catch(() => ({})) }
+  }
+  get = (p: string) => this.req('GET', p)
+  post = (p: string, b?: unknown) => this.req('POST', p, b ?? {})
+  patch = (p: string, b: unknown) => this.req('PATCH', p, b)
+  del = (p: string) => this.req('DELETE', p)
+}
+
+let pass = 0
+const failures: string[] = []
+function check(name: string, ok: boolean, detail?: unknown) {
+  if (ok) pass++
+  else failures.push(`${name}${detail !== undefined ? ` -> ${JSON.stringify(detail).slice(0, 300)}` : ''}`)
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`)
+}
+
+async function login(key: string) {
+  const s = new Session(key)
+  const r = await s.post('/auth/demo', { account: key })
+  check(`demo login: ${key}`, r.status === 200, r)
+  return s
+}
+
+const anon = new Session('anon')
+check('health ok', (await anon.get('/health')).body.db === 'connected')
+check('unknown /api route is 404', (await anon.get('/nope')).status === 404)
+check('me without login returns no user', (await anon.get('/auth/me')).body.user === null)
+check('demo list available', (await anon.get('/auth/demo')).body.accounts?.length === 5)
+const wrong = await anon.post('/auth/login', { email: 'mehta@courtcall.demo', password: 'wrong-password' })
+check('wrong password rejected', wrong.status === 401, wrong)
+check('junior signup with bad invite code rejected', (await anon.post('/auth/register/junior', { name: 'Test', email: `x${Date.now()}@t.test`, phone: '9800000000', password: 'password123', inviteCode: 'ZZZZZZ' })).status === 400)
+check('signup validation errors are per-field', !!(await anon.post('/auth/register/lawyer', { email: 'bad' })).body.details?.email)
+
+const lawyer = await login('lawyer')
+const junior = await login('junior')
+const lawyer2 = await login('lawyer2')
+const junior2 = await login('junior2')
+const admin = await login('admin')
+
+const me = await lawyer.get('/auth/me')
+check('lawyer me has office + invite code', me.body.office?.inviteCode === 'MEHTA4', me.body)
+check('junior me hides invite code', (await junior.get('/auth/me')).body.office?.inviteCode === undefined)
+
+// ---- clients ----
+const c1 = await lawyer.post('/clients', { name: 'Smoke Client', phone: '9812345678', language: 'gu' })
+check('create client', c1.status === 201, c1.body)
+const clientId = c1.body.client?.id
+check('edit client', (await lawyer.patch(`/clients/${clientId}`, { name: 'Smoke Client 2' })).body.client?.name === 'Smoke Client 2')
+check('client list includes nexconn id', (await lawyer.get('/clients')).body.clients?.some((c: any) => c.id === clientId && c.ncId))
+check('other office cannot edit my client', (await lawyer2.patch(`/clients/${clientId}`, { name: 'hack' })).status === 404)
+check('other office cannot see my client', !(await lawyer2.get('/clients')).body.clients?.some((c: any) => c.id === clientId))
+check('junior cannot create client', (await junior.post('/clients', { name: 'X Y' })).status === 403)
+check('invalid client rejected', (await lawyer.post('/clients', { name: 'A' })).status === 400)
+
+// ---- office / team ----
+const office = await lawyer.get('/office')
+check('office team list', office.status === 200 && office.body.members?.length >= 2, office.body)
+const priyaId = office.body.members?.find((m: any) => m.email === 'priya@courtcall.demo')?.id
+check('junior cannot open office admin', (await junior.get('/office')).status === 403)
+
+// ---- cases ----
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
+const k1 = await lawyer.post('/cases', { clientId, title: 'Smoke vs Test', courtComplex: ' smoke   test court ', roomNo: '99', hearingDate: today, itemNo: 7, assignedJuniorId: priyaId })
+check('create case (court name normalised)', k1.status === 201, k1.body)
+const caseId = k1.body.case?.id
+const list = await lawyer.get(`/cases?date=${today}`)
+const listed = list.body.cases?.find((c: any) => c.id === caseId)
+check('case listed with court + client', listed?.roomNo === '99' && listed?.clientName === 'Smoke Client 2', listed)
+check('edit case item', (await lawyer.patch(`/cases/${caseId}`, { itemNo: 8 })).body.case?.itemNo === 8)
+check('edit case court needs both fields', (await lawyer.patch(`/cases/${caseId}`, { roomNo: '98' })).status === 400)
+check('junior sees office cases', (await junior.get('/cases')).body.cases?.some((c: any) => c.id === caseId))
+check('other office cannot see my case', !(await lawyer2.get('/cases')).body.cases?.some((c: any) => c.id === caseId))
+check('case with other office client rejected', (await lawyer2.post('/cases', { clientId, title: 'Bad case', courtComplex: 'X Court', roomNo: '1', hearingDate: today, itemNo: 1 })).status === 400)
+
+// ---- courtrooms ----
+const t1 = await junior.get('/courtrooms/today')
+const room = t1.body.sessions?.find((s: any) => s.courtroom.roomNo === '99')
+check('junior auto-joined smoke room via office case', !!room, t1.body)
+check('room shows only my office cases', room?.myCases?.every((c: any) => c.id === caseId))
+const sid = room?.id
+const j2 = await junior2.post('/courtrooms/join', { courtComplex: 'Smoke Test Court', roomNo: '99' })
+check('other office junior joins same room', j2.body.sessionId === sid, j2.body)
+check('non-member cannot read room', (await lawyer2.get(`/sessions/${sid}`)).status === 403)
+
+let s = (await junior.get(`/sessions/${sid}`)).body
+check('room detail has members + chat group', Array.isArray(s.members) && s.members.length >= 2, s)
+const v0 = s.session.version
+const e1 = await junior.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: (s.session.currentItem ?? 0) + 1, baseVersion: v0 })
+check('report now hearing', e1.status === 201, e1.body)
+const e2 = await junior2.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: 50, baseVersion: v0 })
+check('stale baseVersion -> 409 conflict', e2.status === 409 && e2.body.session?.version === v0 + 1, e2.body)
+const cur = e1.body.session.currentItem
+const e3 = await junior2.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: cur + 10, baseVersion: v0 + 1 })
+check('big jump asks for confirmation', !!e3.body.needsConfirmation, e3.body)
+const e4 = await junior2.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: cur + 10, baseVersion: v0 + 1, confirm: true })
+check('confirmed jump applied', e4.status === 201 && e4.body.event?.confirmed === true, e4.body)
+const e5 = await junior2.post(`/sessions/${sid}/events`, { type: 'correction', correctsEventId: e4.body.event?.id, baseVersion: v0 + 2 })
+check('undo restores previous item', e5.status === 201 && e5.body.session?.currentItem === cur, e5.body)
+const e6 = await junior.post(`/sessions/${sid}/events`, { type: 'correction', correctsEventId: e1.body.event?.id, baseVersion: v0 + 3 })
+check('cannot undo an older event', e6.status === 400, e6.body)
+const e7 = await junior.post(`/sessions/${sid}/events`, { type: 'passed_over', item: cur, baseVersion: v0 + 3 })
+check('passed over', e7.status === 201 && e7.body.session?.hearingItem === null, e7.body)
+const e8 = await junior.post(`/sessions/${sid}/events`, { type: 'recalled', item: cur, baseVersion: v0 + 4 })
+check('recalled', e8.status === 201 && e8.body.session?.hearingItem === cur, e8.body)
+const e9 = await junior.post(`/sessions/${sid}/events`, { type: 'break_start', baseVersion: v0 + 5 })
+check('break', e9.body.session?.status === 'break', e9.body)
+const e10 = await junior.post(`/sessions/${sid}/events`, { type: 'break_start', baseVersion: v0 + 6 })
+check('duplicate break is noop', !!e10.body.noop, e10.body)
+const e11 = await junior.post(`/sessions/${sid}/events`, { type: 'break_end', baseVersion: v0 + 6 })
+check('resume', e11.body.session?.status === 'hearing', e11.body)
+check('item event without item rejected', (await junior.post(`/sessions/${sid}/events`, { type: 'adjourned', baseVersion: v0 + 7 })).status === 400)
+s = (await junior2.get(`/sessions/${sid}`)).body
+check('history visible to other office', s.events?.length >= 7 && s.events.some((e: any) => e.officeName === 'Mehta & Associates'), s.events?.length)
+check('lawyer today shows room with distance data', (await lawyer.get('/courtrooms/today')).body.sessions?.some((x: any) => x.id === sid && x.currentItem != null))
+
+// ---- chat + admin ----
+const tok = await junior.post('/chat/token')
+check('chat token for junior (with team room)', tok.status === 200 && !!tok.body.token && !!tok.body.team?.groupId, { status: tok.status, err: tok.body.error })
+check('admin cannot get chat token', (await admin.post('/chat/token')).status === 403)
+check('admin lists lawyers', (await admin.get('/admin/lawyers?status=verified')).body.lawyers?.length >= 2)
+check('lawyer cannot use admin api', (await lawyer.get('/admin/lawyers')).status === 403)
+
+// ---- logout + cleanup ----
+check('delete case', (await lawyer.del(`/cases/${caseId}`)).status === 200)
+check('delete client', (await lawyer.del(`/clients/${clientId}`)).status === 200)
+await lawyer.post('/auth/logout')
+check('after logout me has no user', (await lawyer.get('/auth/me')).body.user === null)
+
+console.log(`\n${pass} passed, ${failures.length} failed`)
+if (failures.length) {
+  console.log('\nFailures:\n' + failures.map((f) => ' - ' + f).join('\n'))
+  process.exit(1)
+}

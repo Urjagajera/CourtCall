@@ -2,6 +2,7 @@ import { CalendarDays, Hash, Landmark, Pencil, Plus, Trash2, UserRound } from 'l
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
+import { ConfirmSheet } from '../../components/ConfirmSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
 import { api, type Case, type Client, type User } from '../../lib/api'
@@ -25,11 +26,8 @@ export default function Cases() {
     return [...groups.entries()]
   }, [data])
 
-  async function remove(c: Case) {
-    if (!confirm(`Delete case "${c.title}"?`)) return
-    await api(`/cases/${c.id}`, { method: 'DELETE' })
-    reload()
-  }
+  const [deleting, setDeleting] = useState<Case | null>(null)
+  const remove = (c: Case) => setDeleting(c)
 
   return (
     <>
@@ -100,8 +98,20 @@ export default function Cases() {
         </Card>
       )}
 
+      <ConfirmSheet
+        open={!!deleting}
+        title="Delete case?"
+        message={`"${deleting?.title}" will be removed from your cases. This cannot be undone.`}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          await api(`/cases/${deleting!.id}`, { method: 'DELETE' })
+          reload()
+        }}
+      />
+
       {editing && (
         <CaseForm
+          key={editing === 'new' ? 'new' : editing.id}
           existing={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
           onSaved={() => {

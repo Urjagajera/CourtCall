@@ -9,8 +9,8 @@ import {
   checkPassword,
   clearSessionCookie,
   hashPassword,
+  currentUser,
   publicUser,
-  requireAuth,
   setSessionCookie,
 } from '../lib/auth.js'
 import { HttpError, badRequest, parse, unauthorized } from '../lib/http.js'
@@ -138,8 +138,13 @@ authRouter.post('/logout', (_req, res) => {
   res.json({ ok: true })
 })
 
-authRouter.get('/me', requireAuth, async (req, res) => {
-  const user = req.user!
+// Answers 200 with { user: null } for visitors, so the landing page doesn't log a 401 error.
+authRouter.get('/me', async (req, res) => {
+  const user = await currentUser(req)
+  if (!user) {
+    res.json({ user: null, office: null })
+    return
+  }
   const office = user.officeId
     ? (await db.select().from(schema.offices).where(eq(schema.offices.id, user.officeId)))[0]
     : null
