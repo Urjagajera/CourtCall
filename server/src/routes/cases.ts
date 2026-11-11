@@ -18,7 +18,8 @@ const caseInput = z.object({
   courtComplex: z.string().trim().min(2).max(100),
   roomNo: z.string().trim().min(1).max(20),
   hearingDate: z.iso.date(),
-  itemNo: z.coerce.number().int().min(1).max(2000),
+  // Optional: the item number is only known once the cause list for that date is out.
+  itemNo: z.coerce.number().int().min(1).max(2000).nullable().optional(),
   assignedJuniorId: z.uuid().nullable().optional(),
 })
 

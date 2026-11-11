@@ -7,6 +7,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from 'react'
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
@@ -161,3 +162,12 @@ export function PageSpinner() {
 }
 
 export { cx }
+
+export function Textarea({ label, error, hint, className, ...rest }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const id = useId()
+  return (
+    <FieldShell id={id} label={label} error={error} hint={hint}>
+      <textarea id={id} rows={3} className={cx(fieldClass, 'h-auto min-h-24 py-2 leading-relaxed', className)} aria-invalid={!!error} {...rest} />
+    </FieldShell>
+  )
+}

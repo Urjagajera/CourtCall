@@ -1,8 +1,9 @@
 import { CalendarDays, Hash, Landmark, Link2, Pencil, Plus, Trash2, UserRound } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
+import { HearingsToUpdate } from '../../components/HearingsToUpdate'
 import { LinkSheet } from '../../components/LinkSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
@@ -17,11 +18,17 @@ export default function Cases() {
   const isLawyer = user!.role === 'lawyer' || user!.role === 'staff' // can manage cases
   const { data, error, loading, reload } = useApi<{ cases: Case[] }>('/cases')
   const [editing, setEditing] = useState<Case | 'new' | null>(null)
+  // ?new=<clientId> (from a client's page) opens the add-case form for that client.
+  const [params, setParams] = useSearchParams()
+  const newFor = params.get('new')
+  useEffect(() => {
+    if (newFor && isLawyer) setEditing('new')
+  }, [newFor, isLawyer])
 
   const byDate = useMemo(() => {
     const groups = new Map<string, Case[]>()
     for (const c of data?.cases ?? []) {
-      if (c.hearingDate < todayISO()) continue // past hearings hidden
+      if (c.hearingDate < todayISO() || c.status === 'closed') continue // past and closed: on the case pages and Calendar
       groups.set(c.hearingDate, [...(groups.get(c.hearingDate) ?? []), c])
     }
     return [...groups.entries()]
@@ -37,7 +44,7 @@ export default function Cases() {
     <>
       <PageHeader
         title="Cases"
-        subtitle="Upcoming hearings by date"
+        subtitle="Upcoming hearings by date. Tap a case for its full details and history."
         action={
           isLawyer && (
             <Button data-tour="add-case" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
@@ -47,6 +54,7 @@ export default function Cases() {
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
+      {isLawyer && <HearingsToUpdate onChanged={reload} />}
       {loading && !data ? (
         <PageSpinner />
       ) : byDate.length ? (
@@ -62,10 +70,12 @@ export default function Cases() {
                   <Card key={c.id} className="flex items-start gap-3">
                     <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-md bg-accent text-accent-ink">
                       <span className="text-caption">Item</span>
-                      <span className="tabular text-h2 font-bold leading-none">{c.itemNo}</span>
+                      <span className="tabular text-h2 font-bold leading-none">{c.itemNo ?? '—'}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-body font-semibold">{c.title}</p>
+                      <Link to={`/cases/${c.id}`} className="block truncate text-body font-semibold hover:underline">
+                        {c.title}
+                      </Link>
                       <p className="flex items-center gap-1 text-label text-ink-muted">
                         <UserRound className="size-3.5" strokeWidth={1.75} /> {c.clientName}
                         {c.caseNo && (
@@ -135,9 +145,14 @@ export default function Cases() {
         <CaseForm
           key={editing === 'new' ? 'new' : editing.id}
           existing={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
+          clientId={editing === 'new' ? newFor : null}
+          onClose={() => {
+            setEditing(null)
+            if (newFor) setParams({})
+          }}
           onSaved={() => {
             setEditing(null)
+            if (newFor) setParams({})
             reload()
           }}
         />
@@ -146,19 +161,19 @@ export default function Cases() {
   )
 }
 
-function CaseForm({ existing, onClose, onSaved }: { existing: Case | null; onClose: () => void; onSaved: () => void }) {
+function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | null; clientId?: string | null; onClose: () => void; onSaved: () => void }) {
   const clients = useApi<{ clients: Client[] }>('/clients')
   const team = useApi<{ members: User[] }>('/office')
   const juniors = (team.data?.members ?? []).filter((m) => m.role === 'junior' && m.verificationStatus === 'verified')
 
   const { field, submit, submitting, formError } = useForm({
-    clientId: existing?.clientId ?? '',
+    clientId: existing?.clientId ?? clientId ?? '',
     title: existing?.title ?? '',
     caseNo: existing?.caseNo ?? '',
     courtComplex: existing?.courtComplex ?? '',
     roomNo: existing?.roomNo ?? '',
     hearingDate: existing?.hearingDate ?? todayISO(),
-    itemNo: existing ? String(existing.itemNo) : '',
+    itemNo: existing?.itemNo != null ? String(existing.itemNo) : '',
     assignedJuniorId: existing?.assignedJuniorId ?? '',
   })
 
@@ -184,7 +199,7 @@ function CaseForm({ existing, onClose, onSaved }: { existing: Case | null; onClo
             const body = {
               ...v,
               caseNo: v.caseNo || undefined,
-              itemNo: Number(v.itemNo),
+              itemNo: v.itemNo ? Number(v.itemNo) : null,
               assignedJuniorId: v.assignedJuniorId || null,
             }
             await api(existing ? `/cases/${existing.id}` : '/cases', { method: existing ? 'PATCH' : 'POST', body })
@@ -204,14 +219,14 @@ function CaseForm({ existing, onClose, onSaved }: { existing: Case | null; onClo
           ))}
         </Select>
         <Input label="Case title" required placeholder="e.g. Shah vs State of Gujarat" {...field('title')} />
-        <Input label="Case number (optional)" placeholder="e.g. CR.MA/1234/2026" {...field('caseNo')} />
+        <Input label="Case number" required placeholder="e.g. CR.MA/1234/2026" hint="Needed before the client link can be shared" {...field('caseNo')} />
         <div className="grid grid-cols-[1fr_7rem] gap-3">
           <Input label="Court complex" required placeholder="e.g. Gujarat High Court" {...field('courtComplex')} />
           <Input label="Court no." required placeholder="4" {...field('roomNo')} />
         </div>
         <div className="grid grid-cols-[1fr_7rem] gap-3">
-          <Input label="Hearing date" type="date" required {...field('hearingDate')} />
-          <Input label="Item no." type="number" inputMode="numeric" min={1} required className="tabular" {...field('itemNo')} />
+          <Input label="Next hearing date" type="date" required {...field('hearingDate')} />
+          <Input label="Item no." type="number" inputMode="numeric" min={1} placeholder="Later" className="tabular" {...field('itemNo')} />
         </div>
         <Select label="Junior in court (optional)" {...field('assignedJuniorId')}>
           <option value="">Not assigned</option>

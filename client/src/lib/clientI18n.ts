@@ -60,6 +60,12 @@ const en = {
   cancel: 'Cancel',
   backToCase: 'Back to my case',
   language: 'Language',
+  closed: 'This case has ended. Its history stays below.',
+  itemNotOut: 'Not out yet',
+  nextHearing: (d: string) => `Next hearing: ${d}`,
+  whatHappened: 'What happened',
+  caseEnded: 'Case ended',
+  caseClosed: 'Ended',
   status: {} as Record<string, string>, // English labels are used as-is
   events: {
     now_hearing: 'Now hearing',
@@ -126,6 +132,12 @@ const hi: ClientStrings = {
   cancel: 'रद्द करें',
   backToCase: 'मेरे केस पर वापस',
   language: 'भाषा',
+  closed: 'यह केस खत्म हो गया है। इसका इतिहास नीचे है।',
+  itemNotOut: 'अभी नहीं आया',
+  nextHearing: (d) => `अगली सुनवाई: ${d}`,
+  whatHappened: 'क्या हुआ',
+  caseEnded: 'केस खत्म',
+  caseClosed: 'खत्म',
   status: { Stale: 'पुराना', Hearing: 'सुनवाई चालू', 'On break': 'ब्रेक', 'Court risen': 'कोर्ट उठ गई', 'Not sitting': 'नहीं बैठी', 'Not started': 'शुरू नहीं हुई' },
   events: {
     now_hearing: 'अभी सुनवाई',
@@ -191,6 +203,12 @@ const gu: ClientStrings = {
   cancel: 'રદ કરો',
   backToCase: 'મારા કેસ પર પાછા',
   language: 'ભાષા',
+  closed: 'આ કેસ પૂરો થયો છે. તેનો ઇતિહાસ નીચે છે.',
+  itemNotOut: 'હજુ આવી નથી',
+  nextHearing: (d) => `આગલી સુનાવણી: ${d}`,
+  whatHappened: 'શું થયું',
+  caseEnded: 'કેસ પૂરો',
+  caseClosed: 'પૂરો',
   status: { Stale: 'જૂનું', Hearing: 'સુનાવણી ચાલુ', 'On break': 'વિરામ', 'Court risen': 'કોર્ટ ઊઠી ગઈ', 'Not sitting': 'બેઠી નથી', 'Not started': 'શરૂ થઈ નથી' },
   events: {
     now_hearing: 'હમણાં સુનાવણી',

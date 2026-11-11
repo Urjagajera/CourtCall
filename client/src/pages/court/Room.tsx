@@ -335,11 +335,11 @@ export default function Room() {
           <p className="mb-2 text-h2">Your cases here</p>
           <ul className="divide-y divide-line">
             {myCases.map((c) => {
-              const away = session.currentItem != null ? c.itemNo - session.currentItem : null
+              const away = session.currentItem != null && c.itemNo != null ? c.itemNo - session.currentItem : null
               return (
                 <li key={c.id} className="flex items-center gap-3 py-2">
                   <span className="tabular flex h-9 min-w-12 items-center justify-center rounded-sm bg-accent px-2 text-label font-bold text-accent-ink">
-                    {c.itemNo}
+                    {c.itemNo ?? "—"}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-label font-semibold">{c.title}</span>

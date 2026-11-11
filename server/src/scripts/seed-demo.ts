@@ -141,6 +141,37 @@ await pastDay(cityCivil12.id, daysAgo(21), oldCase.id, [
   ['now_hearing', T.now_hearing(v12(31)), 52],
 ])
 
+// Recorded hearing outcomes: last week's hearing of the main case (adjourned to today), the old case closed.
+const mehtaId = (await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, acc('lawyer').email)))[0].id
+await db.insert(schema.caseHearings).values([
+  {
+    caseId: patelMain.id,
+    date: daysAgo(7),
+    courtroomId: court4.id,
+    itemNo: 11,
+    outcome: 'next_date',
+    nextDate: today,
+    summary: 'Arguments on bail were heard in part. The State asked for time to file its reply. Adjourned to the next date.',
+    shareWithClient: true,
+    prepNotes: 'Collect the State reply copy. Keep the surety documents and the medical certificate ready. Client to be present.',
+    recordedBy: mehtaId,
+  },
+  {
+    caseId: oldCase.id,
+    date: daysAgo(21),
+    courtroomId: cityCivil12.id,
+    itemNo: 31,
+    outcome: 'closed',
+    summary: 'Final arguments completed and the suit was decreed in our favour. The certified copy will be applied for.',
+    shareWithClient: true,
+    prepNotes: 'Apply for the certified copy of the decree. Check the limitation for execution.',
+    recordedBy: mehtaId,
+  },
+])
+await db.update(schema.cases).set({ status: 'closed' }).where(eq(schema.cases.id, oldCase.id))
+// A hearing two days ago with no outcome yet: shows the "Hearings to update" reminder (Mehta and Neha).
+await db.insert(schema.cases).values({ officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi (maintenance)', caseNo: 'CRMA/77/2026', courtroomId: court7.id, hearingDate: daysAgo(2), itemNo: 6 })
+
 // Demo client link for Ramesh Patel's main case: opened by the "Client" demo button (never bound to a phone).
 const patelCase = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!
 await db.insert(schema.accessLinks).values({

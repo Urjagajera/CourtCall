@@ -1,5 +1,6 @@
 import { Pencil, Phone, Plus, Trash2, UserCog, UserRound } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
 import { Sheet } from '../../components/Sheet'
@@ -46,7 +47,9 @@ export default function Clients() {
                 <UserRound className="size-5" strokeWidth={1.75} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-body font-semibold">{c.name}</p>
+                <Link to={`/clients/${c.id}`} className="block truncate text-body font-semibold hover:underline">
+                  {c.name}
+                </Link>
                 <p className="flex items-center gap-1 text-label text-ink-muted">
                   {c.phone && (
                     <>

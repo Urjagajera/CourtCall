@@ -1,7 +1,7 @@
 import type { Lang } from './alertText.js'
 // After every accepted courtroom update: work out which clients (in ANY firm with a case in that
 // courtroom today) need an alert, record it once in alert_logs, and deliver it by Nexconn + Web Push.
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, isNotNull } from 'drizzle-orm'
 import { db, schema } from '../db/index.js'
 import type { CourtEvent, CourtSession } from '../db/schema.js'
 import { chooseAlert } from './alertRules.js'
@@ -26,7 +26,16 @@ export async function alertClients(session: CourtSession, event: CourtEvent) {
     .from(schema.cases)
     .innerJoin(schema.clients, eq(schema.clients.id, schema.cases.clientId))
     .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.cases.courtroomId))
-    .where(and(eq(schema.cases.courtroomId, session.courtroomId), eq(schema.cases.hearingDate, session.date)))
+    // Closed cases and cases without an item number yet get no progress alerts.
+    .where(
+      and(
+        eq(schema.cases.courtroomId, session.courtroomId),
+        eq(schema.cases.hearingDate, session.date),
+        eq(schema.cases.status, 'active'),
+        isNotNull(schema.cases.itemNo),
+      ),
+    )
+    .then((list) => list.map((r) => ({ ...r, itemNo: r.itemNo! })))
   if (!rows.length) return
 
   const caseIds = rows.map((r) => r.caseId)

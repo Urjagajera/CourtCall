@@ -47,7 +47,7 @@ export interface Courtroom {
 export interface MyCase {
   id: string
   title: string
-  itemNo: number
+  itemNo: number | null
   clientName: string
   assignedJuniorId: string | null
 }

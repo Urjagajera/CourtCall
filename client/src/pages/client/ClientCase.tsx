@@ -18,7 +18,9 @@ interface ClientView {
   clientName: string
   language: Lang
   firmName: string
-  case: { title: string; caseNo: string | null; itemNo: number; hearingDate: string; courtComplex: string; roomNo: string }
+  case: { title: string; caseNo: string | null; itemNo: number | null; hearingDate: string; courtComplex: string; roomNo: string; status: 'active' | 'closed' }
+  /** Recorded hearing outcomes (summary only when the firm shared it). */
+  hearings: { date: string; outcome: 'next_date' | 'closed'; nextDate: string | null; summary: string | null }[]
   isToday: boolean
   session: SessionState | null
   updates: { type: EventType; item: number | null; at: string }[]
@@ -27,7 +29,7 @@ interface ClientView {
   caseId: string
   today: string
   history: { date: string; message: string; at: string }[]
-  cases: { id: string; title: string; caseNo: string | null; hearingDate: string; itemNo: number; courtComplex: string; roomNo: string; current: boolean }[]
+  cases: { id: string; title: string; caseNo: string | null; hearingDate: string; itemNo: number | null; status: 'active' | 'closed'; courtComplex: string; roomNo: string; current: boolean }[]
 }
 
 const LANG_KEY = 'cc-client-lang'
@@ -180,14 +182,15 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
   const c = data.case
   const s = data.session
   const current = s?.currentItem ?? null
-  const away = current != null ? c.itemNo - current : null
+  const away = current != null && c.itemNo != null ? c.itemNo - current : null
   const st = s ? statusMeta(s) : null
   const recalled = s && s.hearingItem != null && s.currentItem != null && s.hearingItem !== s.currentItem
 
   let headline: string
-  if (c.hearingDate < data.today) headline = t.past(dateIn(lang, c.hearingDate))
+  if (c.status === 'closed') headline = t.closed
+  else if (c.hearingDate < data.today) headline = t.past(dateIn(lang, c.hearingDate))
   else if (!data.isToday) headline = t.upcoming(dateIn(lang, c.hearingDate))
-  else if (!s || current == null) headline = t.noUpdates
+  else if (!s || current == null || c.itemNo == null) headline = t.noUpdates
   else if (s.status === 'not_sitting') headline = t.notSitting
   else if (s.status === 'risen') headline = t.risen
   else if (recalled && s.hearingItem === c.itemNo) headline = t.recalledYours
@@ -231,7 +234,8 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
                 <Landmark className="size-4 text-detail" strokeWidth={1.75} /> {c.courtComplex} · Court {c.roomNo}
               </li>
               <li className="flex items-center gap-1.5">
-                <CalendarDays className="size-4" strokeWidth={1.75} /> {data.isToday ? t.today : dateIn(lang, c.hearingDate)}
+                <CalendarDays className="size-4" strokeWidth={1.75} />{' '}
+                {c.status === 'closed' ? t.caseEnded : data.isToday ? t.today : c.hearingDate > data.today ? <b>{t.nextHearing(dateIn(lang, c.hearingDate))}</b> : dateIn(lang, c.hearingDate)}
               </li>
             </ul>
           </Card>
@@ -255,14 +259,18 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
               </div>
               <div className="rounded-md bg-accent p-3 text-accent-ink">
                 <p className="text-caption opacity-90">{t.yourItem}</p>
-                <p className="tabular text-[2.75rem] font-bold leading-none">{c.itemNo}</p>
+                {c.itemNo != null ? (
+                  <p className="tabular text-[2.75rem] font-bold leading-none">{c.itemNo}</p>
+                ) : (
+                  <p className="py-2 text-label font-semibold">{t.itemNotOut}</p>
+                )}
               </div>
             </div>
-            {current != null && (
+            {current != null && c.itemNo != null && (
               <div className="mt-3 h-2 rounded-full bg-line" aria-hidden="true">
                 <div
                   className="h-2 rounded-full bg-detail transition-all duration-700"
-                  style={{ width: `${Math.min(100, Math.max(4, (current / c.itemNo) * 100))}%` }}
+                  style={{ width: `${Math.min(100, Math.max(4, (current / c.itemNo!) * 100))}%` }}
                 />
               </div>
             )}
@@ -478,8 +486,8 @@ function YourCases({ data, onPick }: { data: ClientView; onPick: (id: string) =>
                     {k.courtComplex} · {t.court(k.roomNo)} · {dateIn(lang, k.hearingDate)}
                   </span>
                 </span>
-                <Badge tone={when === 'today' ? 'hearing' : when === 'upcoming' ? 'info' : 'stale'}>
-                  {when === 'today' ? t.caseToday : when === 'upcoming' ? t.caseUpcoming : t.casePast}
+                <Badge tone={k.status === 'closed' ? 'stale' : when === 'today' ? 'hearing' : when === 'upcoming' ? 'info' : 'stale'}>
+                  {k.status === 'closed' ? t.caseClosed : when === 'today' ? t.caseToday : when === 'upcoming' ? t.caseUpcoming : t.casePast}
                 </Badge>
               </button>
             </li>
@@ -497,6 +505,10 @@ function CaseHistory({ data }: { data: ClientView }) {
   const earlier = data.history.filter((h) => h.date !== data.today)
   const byDate = new Map<string, typeof earlier>()
   for (const h of earlier) byDate.set(h.date, [...(byDate.get(h.date) ?? []), h])
+  // Days with a recorded outcome but no alerts still get a row.
+  for (const h of data.hearings) if (!byDate.has(h.date)) byDate.set(h.date, [])
+  const outcomeOn = new Map(data.hearings.map((h) => [h.date, h]))
+  const dates = [...byDate.keys()].sort((a, b) => b.localeCompare(a))
   return (
     <Card data-tour="client-history">
       <p className="mb-2 flex items-center gap-2 text-h2">
@@ -506,9 +518,25 @@ function CaseHistory({ data }: { data: ClientView }) {
         <p className="text-label text-ink-muted">{t.historyEmpty}</p>
       ) : (
         <ol className="flex flex-col gap-4">
-          {[...byDate.entries()].map(([date, items]) => (
+          {dates.map((date) => {
+            const items = byDate.get(date)!
+            const o = outcomeOn.get(date)
+            return (
             <li key={date}>
-              <p className="mb-1 text-label font-semibold">{dateIn(lang, date)}</p>
+              <p className="mb-1 flex flex-wrap items-center gap-2 text-label font-semibold">
+                {dateIn(lang, date)}
+                {o && (
+                  <Badge tone={o.outcome === 'closed' ? 'stale' : 'info'}>
+                    {o.outcome === 'closed' ? t.caseEnded : t.nextHearing(dateIn(lang, o.nextDate!))}
+                  </Badge>
+                )}
+              </p>
+              {o?.summary && (
+                <div className="mb-2 rounded-md bg-surface-raised p-2.5 text-label">
+                  <p className="mb-0.5 text-caption font-semibold text-ink-muted">{t.whatHappened}</p>
+                  {o.summary}
+                </div>
+              )}
               <ul className="flex flex-col gap-1.5 border-l-2 border-line pl-3">
                 {[...items].reverse().map((h) => (
                   <li key={h.at + h.message} className="flex items-start gap-2 text-label">
@@ -518,7 +546,8 @@ function CaseHistory({ data }: { data: ClientView }) {
                 ))}
               </ul>
             </li>
-          ))}
+            )
+          })}
         </ol>
       )}
     </Card>

@@ -2,6 +2,7 @@ import { CalendarCheck, ChevronRight, Landmark, LogIn, UserRound } from 'lucide-
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
+import { HearingsToUpdate } from '../../components/HearingsToUpdate'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Banner, Button, Card, EmptyState, Input, PageSpinner } from '../../components/ui'
 import { api } from '../../lib/api'
@@ -51,6 +52,7 @@ export default function Today() {
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
+      {user!.role !== 'junior' && <HearingsToUpdate />}
       {!data ? (
         !error && <PageSpinner />
       ) : data.sessions.length ? (
@@ -103,11 +105,11 @@ function RoomCard({ s, now, readOnly }: { s: TodaySession; now: number; readOnly
         {s.myCases.length > 0 && (
           <ul className="mt-3 divide-y divide-line border-t border-line">
             {s.myCases.map((c) => {
-              const away = s.currentItem != null ? c.itemNo - s.currentItem : null
+              const away = s.currentItem != null && c.itemNo != null ? c.itemNo - s.currentItem : null
               return (
                 <li key={c.id} className="flex items-center gap-3 py-2">
                   <span className="tabular flex h-8 min-w-11 items-center justify-center rounded-sm bg-accent px-2 text-label font-bold text-accent-ink">
-                    {c.itemNo}
+                    {c.itemNo ?? "—"}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-label font-semibold">{c.title}</span>

@@ -69,6 +69,24 @@ export interface Case {
   courtComplex: string
   roomNo: string
   hearingDate: string
-  itemNo: number
+  /** Null until the cause list for that date is out. */
+  itemNo: number | null
+  status: 'active' | 'closed'
   assignedJuniorId: string | null
+}
+
+export interface Hearing {
+  id: string
+  caseId: string
+  date: string
+  itemNo: number | null
+  outcome: 'next_date' | 'closed'
+  nextDate: string | null
+  summary: string | null
+  shareWithClient: boolean
+  prepNotes: string | null
+  courtComplex: string
+  roomNo: string
+  recordedByName: string | null
+  createdAt: string
 }

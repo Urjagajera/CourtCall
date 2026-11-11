@@ -163,6 +163,10 @@ check('history visible to other office', s.events?.length >= 7 && s.events.some(
 check('lawyer today shows room with distance data', (await lawyer.get('/courtrooms/today')).body.sessions?.some((x: any) => x.id === sid && x.currentItem != null))
 
 // ---- client links ----
+check('no client link before the case number is added', (await lawyer.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 400)
+check('case number added', (await lawyer.patch(`/cases/${caseId}`, { caseNo: 'SMK/1/2026' })).body.case?.caseNo === 'SMK/1/2026')
+check('case can be saved without an item number (cause list not out)', (await lawyer.patch(`/cases/${caseId}`, { itemNo: null })).body.case?.itemNo === null)
+await lawyer.patch(`/cases/${caseId}`, { itemNo: 8 })
 const mk = await lawyer.post(`/cases/${caseId}/links`, { kind: 'client' })
 check('lawyer creates a client link (token returned once)', mk.status === 201 && typeof mk.body.token === 'string' && mk.body.token.length > 20, mk.body)
 const linkToken = mk.body.token
@@ -244,6 +248,30 @@ check('sharing a link keeps assignments', famSunita.status === 201 && (await nam
 await lawyer.post(`/links/${famSunita.body.link?.id}/revoke`)
 check('people list for the picker', ((await staff.get('/office/people')).body.people ?? []).length >= 3)
 
+// ---- hearing outcomes, reminders, calendar, detail pages ----
+const pendingMehta = (await lawyer.get('/hearings/pending')).body.cases ?? []
+const maint = pendingMehta.find((k: any) => k.title === 'Joshi vs Joshi (maintenance)')
+check('firm admin is reminded of a hearing that happened', !!maint, pendingMehta.map((k: any) => k.title))
+check('the assigned lawyer is reminded too', ((await lawyer3.get('/hearings/pending')).body.cases ?? []).some((k: any) => k.id === maint?.id))
+check('juniors get no reminder list', (await junior.get('/hearings/pending')).status === 403)
+check('next date must be after the hearing', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_date', nextDate: '2020-01-01' })).status === 400)
+check('next date is required', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_date' })).status === 400)
+const nextDate = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10)
+const rec = await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_date', nextDate, summary: 'Reply filed. Arguments next time.', shareWithClient: true, prepNotes: 'SECRET-PREP: get income proof' })
+check('outcome recorded and case moved to the next date', rec.status === 201 && rec.body.case?.hearingDate === nextDate && rec.body.case?.itemNo === null, rec.body)
+check('the next (future) hearing cannot get an outcome yet', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'closed' })).status === 400)
+check('reminder cleared after recording', !((await lawyer.get('/hearings/pending')).body.cases ?? []).some((k: any) => k.id === maint?.id))
+const det = (await lawyer.get(`/cases/${maint?.id}/detail`)).body
+check('case detail shows the hearing history with notes', det.hearings?.[0]?.summary === 'Reply filed. Arguments next time.' && det.hearings?.[0]?.prepNotes?.includes('SECRET-PREP'), det)
+check('juniors can open case details', (await junior.get(`/cases/${maint?.id}/detail`)).status === 200)
+check("lawyer can't open an unassigned client's case", (await lawyer2.get(`/cases/${maint?.id}/detail`)).status === 404)
+const cd = (await lawyer.get(`/clients/${maint?.clientId}/detail`)).body
+check('client detail lists all their cases with hearings', cd.cases?.length >= 2 && cd.cases.some((k: any) => k.hearings?.length >= 1))
+const monthEnd = new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10)
+const cal = (await lawyer.get(`/calendar?from=2026-01-01&to=${monthEnd}`)).body.events ?? []
+check('calendar shows held and upcoming hearings', cal.some((e: any) => e.kind === 'held') && cal.some((e: any) => e.kind === 'upcoming' && e.caseId === maint?.id))
+check('calendar rejects a backwards range', (await lawyer.get('/calendar?from=2026-12-01&to=2026-01-01')).status === 400)
+
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
 const rameshMe = (await demoClient.get('/c/me')).body
@@ -252,6 +280,8 @@ await demoClient.post('/c/language', { language: 'en' })
 check('unsupported language rejected', (await demoClient.post('/c/language', { language: 'fr' })).status === 400)
 check('client sees all their cases (today and past)', rameshMe.cases?.length >= 3 && rameshMe.cases.some((k: any) => k.hearingDate < rameshMe.today), rameshMe.cases)
 check('client sees earlier court days in history', rameshMe.history?.some((h: any) => h.date < rameshMe.today && /adjourned/.test(h.message)))
+check('client sees the shared hearing summary and the next date', rameshMe.hearings?.some((h: any) => h.summary && h.nextDate === rameshMe.today))
+check('client never sees prep notes', !JSON.stringify(rameshMe).includes('surety') && !JSON.stringify(rameshMe).includes('prepNotes'))
 const pastCase = rameshMe.cases?.find((k: any) => k.hearingDate < rameshMe.today)
 check('client opens one of their other cases', (await demoClient.get(`/c/me?case=${pastCase?.id}`)).body.case?.title === pastCase?.title)
 const cases2 = (await clientNew.get('/c/me')).body.cases ?? []

@@ -89,11 +89,27 @@ Your firm's clients and cases are **never** visible to other firms. Only courtro
 ### Lawyers and staff: prepare the day
 
 1. **Clients → Add client:** name, WhatsApp number and alert language.
-2. **Cases → Add case:** client, court complex (e.g. "Gujarat High Court"), court number, hearing date, item number from the cause list, and the junior who will be in court.
+2. **Cases → Add case:** client, case number, court complex (e.g. "Gujarat High Court"), court number, next hearing date, item number from the cause list (or later, when it's out), and the junior who will be in court.
 3. **Share the case with the client:** on **Cases**, tap the **link icon** on the case, then **Client link → Share on WhatsApp**. The message and link are filled in for you.
    - The link **locks to the first phone that opens it**, so don't open it yourself.
    - **Family link**: progress only, no chat. Good for a relative waiting outside court.
    - Lost or new phone? Tap **New link**. To stop a link at once, tap **Turn off**.
+
+### After every hearing: record what happened
+
+When a hearing is over (the date has passed, or the court has risen or moved past the item), the people who look after that client see **"Hearings to update"** on **Today** and **Cases**.
+1. Tap **Update**.
+2. Choose **Next date given** (pick the date; the item number can be added later when the cause list is out; tick if the court or room changes) or **Case ended**.
+3. Write **What happened in court**. Leave **Show this to the client** ticked to share it on their page.
+4. Write **To prepare for the next hearing**: only your firm sees this.
+5. Save. The case moves to the next date and the client's page shows it.
+
+### Case, client and calendar pages
+
+- **Tap a case** (Cases, Calendar, a client's page): case number, court, next date and item, junior in court, client link status, who looks after the client, and every past hearing with its notes (edit notes with the pencil).
+- **Tap a client** (Clients): phone, alert language, who looks after them, and all their cases (active and closed). **Add case** from there.
+- **Calendar**: a month view of every hearing. Dots: maroon = upcoming, taupe = held, amber = still to update. Tap a day to list its hearings.
+- A **case number** is required before a client link can be shared, so the client always sees complete details.
 
 ### Juniors: report from the courtroom
 
@@ -134,7 +150,7 @@ Open **Chat**:
 4. Install it (section 1) so it opens from your home screen next time.
 5. **Chat with your firm** at the bottom of the page. Type, or tap the **mic** and speak (in the page's language).
 6. **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
-7. **History**: what happened on earlier court days for the case, such as when it was heard, adjourned or passed over.
+7. **History**: what happened on earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it). The top of the page always shows the **next hearing date**.
 8. At the top: **EN / हिं / ગુ** switches the page language (English, Hindi, Gujarati). Your alerts switch to that language too. **Tour** replays the guided tour (it also runs on your first visit), and **Sign out** removes your case and alerts from this phone. To come back, open the WhatsApp link again.
 
 The link works on **your phone only**. If you change phones, ask your lawyer for a new link.

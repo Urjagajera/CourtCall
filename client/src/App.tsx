@@ -12,7 +12,10 @@ import Login from './pages/auth/Login'
 import Pending from './pages/auth/Pending'
 import Signup from './pages/auth/Signup'
 import Room from './pages/court/Room'
+import Calendar from './pages/lawyer/Calendar'
+import CaseDetail from './pages/lawyer/CaseDetail'
 import Cases from './pages/lawyer/Cases'
+import ClientDetail from './pages/lawyer/ClientDetail'
 import Clients from './pages/lawyer/Clients'
 import Team from './pages/lawyer/Team'
 import Today from './pages/lawyer/Today'
@@ -73,7 +76,10 @@ export default function App() {
             <Route path="room/:id" element={<RoleOnly roles={['lawyer', 'junior']}><Room /></RoleOnly>} />
             <Route path="chats" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Chats /></RoleOnly>} />
             <Route path="cases" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Cases /></RoleOnly>} />
+            <Route path="cases/:id" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><CaseDetail /></RoleOnly>} />
+            <Route path="calendar" element={<RoleOnly roles={['lawyer', 'junior', 'staff']}><Calendar /></RoleOnly>} />
             <Route path="clients" element={<RoleOnly roles={['lawyer', 'staff']}><Clients /></RoleOnly>} />
+            <Route path="clients/:id" element={<RoleOnly roles={['lawyer', 'staff']}><ClientDetail /></RoleOnly>} />
             <Route path="team" element={<RoleOnly roles={['lawyer', 'staff']}><Team /></RoleOnly>} />
             <Route path="settings" element={<Settings />} />
           </Route>

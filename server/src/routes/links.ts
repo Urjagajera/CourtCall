@@ -79,6 +79,9 @@ linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
     req.body,
   )
   const c = await caseInMyFirm(String(req.params.id), req.user!)
+  // The client only follows what the firm entered, so the case must be complete first.
+  if (!c.caseNo) throw badRequest('Add the case number before sharing a link')
+  if (c.status === 'closed') throw badRequest('This case is closed. Reopen it with a new case to share a link')
   await assignClient(c.clientId, c.officeId, [...(req.user!.isFirmAdmin ? [] : [req.user!.id]), ...(body.assignTo ?? [])])
   const { link, token } = await createLink(c.id, body.kind, body.label || null, req.user!.id)
   res.status(201).json({ link: view(link, req.user!.name), token })

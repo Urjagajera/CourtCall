@@ -103,7 +103,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     }
   }
 
-  const [history, cases] = await Promise.all([
+  const [history, cases, hearings] = await Promise.all([
     // Every alert ever sent for this case, with the court day it belongs to (newest first).
     db
       .select({ date: schema.courtSessions.date, message: schema.alertLogs.message, at: schema.alertLogs.createdAt })
@@ -122,6 +122,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
             caseNo: schema.cases.caseNo,
             hearingDate: schema.cases.hearingDate,
             itemNo: schema.cases.itemNo,
+            status: schema.cases.status,
             courtComplex: schema.courtrooms.courtComplex,
             roomNo: schema.courtrooms.roomNo,
           })
@@ -130,6 +131,18 @@ clientRouter.get('/me', requireClient, async (req, res) => {
           .where(and(eq(schema.cases.clientId, ctx.client.id), eq(schema.cases.officeId, ctx.office.id)))
           .orderBy(desc(schema.cases.hearingDate))
       : Promise.resolve([]),
+    // Recorded hearing outcomes. The summary only if the lawyer chose to share it; prep notes never.
+    db
+      .select({
+        date: schema.caseHearings.date,
+        outcome: schema.caseHearings.outcome,
+        nextDate: schema.caseHearings.nextDate,
+        summary: schema.caseHearings.summary,
+        shareWithClient: schema.caseHearings.shareWithClient,
+      })
+      .from(schema.caseHearings)
+      .where(eq(schema.caseHearings.caseId, theCase.id))
+      .orderBy(desc(schema.caseHearings.date)),
   ])
 
   res.json({
@@ -144,6 +157,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
       caseNo: theCase.caseNo,
       itemNo: theCase.itemNo,
       hearingDate: theCase.hearingDate,
+      status: theCase.status,
       courtComplex: courtroom.courtComplex,
       roomNo: courtroom.roomNo,
     },
@@ -153,6 +167,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     updates,
     alerts: history.filter((h) => h.date === today).map(({ message, at }) => ({ message, at })),
     history,
+    hearings: hearings.map(({ shareWithClient, summary, ...h }) => ({ ...h, summary: shareWithClient ? summary : null })),
     cases: cases.map((c) => ({ ...c, current: c.id === theCase.id })),
   })
 })

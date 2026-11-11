@@ -181,6 +181,9 @@ export const clientAssignments = pgTable(
   (t) => [primaryKey({ columns: [t.clientId, t.userId] })],
 )
 
+export const caseStatus = pgEnum('case_status', ['active', 'closed'])
+export const hearingOutcome = pgEnum('hearing_outcome', ['next_date', 'closed'])
+
 export const cases = pgTable(
   'cases',
   {
@@ -196,8 +199,12 @@ export const cases = pgTable(
     courtroomId: uuid('courtroom_id')
       .notNull()
       .references(() => courtrooms.id),
+    /** The next (or latest) hearing. After a hearing the firm records the outcome and moves this on. */
     hearingDate: date('hearing_date').notNull(),
-    itemNo: integer('item_no').notNull(),
+    /** Null until the cause list for that date is out. */
+    itemNo: integer('item_no'),
+    /** closed = disposed / finished: no more hearings, no reminders. */
+    status: caseStatus('status').notNull().default('active'),
     assignedJuniorId: uuid('assigned_junior_id').references(() => users.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
   },
@@ -258,3 +265,30 @@ export type User = typeof users.$inferSelect
 export type CourtSession = typeof courtSessions.$inferSelect
 export type CourtEvent = typeof courtEvents.$inferSelect
 export type Office = typeof offices.$inferSelect
+
+// One row per hearing that has happened, written when the firm records its outcome.
+export const caseHearings = pgTable(
+  'case_hearings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => cases.id, { onDelete: 'cascade' }),
+    date: date('date').notNull(),
+    courtroomId: uuid('courtroom_id')
+      .notNull()
+      .references(() => courtrooms.id),
+    itemNo: integer('item_no'),
+    outcome: hearingOutcome('outcome').notNull(),
+    /** Set when outcome = next_date. */
+    nextDate: date('next_date'),
+    /** What happened in court. Shown to the client only when shareWithClient is true. */
+    summary: text('summary'),
+    shareWithClient: boolean('share_with_client').notNull().default(false),
+    /** What to prepare / track for the next hearing. Firm only, never shown to the client. */
+    prepNotes: text('prep_notes'),
+    recordedBy: uuid('recorded_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('case_hearings_case_date_uq').on(t.caseId, t.date)],
+)

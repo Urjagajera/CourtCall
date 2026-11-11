@@ -1,4 +1,4 @@
-import { Briefcase, CalendarDays, LayoutDashboard, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
+import { Briefcase, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
@@ -18,7 +18,8 @@ interface NavItem {
 function navFor(role: string): NavItem[] {
   const items: NavItem[] = [
     { to: '/', label: 'Today', icon: LayoutDashboard },
-    { to: '/cases', label: 'Cases', icon: CalendarDays },
+    { to: '/cases', label: 'Cases', icon: FolderOpen },
+    { to: '/calendar', label: 'Calendar', icon: CalendarDays },
     { to: '/chats', label: 'Chat', icon: MessageCircle },
   ]
   if (role === 'lawyer' || role === 'staff') {

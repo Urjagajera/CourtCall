@@ -120,6 +120,11 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
         </div>
       )}
 
+      {!c.caseNo && (
+        <div className="mt-4">
+          <Banner tone="waiting">Add the case number first (edit the case). The client follows only what your firm enters, so the case must be complete before you share a link.</Banner>
+        </div>
+      )}
       <div className="mt-4 rounded-md border border-line bg-surface-raised p-3">
         <p className="mb-2 text-label font-semibold">Who looks after {c.clientName}?</p>
         <AssigneePicker value={assignTo} onChange={setAssignTo} lockSelf={!user!.isFirmAdmin} />
@@ -127,12 +132,13 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button loading={busy === 'new-client'} onClick={() => create('client')} icon={<Plus className="size-4" strokeWidth={1.75} />}>
+        <Button loading={busy === 'new-client'} disabled={!c.caseNo} onClick={() => create('client')} icon={<Plus className="size-4" strokeWidth={1.75} />}>
           Client link
         </Button>
         <Button
           variant="secondary"
           loading={busy === 'new-family'}
+          disabled={!c.caseNo}
           onClick={() => create('family')}
           icon={<Users className="size-4" strokeWidth={1.75} />}
         >
