@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Case } from '../lib/api'
 import { api } from '../lib/api'
 import { formatDate } from '../lib/dates'
-import { useAuth } from '../lib/auth'
-import { AssigneePicker } from './AssigneePicker'
 import { Sheet } from './Sheet'
 import { Badge, Banner, Button, cx } from './ui'
 
@@ -33,14 +31,6 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
   // The raw token exists only right after creating a link; it's never stored or shown again.
   const [fresh, setFresh] = useState<{ url: string } | null>(null)
   const [copied, setCopied] = useState(false)
-  // Who looks after this client: starts with whoever is already assigned; saved when a link is shared.
-  const { user } = useAuth()
-  const [assignTo, setAssignTo] = useState<string[]>([])
-  useEffect(() => {
-    api<{ clients: { id: string; assignees: { id: string }[] }[] }>('/clients')
-      .then((r) => setAssignTo(r.clients.find((k) => k.id === c.clientId)?.assignees.map((a) => a.id) ?? []))
-      .catch(() => {})
-  }, [c.clientId])
 
   const load = useCallback(async () => {
     try {
@@ -67,7 +57,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
       setBusy(null)
     }
   }
-  const create = () => run('new-client', () => api(`/cases/${c.id}/links`, { body: { kind: 'client', assignTo } }))
+  const create = () => run('new-client', () => api(`/cases/${c.id}/links`, { body: { kind: 'client' } }))
   const revoke = (l: LinkRow) => run(`off-${l.id}`, () => api(`/links/${l.id}/revoke`, { method: 'POST' }))
   const reissue = (l: LinkRow) => run(`re-${l.id}`, () => api(`/links/${l.id}/reissue`, { method: 'POST' }))
 
@@ -123,11 +113,6 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
           <Banner tone="waiting">Add the case number first (edit the case). The client follows only what your firm enters, so the case must be complete before you share a link.</Banner>
         </div>
       )}
-      <div className="mt-4 rounded-md border border-line bg-surface-raised p-3">
-        <p className="mb-2 text-label font-semibold">Who looks after {c.clientName}?</p>
-        <AssigneePicker value={assignTo} onChange={setAssignTo} lockSelf={!user!.isFirmAdmin} />
-        <p className="mt-2 text-caption text-ink-muted">Saved when you share a link. Only these people (and firm admins) see this client, their cases and chat.</p>
-      </div>
 
       <div className="mt-4">
         <Button className="w-full" loading={busy === 'new-client'} disabled={!c.caseNo} onClick={create} icon={<Plus className="size-4" strokeWidth={1.75} />}>

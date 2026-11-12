@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
+import { TeamFields, type Team } from '../../components/CaseTeam'
 import { HearingsToUpdate } from '../../components/HearingsToUpdate'
 import { LinkSheet } from '../../components/LinkSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
-import { api, type Case, type Client, type User } from '../../lib/api'
+import { api, type Case, type Client } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatDate, todayISO } from '../../lib/dates'
 import { useApi } from '../../lib/useApi'
@@ -15,15 +16,16 @@ import { useForm } from '../../lib/useForm'
 
 export default function Cases() {
   const { user } = useAuth()
-  const isLawyer = user!.role === 'lawyer' || user!.role === 'staff' // can manage cases
+  // New cases: firm admins and senior lawyers. Edit/delete per case comes from the server (canEdit).
+  const canAdd = user!.role === 'lawyer'
   const { data, error, loading, reload } = useApi<{ cases: Case[] }>('/cases')
   const [editing, setEditing] = useState<Case | 'new' | null>(null)
   // ?new=<clientId> (from a client's page) opens the add-case form for that client.
   const [params, setParams] = useSearchParams()
   const newFor = params.get('new')
   useEffect(() => {
-    if (newFor && isLawyer) setEditing('new')
-  }, [newFor, isLawyer])
+    if (newFor && canAdd) setEditing('new')
+  }, [newFor, canAdd])
 
   const byDate = useMemo(() => {
     const groups = new Map<string, Case[]>()
@@ -38,15 +40,15 @@ export default function Cases() {
   const remove = (c: Case) => setDeleting(c)
   const [sharing, setSharing] = useState<Case | null>(null)
   // Client phone numbers for the WhatsApp share button.
-  const clientList = useApi<{ clients: Client[] }>(isLawyer ? '/clients' : null)
+  const clientList = useApi<{ clients: Client[] }>('/clients')
 
   return (
     <>
       <PageHeader
         title="Cases"
-        subtitle="Upcoming hearings by date. Tap a case for its full details and history."
+        subtitle="Your upcoming hearings by date. Tap a case for its full details, team and history."
         action={
-          isLawyer && (
+          canAdd && (
             <Button data-tour="add-case" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
               Add case
             </Button>
@@ -54,7 +56,7 @@ export default function Cases() {
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
-      {isLawyer && <HearingsToUpdate onChanged={reload} />}
+      <HearingsToUpdate onChanged={reload} />
       {loading && !data ? (
         <PageSpinner />
       ) : byDate.length ? (
@@ -88,8 +90,7 @@ export default function Cases() {
                         <Landmark className="size-3.5" strokeWidth={1.75} /> {c.courtComplex} · Court {c.roomNo}
                       </p>
                     </div>
-                    {isLawyer && (
-                      <div className="flex">
+                    <div className="flex">
                         <Button
                           data-tour={c === list[0] ? 'client-link' : undefined}
                           variant="ghost"
@@ -100,14 +101,17 @@ export default function Cases() {
                         >
                           <Link2 className="size-4" strokeWidth={1.75} />
                         </Button>
-                        <Button variant="ghost" size="sm" aria-label="Edit case" onClick={() => setEditing(c)}>
-                          <Pencil className="size-4" strokeWidth={1.75} />
-                        </Button>
-                        <Button variant="ghost" size="sm" aria-label="Delete case" onClick={() => remove(c)}>
-                          <Trash2 className="size-4" strokeWidth={1.75} />
-                        </Button>
-                      </div>
-                    )}
+                        {c.canEdit && (
+                          <>
+                            <Button variant="ghost" size="sm" aria-label="Edit case" onClick={() => setEditing(c)}>
+                              <Pencil className="size-4" strokeWidth={1.75} />
+                            </Button>
+                            <Button variant="ghost" size="sm" aria-label="Delete case" onClick={() => remove(c)}>
+                              <Trash2 className="size-4" strokeWidth={1.75} />
+                            </Button>
+                          </>
+                        )}
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -117,7 +121,7 @@ export default function Cases() {
       ) : (
         <Card>
           <EmptyState icon={<CalendarDays className="size-10" strokeWidth={1.5} />} title="No upcoming hearings">
-            {isLawyer ? 'Add a case with its courtroom, date and item number from the cause list.' : 'Your senior lawyer has not added any cases yet.'}
+            {canAdd ? 'Add a case with its courtroom, date and item number from the cause list.' : 'Cases you are put on by your firm appear here.'}
           </EmptyState>
         </Card>
       )}
@@ -163,8 +167,9 @@ export default function Cases() {
 
 function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | null; clientId?: string | null; onClose: () => void; onSaved: () => void }) {
   const clients = useApi<{ clients: Client[] }>('/clients')
-  const team = useApi<{ members: User[] }>('/office')
-  const juniors = (team.data?.members ?? []).filter((m) => m.role === 'junior' && m.verificationStatus === 'verified')
+  const { user } = useAuth()
+  // Team only when adding; afterwards it's changed from the case page (Case team).
+  const [team, setTeam] = useState<Team>({ mainLawyerId: user!.id, assignedJuniorId: '', helperStaffId: '' })
 
   const { field, submit, submitting, formError } = useForm({
     clientId: existing?.clientId ?? clientId ?? '',
@@ -174,7 +179,6 @@ function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | n
     roomNo: existing?.roomNo ?? '',
     hearingDate: existing?.hearingDate ?? todayISO(),
     itemNo: existing?.itemNo != null ? String(existing.itemNo) : '',
-    assignedJuniorId: existing?.assignedJuniorId ?? '',
   })
 
   if (clients.data && clients.data.clients.length === 0) {
@@ -200,7 +204,13 @@ function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | n
               ...v,
               caseNo: v.caseNo || undefined,
               itemNo: v.itemNo ? Number(v.itemNo) : null,
-              assignedJuniorId: v.assignedJuniorId || null,
+              ...(existing
+                ? {}
+                : {
+                    mainLawyerId: team.mainLawyerId,
+                    assignedJuniorId: team.assignedJuniorId || null,
+                    helperStaffId: team.helperStaffId || null,
+                  }),
             }
             await api(existing ? `/cases/${existing.id}` : '/cases', { method: existing ? 'PATCH' : 'POST', body })
             onSaved()
@@ -228,14 +238,12 @@ function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | n
           <Input label="Next hearing date" type="date" required {...field('hearingDate')} />
           <Input label="Item no." type="number" inputMode="numeric" min={1} placeholder="Later" className="tabular" {...field('itemNo')} />
         </div>
-        <Select label="Junior in court (optional)" {...field('assignedJuniorId')}>
-          <option value="">Not assigned</option>
-          {juniors.map((j) => (
-            <option key={j.id} value={j.id}>
-              {j.name}
-            </option>
-          ))}
-        </Select>
+        {!existing && (
+          <div className="rounded-md border border-line bg-surface-raised p-3">
+            <p className="mb-2 text-label font-semibold">Case team</p>
+            <TeamFields value={team} onChange={setTeam} canChangeMain={user!.isFirmAdmin} />
+          </div>
+        )}
         <Button type="submit" loading={submitting}>
           {existing ? 'Save changes' : 'Add case'}
         </Button>

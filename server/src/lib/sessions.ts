@@ -3,7 +3,8 @@ import { db, schema } from '../db/index.js'
 import type { CourtEvent, CourtSession, User } from '../db/schema.js'
 import { ACTIVE_REPORTER_MS, decide, isStale, type CorrectionTarget, type EventInput } from './engine.js'
 import { notFound } from './http.js'
-import { inScope } from './visibility.js'
+import { type SQL } from 'drizzle-orm'
+import { caseVisible } from './visibility.js'
 import { MSG_PROGRESS, createGroup, joinGroup, ncSessionGroupId, ncStaffId, safely, sendGroupMessage } from './nexconn.js'
 
 const { courtSessions, courtSessionMembers, courtEvents, courtrooms, cases, clients, users, offices } = schema
@@ -138,8 +139,8 @@ export function sessionView(s: CourtSession) {
 }
 
 /** This office's cases in a given courtroom/day (never other offices' cases). */
-/** `scope`: client IDs this person may see (null = whole firm), from lib/visibility. */
-export async function officeCasesIn(officeId: string, courtroomId: string, date: string, scope: string[] | null = null) {
+/** `only`: extra condition limiting which cases (e.g. caseVisible(user) from lib/visibility). */
+export async function officeCasesIn(officeId: string, courtroomId: string, date: string, only?: SQL) {
   return db
     .select({
       id: cases.id,
@@ -150,7 +151,7 @@ export async function officeCasesIn(officeId: string, courtroomId: string, date:
     })
     .from(cases)
     .innerJoin(clients, eq(clients.id, cases.clientId))
-    .where(and(eq(cases.officeId, officeId), eq(cases.courtroomId, courtroomId), eq(cases.hearingDate, date), inScope(cases.clientId, scope)))
+    .where(and(eq(cases.officeId, officeId), eq(cases.courtroomId, courtroomId), eq(cases.hearingDate, date), only))
     .orderBy(asc(cases.itemNo))
 }
 
@@ -281,7 +282,8 @@ export async function applyEvent(
 }
 
 /**
- * Sessions shown on a staff member's day view: rooms with their office's cases + rooms they joined.
+ * Sessions shown on a staff member's day view: rooms with cases they are on (firm admins: all firm cases)
+ * + rooms they joined.
  * Batched (constant number of queries) because the database may be far from the API in development.
  */
 export async function sessionsForUser(user: User, date: string) {
@@ -289,7 +291,7 @@ export async function sessionsForUser(user: User, date: string) {
     ? await db
         .selectDistinct({ courtroomId: cases.courtroomId })
         .from(cases)
-        .where(and(eq(cases.officeId, user.officeId), eq(cases.hearingDate, date)))
+        .where(and(eq(cases.officeId, user.officeId), eq(cases.hearingDate, date), caseVisible(user)))
     : []
 
   if (officeRooms.length) {
@@ -330,7 +332,7 @@ export async function sessionsForUser(user: User, date: string) {
 }
 
 /** All of an office's cases on a date, for grouping by courtroom in one query. */
-export async function officeCasesOn(officeId: string, date: string, scope: string[] | null = null) {
+export async function officeCasesOn(officeId: string, date: string, only?: SQL) {
   return db
     .select({
       id: cases.id,
@@ -342,6 +344,6 @@ export async function officeCasesOn(officeId: string, date: string, scope: strin
     })
     .from(cases)
     .innerJoin(clients, eq(clients.id, cases.clientId))
-    .where(and(eq(cases.officeId, officeId), eq(cases.hearingDate, date), inScope(cases.clientId, scope)))
+    .where(and(eq(cases.officeId, officeId), eq(cases.hearingDate, date), only))
     .orderBy(asc(cases.itemNo))
 }

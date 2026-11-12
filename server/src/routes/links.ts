@@ -5,32 +5,31 @@ import { db, schema } from '../db/index.js'
 import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import type { User } from '../db/schema.js'
 import { DEMO_LINK_LABEL, newLinkToken, sha256 } from '../lib/clientAccess.js'
-import { assignClient, canSeeClient, clientScope, inScope } from '../lib/visibility.js'
+import { caseVisible } from '../lib/visibility.js'
 import { badRequest, notFound, parse } from '../lib/http.js'
 
-// Firm side of client links: create, list, revoke, reissue. Only lawyers and staff of the case's firm.
+// Firm side of client links: create, list, revoke, reissue. Anyone on the case's team (firm admins: any case).
 export const linksRouter = Router()
-const firm = [requireAuth, requireVerified, requireRole('lawyer', 'staff')]
+const firm = [requireAuth, requireVerified, requireRole('lawyer', 'junior', 'staff')]
 
-/** The case, if it belongs to this person's firm AND to a client they may see. */
+/** The case, if this person is on its team (firm admins: any case of the firm). */
 async function caseInMyFirm(caseId: string, user: User) {
   if (!user.officeId) throw notFound('Case not found')
-  const scope = await clientScope(user)
   const [c] = await db
     .select()
     .from(schema.cases)
-    .where(and(eq(schema.cases.id, caseId), eq(schema.cases.officeId, user.officeId), inScope(schema.cases.clientId, scope)))
+    .where(and(eq(schema.cases.id, caseId), eq(schema.cases.officeId, user.officeId), caseVisible(user)))
   if (!c) throw notFound('Case not found')
   return c
 }
 
 async function linkInMyFirm(linkId: string, user: User) {
   const [row] = await db
-    .select({ link: schema.accessLinks, officeId: schema.cases.officeId, clientId: schema.cases.clientId })
+    .select({ link: schema.accessLinks })
     .from(schema.accessLinks)
     .innerJoin(schema.cases, eq(schema.cases.id, schema.accessLinks.caseId))
-    .where(eq(schema.accessLinks.id, linkId))
-  if (!row || row.officeId !== user.officeId || !(await canSeeClient(user, row.clientId))) throw notFound('Link not found')
+    .where(and(eq(schema.accessLinks.id, linkId), eq(schema.cases.officeId, user.officeId!), caseVisible(user)))
+  if (!row) throw notFound('Link not found')
   return row.link
 }
 
@@ -68,7 +67,6 @@ async function createLink(caseId: string, label: string | null, userId: string) 
 
 /**
  * The raw token is returned only here, once. Only its hash is stored.
- * Sharing a link also sets who looks after the client: the sharer plus anyone in `assignTo`.
  */
 linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
   const body = parse(
@@ -76,6 +74,7 @@ linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
       // Family links were removed (Nov 2026): every link is a client link. Old callers may still send kind.
       kind: z.literal('client').default('client'),
       label: z.string().trim().max(60).optional(),
+      // Ignored since case teams (Nov 2026): who sees a client now follows the case team.
       assignTo: z.array(z.uuid()).max(50).optional(),
     }),
     req.body,
@@ -84,7 +83,6 @@ linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
   // The client only follows what the firm entered, so the case must be complete first.
   if (!c.caseNo) throw badRequest('Add the case number before sharing a link')
   if (c.status === 'closed') throw badRequest('This case is closed. Reopen it with a new case to share a link')
-  await assignClient(c.clientId, c.officeId, [...(req.user!.isFirmAdmin ? [] : [req.user!.id]), ...(body.assignTo ?? [])])
   const { link, token } = await createLink(c.id, body.label || null, req.user!.id)
   res.status(201).json({ link: view(link, req.user!.name), token })
 })

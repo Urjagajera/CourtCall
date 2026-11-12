@@ -226,18 +226,18 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
       and(
         eq(schema.users.officeId, ctx.office.id),
         eq(schema.users.verificationStatus, 'verified'),
-        inArray(schema.users.role, ['lawyer', 'staff']),
-        // Only the people who look after this client, plus the firm admins.
+        inArray(schema.users.role, ['lawyer', 'junior', 'staff']),
+        // The people on this client's cases (main lawyer, helping junior, staff helper), plus the firm admins.
         or(
           and(eq(schema.users.isFirmAdmin, true), eq(schema.users.role, 'lawyer')),
-          inArray(
-            schema.users.id,
-            db.select({ id: schema.clientAssignments.userId }).from(schema.clientAssignments).where(eq(schema.clientAssignments.clientId, ctx.client.id)),
-          ),
+          inArray(schema.users.id, db.select({ id: schema.cases.mainLawyerId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
+          inArray(schema.users.id, db.select({ id: schema.cases.assignedJuniorId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
+          inArray(schema.users.id, db.select({ id: schema.cases.helperStaffId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
         ),
       ),
     )
-  const first = ctx.link.createdBy ?? ctx.office.ownerId
+  // The main lawyer of the case this link is for comes first.
+  const first = ctx.case.mainLawyerId ?? ctx.link.createdBy ?? ctx.office.ownerId
   people.sort((a, b) => Number(b.id === first) - Number(a.id === first))
   res.json({
     appKey: config.nexconn.appKey,

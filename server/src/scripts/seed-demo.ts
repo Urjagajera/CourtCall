@@ -66,7 +66,7 @@ await db.delete(schema.users).where(eq(schema.users.email, 'admin@courtcall.demo
 const a = await office(acc('lawyer').email, acc('lawyer').name, 'Mehta & Associates', 'MEHTA4')
 const b = await office(acc('lawyer2').email, acc('lawyer2').name, 'Desai Law Chambers', 'DESAI7')
 const juniorA = await user(acc('junior').email, acc('junior').name, 'junior', a.officeId)
-await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
+const juniorB = await user(acc('junior2').email, acc('junior2').name, 'junior', b.officeId)
 const anil = await user(acc('lawyer3').email, acc('lawyer3').name, 'lawyer', a.officeId)
 const neha = await user(acc('staff').email, acc('staff').name, 'staff', a.officeId)
 
@@ -77,22 +77,16 @@ const court7 = await upsertCourtroom(COMPLEX, '7')
 const ramesh = await client(a.officeId, 'Ramesh Patel', 'en')
 await db.update(schema.clients).set({ language: 'en' }).where(eq(schema.clients.id, ramesh.id))
 const sunita = await client(a.officeId, 'Sunita Joshi', 'hi')
-// Who looks after whom (firm admin Mehta sees everyone): Anil + Neha look after Ramesh, Neha alone looks after Sunita.
-await db.delete(schema.clientAssignments).where(inArray(schema.clientAssignments.clientId, [ramesh.id, sunita.id]))
-await db.insert(schema.clientAssignments).values([
-  { clientId: ramesh.id, userId: anil.id },
-  { clientId: ramesh.id, userId: neha.id },
-  { clientId: sunita.id, userId: neha.id },
-])
 const kiran = await client(b.officeId, 'Kiran Desai', 'en')
 
-// Fresh cases for today (old demo cases for these offices are replaced).
+// Fresh cases for today (old demo cases for these offices are replaced, with their updates).
+await db.delete(schema.notifications).where(inArray(schema.notifications.userId, [a.owner.id, b.owner.id, anil.id, neha.id, juniorA.id, juniorB.id]))
 await db.delete(schema.cases).where(inArray(schema.cases.officeId, [a.officeId, b.officeId]))
 const seededCases = await db.insert(schema.cases).values([
-  { officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs State of Gujarat', caseNo: 'CR.MA/1452/2026', courtroomId: court4.id, hearingDate: today, itemNo: 15, assignedJuniorId: juniorA.id },
-  { officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi', caseNo: 'FA/388/2025', courtroomId: court4.id, hearingDate: today, itemNo: 22, assignedJuniorId: juniorA.id },
-  { officeId: a.officeId, clientId: ramesh.id, title: 'Patel Textiles vs GSFC', caseNo: 'SCA/9021/2026', courtroomId: court7.id, hearingDate: today, itemNo: 9 },
-  { officeId: b.officeId, clientId: kiran.id, title: 'Desai vs Municipal Corporation', caseNo: 'SCA/7710/2026', courtroomId: court4.id, hearingDate: today, itemNo: 18 },
+  { officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs State of Gujarat', caseNo: 'CR.MA/1452/2026', courtroomId: court4.id, hearingDate: today, itemNo: 15, mainLawyerId: anil.id, assignedJuniorId: juniorA.id, helperStaffId: neha.id },
+  { officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi', caseNo: 'FA/388/2025', courtroomId: court4.id, hearingDate: today, itemNo: 22, mainLawyerId: a.owner.id, assignedJuniorId: juniorA.id, helperStaffId: neha.id },
+  { officeId: a.officeId, clientId: ramesh.id, title: 'Patel Textiles vs GSFC', caseNo: 'SCA/9021/2026', courtroomId: court7.id, hearingDate: today, itemNo: 9, mainLawyerId: anil.id, helperStaffId: neha.id },
+  { officeId: b.officeId, clientId: kiran.id, title: 'Desai vs Municipal Corporation', caseNo: 'SCA/7710/2026', courtroomId: court4.id, hearingDate: today, itemNo: 18, mainLawyerId: b.owner.id, assignedJuniorId: juniorB.id },
 ]).returning()
 
 // History for the client demo: an earlier hearing of Ramesh's main case (adjourned) and an older, finished case.
@@ -104,7 +98,7 @@ const daysAgo = (n: number) => {
 const cityCivil12 = await upsertCourtroom('City Civil Court', '12')
 const [oldCase] = await db
   .insert(schema.cases)
-  .values({ officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs Shah (property)', caseNo: 'CS/220/2025', courtroomId: cityCivil12.id, hearingDate: daysAgo(21), itemNo: 31 })
+  .values({ officeId: a.officeId, clientId: ramesh.id, title: 'Patel vs Shah (property)', caseNo: 'CS/220/2025', courtroomId: cityCivil12.id, hearingDate: daysAgo(21), itemNo: 31, mainLawyerId: anil.id })
   .returning()
 async function pastDay(courtroomId: string, date: string, caseId: string, alerts: [string, string, number][]) {
   await db.insert(schema.courtSessions).values({ courtroomId, date, currentItem: 40, hearingItem: 40, status: 'risen', version: 20 }).onConflictDoNothing()
@@ -170,7 +164,7 @@ await db.insert(schema.caseHearings).values([
 ])
 await db.update(schema.cases).set({ status: 'closed' }).where(eq(schema.cases.id, oldCase.id))
 // A hearing two days ago with no outcome yet: shows the "Hearings to update" reminder (Mehta and Neha).
-await db.insert(schema.cases).values({ officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi (maintenance)', caseNo: 'CRMA/77/2026', courtroomId: court7.id, hearingDate: daysAgo(2), itemNo: 6 })
+await db.insert(schema.cases).values({ officeId: a.officeId, clientId: sunita.id, title: 'Joshi vs Joshi (maintenance)', caseNo: 'CRMA/77/2026', courtroomId: court7.id, hearingDate: daysAgo(2), itemNo: 6, mainLawyerId: a.owner.id, helperStaffId: neha.id })
 
 // Demo client link for Ramesh Patel's main case: opened by the "Client" demo button (never bound to a phone).
 const patelCase = seededCases.find((c) => c.title === 'Patel vs State of Gujarat')!

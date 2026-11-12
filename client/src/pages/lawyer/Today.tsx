@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { HearingsToUpdate } from '../../components/HearingsToUpdate'
+import { UpdatesCard } from '../../components/UpdatesCard'
 import { Sheet } from '../../components/Sheet'
 import { Badge, Banner, Button, Card, EmptyState, Input, PageSpinner } from '../../components/ui'
 import { api } from '../../lib/api'
@@ -52,7 +53,8 @@ export default function Today() {
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
-      {user!.role !== 'junior' && <HearingsToUpdate />}
+      <UpdatesCard />
+      <HearingsToUpdate />
       {!data ? (
         !error && <PageSpinner />
       ) : data.sessions.length ? (

@@ -81,15 +81,15 @@ PLAN.md              original product plan and schedule
 
 | Role (`users.role`) | Can do | Approved by |
 |---|---|---|
-| `lawyer` (senior lawyer) | Assigned clients, their cases + chats; courtrooms (join + report), team room | Firm founder: nobody (starts right away). Others: a firm admin |
-| `junior` | Join courtrooms, report progress, room chat, team room | A firm admin |
-| `staff` (office clerk) | Assigned clients, their cases + chats, team room; today's courtrooms **read-only**, never reports | A firm admin |
+| `lawyer` (senior lawyer) | Adds clients and cases (becomes main lawyer); sees the cases they are on + their clients and chats; on cases they lead: edits details, records hearings, picks helping junior + staff helper; courtrooms (join + report), team room | Firm founder: nobody (starts right away). Others: a firm admin |
+| `junior` | Sees only cases they are on (as main lawyer or helping junior) + those clients and chats; as main lawyer records hearings and edits the case; join courtrooms, report progress, room chat, team room; never assigns anyone | A firm admin |
+| `staff` (office clerk) | Staff helper on cases (max one per case): sees those cases, clients and chats read-only; team room; today's courtrooms **read-only**, never reports; can't add or edit cases or clients | A firm admin |
 | `admin` | Removed (Nov 2026). The enum value stays in the DB but nothing uses it | — |
 
 - **Firm admin** is a flag (`users.is_firm_admin`), not a role. The founder (`offices.owner_id`) always has it and can't be deactivated or demoted. Only **senior lawyers** can be firm admins (never juniors or office staff): enforced in `PATCH /office/members/:id`, and `withAdminRule()` in `lib/auth.ts` ignores the flag on anyone else. Moving an admin to junior/staff removes it. They approve/decline/deactivate people, change roles, and rotate the invite code (`/api/office/*`).
 - People join a firm with its 6-character invite code (`/api/auth/register/member` with a role) and wait in `pending` until approved. "Deactivated" = `verification_status = 'rejected'`.
 - Firm data is **never** shared with other firms; courtroom progress is the only thing shared between firms.
-- **Client visibility** (`server/src/lib/visibility.ts`, table `client_assignments`): firm admins see every client; juniors see every firm case (they cover courtrooms) but not /clients; other lawyers and staff see only assigned clients (clients, cases, links, Today case rows). Assigned when sharing a link (`assignTo`, sharer always included unless firm admin), when adding a client, or by a firm admin (`PUT /api/clients/:id/assignees`). Clients chat only with assignees + firm admins.
+- **Case teams decide visibility** (`server/src/lib/visibility.ts`: `caseVisible`, `clientScope`, `canEditCase`, `canManageTeam`, `validateTeam`): each case has `main_lawyer_id` (senior or junior), `assigned_junior_id` (helping junior, senior-led cases only) and `helper_staff_id` (one staff). Firm admins see everything; everyone else sees only cases they are on, the clients of those cases (plus clients they added that have no case yet), their links and chats, and only those case rows on Today/rooms/Calendar. Team changes: `PUT /api/cases/:id/team` (firm admin: all; senior main lawyer: helping junior + staff helper only). Clients chat with the people on their cases + firm admins. The old per-client `client_assignments` table is no longer used (kept for history).
 - No Bar Council number is collected (removed Nov 2026: there is no public API to verify it). Firm admins approve everyone who joins.
 - `requireAuth`, `requireRole`, `requireVerified`, `requireFirmAdmin` in `server/src/lib/auth.ts` enforce this. Always enforce permissions on the server, not only in the UI.
 
@@ -154,7 +154,7 @@ Done (in order):
 
 ### Pending tasks (requested by Urja; remove each line when done)
 
-- [ ] **Case teams, per-case visibility and update badges** (agreed 12 Nov 2026, in progress). Rules decided by Urja (do not change without asking):
+13d. Done (12 Nov 2026): **case teams, per-case visibility and update badges** (`lib/visibility.ts`, `routes/cases.ts` `PUT /:id/team`, `lib/notify.ts`, `routes/notifications.ts`, table `notifications`, client `lib/updates.tsx`, `components/CaseTeam.tsx`, `UpdatesCard.tsx`, nav badges in `AppLayout.tsx`). Rules decided by Urja (do not change without asking):
   - **Each case has a team:** one **main lawyer** (a senior or a junior), an optional **helping junior** (only when the main lawyer is a senior; replaces "Junior in court", column `assigned_junior_id`), and at most **one staff helper**. Staff are never main lawyer.
   - **Who assigns:** firm admin can set everything (any senior, themselves or a junior as main lawyer; helping junior; staff helper). A senior who is not admin: on cases they are main lawyer of, can set the helping junior and staff helper, but can **not** change the main lawyer. Juniors and staff can't assign anything.
   - **New cases:** firm admin (picks the main lawyer) and senior lawyers (the creator becomes main lawyer). Staff and juniors can't add cases. **Clients:** added by firm admin and seniors; edited/deleted by the firm admin or the main lawyer of that client's case(s).

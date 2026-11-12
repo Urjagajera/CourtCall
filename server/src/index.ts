@@ -11,6 +11,7 @@ import { clientRouter } from './routes/client.js'
 import { clientsRouter } from './routes/clients.js'
 import { courtroomsRouter } from './routes/courtrooms.js'
 import { hearingsRouter } from './routes/hearings.js'
+import { notificationsRouter } from './routes/notifications.js'
 import { linksRouter } from './routes/links.js'
 import { officeRouter } from './routes/office.js'
 
@@ -42,6 +43,7 @@ app.use('/api', linksRouter)
 app.use('/api/c', clientRouter)
 // Hearing outcomes, reminders, calendar, client/case detail pages.
 app.use('/api', hearingsRouter)
+app.use('/api/notifications', notificationsRouter)
 app.use('/api', courtroomsRouter)
 
 app.use('/api', (_req, res) => {

@@ -1,4 +1,4 @@
-import { Pencil, Phone, Plus, Trash2, UserCog, UserRound } from 'lucide-react'
+import { FolderOpen, Pencil, Phone, Plus, Trash2, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
@@ -8,18 +8,16 @@ import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '..
 import { api, type Client } from '../../lib/api'
 import { useApi } from '../../lib/useApi'
 import { useAuth } from '../../lib/auth'
-import { AssigneePicker } from '../../components/AssigneePicker'
-
-type Assignee = { id: string; name: string; role: string }
-type ClientRow = Client & { assignees: Assignee[] }
 import { useForm } from '../../lib/useForm'
+
+/** Per client, from the server: how many of their cases you see, and what you may change. */
+type ClientRow = Client & { caseCount: number; canEdit: boolean; canDelete: boolean }
 
 const LANG = { en: 'English', hi: 'Hindi', gu: 'Gujarati' } as const
 
 export default function Clients() {
-  const { data, error, loading, reload } = useApi<{ clients: ClientRow[] }>('/clients')
+  const { data, error, loading, reload } = useApi<{ clients: ClientRow[]; canAdd: boolean }>('/clients')
   const { user } = useAuth()
-  const [assigning, setAssigning] = useState<ClientRow | null>(null)
   const [editing, setEditing] = useState<Client | 'new' | null>(null)
 
   const [deleting, setDeleting] = useState<Client | null>(null)
@@ -29,11 +27,13 @@ export default function Clients() {
     <>
       <PageHeader
         title="Clients"
-        subtitle={user!.isFirmAdmin ? 'Every client of your firm' : 'Clients assigned to you'}
+        subtitle={user!.isFirmAdmin ? 'Every client of your firm' : 'Clients of the cases you are on'}
         action={
-          <Button data-tour="add-client" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
-            Add client
-          </Button>
+          data?.canAdd && (
+            <Button data-tour="add-client" onClick={() => setEditing('new')} icon={<Plus className="size-5" strokeWidth={1.75} />}>
+              Add client
+            </Button>
+          )
         }
       />
       {error && <Banner tone="stopped">{error}</Banner>}
@@ -58,28 +58,28 @@ export default function Clients() {
                   )}
                   {LANG[c.language]}
                 </p>
-                <p className="truncate text-caption text-ink-muted">
-                  {c.assignees.length ? `Looked after by ${c.assignees.map((a) => a.name).join(', ')}` : 'Not assigned yet (firm admins only)'}
+                <p className="flex items-center gap-1 truncate text-caption text-ink-muted">
+                  <FolderOpen className="size-3.5" strokeWidth={1.75} />
+                  {c.caseCount ? `${c.caseCount} ${c.caseCount === 1 ? 'case' : 'cases'}` : 'No case yet: add one from their page'}
                 </p>
               </div>
-              {user!.isFirmAdmin && (
-                <Button variant="ghost" size="sm" aria-label={`Who looks after ${c.name}`} onClick={() => setAssigning(c)}>
-                  <UserCog className="size-4" strokeWidth={1.75} />
+              {c.canEdit && (
+                <Button variant="ghost" size="sm" aria-label={`Edit ${c.name}`} onClick={() => setEditing(c)}>
+                  <Pencil className="size-4" strokeWidth={1.75} />
                 </Button>
               )}
-              <Button variant="ghost" size="sm" aria-label={`Edit ${c.name}`} onClick={() => setEditing(c)}>
-                <Pencil className="size-4" strokeWidth={1.75} />
-              </Button>
-              <Button variant="ghost" size="sm" aria-label={`Delete ${c.name}`} onClick={() => remove(c)}>
-                <Trash2 className="size-4" strokeWidth={1.75} />
-              </Button>
+              {c.canDelete && (
+                <Button variant="ghost" size="sm" aria-label={`Delete ${c.name}`} onClick={() => remove(c)}>
+                  <Trash2 className="size-4" strokeWidth={1.75} />
+                </Button>
+              )}
             </Card>
           ))}
         </div>
       ) : (
         <Card>
           <EmptyState icon={<UserRound className="size-10" strokeWidth={1.5} />} title="No clients yet">
-            Add a client, then map their case to a courtroom.
+            {data?.canAdd ? 'Add a client, then add their case.' : 'Clients of the cases you are put on appear here.'}
           </EmptyState>
         </Card>
       )}
@@ -106,7 +106,6 @@ export default function Clients() {
           }}
         />
       )}
-      {assigning && <AssignSheet client={assigning} onClose={() => setAssigning(null)} onSaved={() => { setAssigning(null); reload() }} />}
     </>
   )
 }
@@ -143,37 +142,6 @@ function ClientForm({ client, onClose, onSaved }: { client: Client | null; onClo
           {client ? 'Save changes' : 'Add client'}
         </Button>
       </form>
-    </Sheet>
-  )
-}
-
-/** Firm admins: choose which lawyers and staff look after a client. */
-function AssignSheet({ client, onClose, onSaved }: { client: ClientRow; onClose: () => void; onSaved: () => void }) {
-  const [ids, setIds] = useState(client.assignees.map((a) => a.id))
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  return (
-    <Sheet open title={`Who looks after ${client.name}`} onClose={onClose}>
-      <AssigneePicker value={ids} onChange={setIds} />
-      {error && <Banner tone="stopped">{error}</Banner>}
-      <Button
-        className="mt-4 w-full"
-        loading={busy}
-        onClick={async () => {
-          setBusy(true)
-          setError(null)
-          try {
-            await api(`/clients/${client.id}/assignees`, { method: 'PUT', body: { userIds: ids } })
-            onSaved()
-          } catch (e) {
-            setError(e instanceof Error ? e.message : 'Could not save')
-          } finally {
-            setBusy(false)
-          }
-        }}
-      >
-        Save
-      </Button>
     </Sheet>
   )
 }

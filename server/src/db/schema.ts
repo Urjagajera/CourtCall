@@ -159,6 +159,8 @@ export const clients = pgTable(
     name: text('name').notNull(),
     phone: text('phone'),
     language: text('language').notNull().default('en'),
+    /** Who added the client: they see it while it has no case yet. */
+    createdBy: uuid('created_by').references((): AnyPgColumn => users.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
   },
   (t) => [index('clients_office_idx').on(t.officeId)],
@@ -204,7 +206,12 @@ export const cases = pgTable(
     itemNo: integer('item_no'),
     /** closed = disposed / finished: no more hearings, no reminders. */
     status: caseStatus('status').notNull().default('active'),
+    /** Case team. Main lawyer: a senior or a junior. */
+    mainLawyerId: uuid('main_lawyer_id').references(() => users.id, { onDelete: 'set null' }),
+    /** Helping junior (only when the main lawyer is a senior). Formerly "Junior in court". */
     assignedJuniorId: uuid('assigned_junior_id').references(() => users.id, { onDelete: 'set null' }),
+    /** At most one office staff helper. */
+    helperStaffId: uuid('helper_staff_id').references(() => users.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -290,4 +297,25 @@ export const caseHearings = pgTable(
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex('case_hearings_case_date_uq').on(t.caseId, t.date)],
+)
+
+// "Something new" for a person on a case (assigned, details changed, hearing outcome recorded…).
+// The hearing-needs-update to-do is computed live (routes/hearings.ts), not stored here.
+export const notificationKind = pgEnum('notification_kind', ['assigned', 'unassigned', 'details_changed', 'outcome_recorded', 'notes_edited'])
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    caseId: uuid('case_id').references(() => cases.id, { onDelete: 'cascade' }),
+    kind: notificationKind('kind').notNull(),
+    message: text('message').notNull(),
+    actorId: uuid('actor_id').references(() => users.id, { onDelete: 'set null' }),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('notifications_user_idx').on(t.userId, t.createdAt)],
 )

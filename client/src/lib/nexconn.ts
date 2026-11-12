@@ -17,6 +17,10 @@ import { api } from './api'
 
 export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
+/** "Something new on a case" ping for staff: not stored, not counted as unread chat. */
+export const MSG_NOTICE = 'CC:Notice'
+/** The CourtCall bot's own direct channel never counts towards chat unread totals. */
+export const BOT_ID = 'courtcallbot'
 export const MSG_TEXT = 'RC:TxtMsg'
 
 export interface TeamInfo {
@@ -70,6 +74,7 @@ export function startChat(tokenPath = '/chat/token') {
         NCEngine.registerCustomMessages([
           { messageType: MSG_PROGRESS, isPersisted: true, isCounted: false },
           { messageType: MSG_ALERT, isPersisted: true, isCounted: true },
+          { messageType: MSG_NOTICE, isPersisted: false, isCounted: false },
         ])
         NCEngine.addMessageHandler(
           'courtcall',

@@ -21,6 +21,7 @@ export const BOT_NAME = 'CourtCall'
 /** Custom message types (must also be registered in the web SDK). */
 export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
+export const MSG_NOTICE = 'CC:Notice' // badge refresh for staff, not stored
 
 export class NexconnError extends Error {
   code: number
@@ -154,7 +155,8 @@ export async function sendSystemMessage(toUserIds: string[], messageType: string
 }
 
 /** One-to-one message from the CourtCall bot (client alerts arrive in the client's own chat list). */
-export async function sendBotDirectMessage(toUserIds: string[], messageType: string, content: unknown, pushContent?: string) {
+/** `persist: false` sends a signal that isn't stored or counted as unread (e.g. CC:Notice badge refresh). */
+export async function sendBotDirectMessage(toUserIds: string[], messageType: string, content: unknown, pushContent?: string, persist = true) {
   if (!toUserIds.length) return
   await ensureBot()
   await post('/v4/direct-channel/message/send', {
@@ -163,7 +165,7 @@ export async function sendBotDirectMessage(toUserIds: string[], messageType: str
     messageType,
     content: JSON.stringify(content),
     pushContent,
-    shouldPersist: 1,
+    shouldPersist: persist ? 1 : 0,
   })
 }
 

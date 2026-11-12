@@ -71,7 +71,14 @@ export interface Case {
   /** Null until the cause list for that date is out. */
   itemNo: number | null
   status: 'active' | 'closed'
+  /** Case team: main lawyer (senior or junior), helping junior (senior-led only), one staff helper. */
+  mainLawyerId: string | null
   assignedJuniorId: string | null
+  helperStaffId: string | null
+  /** What the signed-in person may do (from the server). */
+  canEdit?: boolean
+  canManageTeam?: boolean
+  canChangeMainLawyer?: boolean
 }
 
 export interface Hearing {

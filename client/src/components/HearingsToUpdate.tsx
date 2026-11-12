@@ -2,16 +2,18 @@ import { BellRing, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatDate } from '../lib/dates'
+import { useUpdates } from '../lib/updates'
 import { useApi } from '../lib/useApi'
 import { OutcomeSheet, type OutcomeCase } from './OutcomeSheet'
 import { Button, Card } from './ui'
 
 /**
- * Reminder for lawyers and staff: hearings that have happened but have no recorded outcome yet
- * (only for clients they look after; firm admins see all). Hidden when there's nothing to do.
+ * To-do for the main lawyer of a case and for firm admins: hearings that have happened but have no
+ * recorded outcome yet. Hidden when there's nothing to do.
  */
 export function HearingsToUpdate({ onChanged }: { onChanged?: () => void }) {
   const { data, reload } = useApi<{ cases: OutcomeCase[] }>('/hearings/pending')
+  const updates = useUpdates()
   const [open, setOpen] = useState<OutcomeCase | null>(null)
   const list = data?.cases ?? []
   if (!list.length) return null
@@ -48,6 +50,7 @@ export function HearingsToUpdate({ onChanged }: { onChanged?: () => void }) {
           onSaved={() => {
             setOpen(null)
             reload()
+            updates.reload()
             onChanged?.()
           }}
         />

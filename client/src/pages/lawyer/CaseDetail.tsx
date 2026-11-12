@@ -16,9 +16,10 @@ import {
   UserRound,
   Users,
 } from 'lucide-react'
-import { useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
+import { TeamSheet } from '../../components/CaseTeam'
 import { LinkSheet } from '../../components/LinkSheet'
 import { OutcomeSheet } from '../../components/OutcomeSheet'
 import { Sheet } from '../../components/Sheet'
@@ -27,19 +28,21 @@ import { api, type Case, type Hearing } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatDate, todayISO } from '../../lib/dates'
 import { useApi } from '../../lib/useApi'
+import { useUpdates } from '../../lib/updates'
 
 interface Detail {
   case: Case & { clientPhone: string | null }
   hearings: Hearing[]
-  assignees: { id: string; name: string; role: string }[]
-  junior: { id: string; name: string } | null
+  team: { mainLawyer: TeamPerson | null; helpingJunior: TeamPerson | null; staffHelper: TeamPerson | null }
+  permissions: { canEdit: boolean; canManageTeam: boolean; canChangeMainLawyer: boolean }
   links: { active: number; openedOnPhone: boolean }
   needsOutcome: boolean
 }
 
-const ROLE: Record<string, string> = { lawyer: 'Senior lawyer', staff: 'Office staff' }
+type TeamPerson = { id: string; name: string; role: string }
+const ROLE: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'Junior lawyer', staff: 'Office staff' }
 
-/** Everything about one case: details, next hearing, who looks after it, every past hearing with notes. */
+/** Everything about one case: details, next hearing, case team, every past hearing with notes. */
 export default function CaseDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -48,7 +51,15 @@ export default function CaseDetail() {
   const [outcomeOpen, setOutcomeOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [editing, setEditing] = useState<Hearing | null>(null)
-  const canEdit = user!.role !== 'junior'
+  const [teamOpen, setTeamOpen] = useState(false)
+  // Opening a case marks its updates as read (the sidebar badge goes down).
+  const updates = useUpdates()
+  useEffect(() => {
+    if (id && updates.items.some((u) => u.caseId === id && !u.readAt)) updates.markRead({ caseId: id })
+    // Only when the case or its unread updates change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, updates.items])
+  const canEdit = data?.permissions.canEdit ?? false
 
   if (error) {
     return (
@@ -70,7 +81,7 @@ export default function CaseDetail() {
         title={c.title}
         subtitle={c.clientName}
         action={
-          canEdit && c.status === 'active' ? (
+          c.status === 'active' ? (
             <Button variant="secondary" onClick={() => setLinkOpen(true)} icon={<Link2 className="size-5" strokeWidth={1.75} />}>
               Client link
             </Button>
@@ -78,7 +89,7 @@ export default function CaseDetail() {
         }
       />
 
-      {data.needsOutcome && (
+      {data.needsOutcome && canEdit && (
         <Card className="flex flex-wrap items-center gap-3 border-2 border-waiting-fg/40">
           <BellRing className="size-6 shrink-0 text-waiting-fg" strokeWidth={1.75} />
           <p className="min-w-0 flex-1 text-label">
@@ -119,28 +130,46 @@ export default function CaseDetail() {
               <Row icon={ListOrdered} label="Item no.">
                 {c.itemNo ?? <span className="text-ink-muted">Not out yet (add it when the cause list is out)</span>}
               </Row>
-              <Row icon={Users} label="Junior in court">
-                {data.junior?.name ?? <span className="text-ink-muted">Not set</span>}
-              </Row>
               <Row icon={Link2} label="Client link">
                 {data.links.active ? (data.links.openedOnPhone ? 'Shared and opened on the client’s phone' : 'Shared, not opened yet') : 'Not shared yet'}
               </Row>
             </dl>
           </Card>
 
-          <Card>
-            <p className="text-h2">Who looks after this client</p>
-            {data.assignees.length ? (
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {data.assignees.map((a) => (
-                  <li key={a.id} className="rounded-full border border-line bg-surface-raised px-3 py-1 text-label">
-                    {a.name} <span className="text-caption text-ink-muted">· {ROLE[a.role] ?? a.role}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-1 text-label text-ink-muted">Nobody yet. Firm admins see this client.</p>
-            )}
+          <Card data-tour="case-team">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-h2">Case team</p>
+              {data.permissions.canManageTeam && (
+                <Button size="sm" variant="secondary" onClick={() => setTeamOpen(true)} icon={<Users className="size-4" strokeWidth={1.75} />}>
+                  Edit team
+                </Button>
+              )}
+            </div>
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-label">
+              {(
+                [
+                  ['Main lawyer', data.team.mainLawyer],
+                  ['Helping junior', data.team.helpingJunior],
+                  ['Staff helper', data.team.staffHelper],
+                ] as const
+              ).map(([label, p]) => (
+                <Fragment key={label}>
+                  <dt className="text-ink-muted">{label}</dt>
+                  <dd className="min-w-0">
+                    {p ? (
+                      <>
+                        <span className="font-semibold">{p.name}</span>
+                        {p.id === user!.id && ' (you)'}
+                        <span className="text-caption text-ink-muted"> · {ROLE[p.role] ?? p.role}</span>
+                      </>
+                    ) : (
+                      <span className="text-ink-muted">None</span>
+                    )}
+                  </dd>
+                </Fragment>
+              ))}
+            </dl>
+            <p className="mt-2 text-caption text-ink-muted">Only these people (and firm admins) see this case, its client and their chat.</p>
           </Card>
         </div>
 
@@ -216,6 +245,22 @@ export default function CaseDetail() {
           onClose={() => setOutcomeOpen(false)}
           onSaved={() => {
             setOutcomeOpen(false)
+            reload()
+          }}
+        />
+      )}
+      {teamOpen && (
+        <TeamSheet
+          caseId={c.id}
+          canChangeMain={data.permissions.canChangeMainLawyer}
+          initial={{
+            mainLawyerId: c.mainLawyerId ?? '',
+            assignedJuniorId: c.assignedJuniorId ?? '',
+            helperStaffId: c.helperStaffId ?? '',
+          }}
+          onClose={() => setTeamOpen(false)}
+          onSaved={() => {
+            setTeamOpen(false)
             reload()
           }}
         />

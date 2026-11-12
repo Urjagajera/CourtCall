@@ -340,7 +340,7 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 6. **Joining a firm:** sign out, choose **Create an account → Join a firm**, pick **Office staff** (or junior / senior lawyer) and use invite code **MEHTA4**. The new person waits for approval. Sign in as **Firm admin (Mehta)** → **Team** → **Approve**, then try changing their role or making them a firm admin.
    - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
 7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Tap **Turn on** under "Get alerts on this phone". Report from Priya's window (Court 4, Now hearing 5, then 10, 13, 15) and watch the alert banner, the phone notification and his page update. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
-8. **Who sees what:** sign in as **Senior lawyer (Anil)**: Clients shows only Ramesh (assigned to him). **Office staff (Neha)** sees Ramesh and Sunita. **Firm admin (Mehta)** sees everyone and can change who looks after a client on **Clients**.
+8. **Case teams and updates:** sign in as **Senior lawyer (Anil)**: he leads Ramesh's cases, so he sees only Ramesh. **Junior (Priya)** sees only the two cases she helps on and can't change them. **Office staff (Neha)** helps on Ramesh's and Sunita's cases (read-only). As **Firm admin (Mehta)**, open a case → **Case team → Edit team** and make Anil the main lawyer: Anil gets a number on **Cases** and an item under **Updates** on Today.
 9. **Languages and voice:** on the client page tap **हिं** or **ગુ**; the page, tour and his future alerts switch language. In any chat, tap the **mic** and speak.
 
 ---

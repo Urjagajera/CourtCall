@@ -86,6 +86,21 @@ const shared = {
     title: 'Everything about a case',
     body: 'Tap any case to open it: case number, court, next date and item, the junior in court, the client link and who looks after the client.',
   },
+  updates: {
+    id: 'updates',
+    target: 'updates',
+    route: '/',
+    optional: true,
+    title: 'Updates',
+    body: 'Whenever something changes on a case you are on (you are added, the date or item changes, a hearing is recorded), it shows here and as a number on Cases in the menu. Unread messages show as a number on Chat. Tap an update to open the case.',
+  },
+  caseTeam: {
+    id: 'case-team',
+    target: 'case-team',
+    optional: true,
+    title: 'Case team',
+    body: 'Every case has a main lawyer, an optional helping junior and one staff helper. Only these people (and firm admins) see the case. The firm admin picks the main lawyer; a senior main lawyer picks the helping junior and staff helper.',
+  },
   caseHearings: {
     id: 'case-hearings',
     target: 'case-hearings',
@@ -113,6 +128,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
     return [
       welcome(firstName),
       shared.today,
+      shared.updates,
       shared.roomCard,
       {
         id: 'room-progress',
@@ -203,6 +219,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         body: 'Every courtroom where your firm has a case today, with live progress. You watch courtrooms read-only; juniors report from inside.',
       },
       { ...shared.roomCard, body: 'The latest reported item in this courtroom, and how far away each of the firm’s cases is.' },
+      shared.updates,
       shared.hearings,
       {
         id: 'cases',
@@ -220,6 +237,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         body: 'This button makes a private link for the client (the case needs its case number first). Choose who looks after the client, then share it on WhatsApp: they see live progress, the next date and can chat with you. No app, no password. It locks to the first phone that opens it.',
       },
       shared.caseDetails,
+      shared.caseTeam,
       shared.caseHearings,
       {
         id: 'clients',
@@ -242,6 +260,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
     welcome(firstName),
     shared.today,
     shared.roomCard,
+    shared.updates,
     shared.hearings,
     shared.join,
     {
@@ -260,6 +279,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
       body: 'This button makes a private link for the client (the case needs its case number first). Choose who looks after the client, then share it on WhatsApp: they see live progress, the next date and can chat with you. No app, no password. It locks to the first phone that opens it.',
     },
     shared.caseDetails,
+    shared.caseTeam,
     shared.caseHearings,
     {
       id: 'clients',

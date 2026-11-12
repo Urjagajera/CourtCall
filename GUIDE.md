@@ -74,13 +74,30 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 Your firm's clients and cases are **never** visible to other firms. Only courtroom progress is shared.
 
-### Who sees which clients
+### Case teams: who works on and sees each case
 
-- **Firm admins** see every client, case and client chat in the firm.
-- **Other senior lawyers and office staff** see only the clients assigned to them: their cases, links and chats.
-- **Junior lawyers** see every case of the firm on **Today** and in courtrooms (they cover the rooms), but not the Clients page.
-- **Assigning:** when you share a client's WhatsApp link (**Cases → link icon**), tick **Who looks after this client**. You're always included. A firm admin can change it anytime on **Clients → person icon**. Whoever adds a client looks after them.
-- The client can chat only with the people assigned to them and the firm admins.
+Every case has a **team**:
+- **Main lawyer**: a senior lawyer or a junior lawyer. They run the case.
+- **Helping junior** (optional): only when the main lawyer is a senior.
+- **Staff helper** (optional): one office staff member who helps on the case.
+
+Who decides:
+- The **firm admin** sets everything: any senior (or themselves) or a junior as main lawyer, the helping junior and the staff helper.
+- A **senior lawyer** who adds a case is its main lawyer. On cases they lead they choose the helping junior and staff helper (**Case team → Edit team** on the case page), but only the firm admin can change the main lawyer.
+- **Juniors and staff** can't assign anyone. Staff and juniors can't add cases or clients.
+
+Who sees what:
+- **Firm admins** see every case and client in the firm.
+- **Everyone else** sees only the cases they are on, plus those clients, their chats and their WhatsApp links. A junior who isn't on a case doesn't see it.
+- Case details and hearing outcomes are changed by the **main lawyer** or a **firm admin**. Helpers see everything on the case but can't change it.
+- The client can chat only with the people on their cases and the firm admins.
+
+### Updates and badges
+
+- When something changes on a case you are on (you are added or removed, the date, item, court or case number changes, a hearing is recorded or its notes edited), it appears under **Updates** at the top of **Today** and as a **number on Cases** in the menu. The person who made the change isn't notified.
+- After a hearing, its **main lawyer** and the **firm admins** get it as a to-do ("Hearings to update", also counted on Cases). When one of them records it, the to-do disappears for everyone and the others get a "changes were made" update.
+- **Chat** in the menu shows how many messages you haven't read yet.
+- Opening a case marks its updates as read; **Mark all read** clears the list.
 
 ---
 
@@ -89,7 +106,7 @@ Your firm's clients and cases are **never** visible to other firms. Only courtro
 ### Lawyers and staff: prepare the day
 
 1. **Clients → Add client:** name, WhatsApp number and alert language.
-2. **Cases → Add case:** client, case number, court complex (e.g. "Gujarat High Court"), court number, next hearing date, item number from the cause list (or later, when it's out), and the junior who will be in court.
+2. **Cases → Add case:** client, case number, court complex (e.g. "Gujarat High Court"), court number, next hearing date, item number from the cause list (or later, when it's out), and the case team (firm admins pick the main lawyer; a senior who adds a case leads it).
 3. **Share the case with the client:** on **Cases**, tap the **link icon** on the case, then **Client link → Share on WhatsApp**. The message and link are filled in for you.
    - The link **locks to the first phone that opens it**, so don't open it yourself.
    - Lost or new phone? Tap **New link**. To stop a link at once, tap **Turn off**.
@@ -105,14 +122,14 @@ When a hearing is over (the date has passed, or the court has risen or moved pas
 
 ### Case, client and calendar pages
 
-- **Tap a case** (Cases, Calendar, a client's page): case number, court, next date and item, junior in court, client link status, who looks after the client, and every past hearing with its notes (edit notes with the pencil).
-- **Tap a client** (Clients): phone, alert language, who looks after them, and all their cases (active and closed). **Add case** from there.
+- **Tap a case** (Cases, Calendar, a client's page): case number, court, next date and item, the case team (main lawyer, helping junior, staff helper; **Edit team** if you may), client link status, and every past hearing with its notes (edit notes with the pencil).
+- **Tap a client** (Clients): phone, alert language, and their cases you are on (firm admins: all) with each case’s main lawyer. Seniors and firm admins can **Add case** from there.
 - **Calendar**: a month view of every hearing. Dots: maroon = upcoming, taupe = held, amber = still to update. Tap a day to list its hearings.
 - A **case number** is required before a client link can be shared, so the client always sees complete details.
 
 ### Juniors: report from the courtroom
 
-1. Open **Today**. Courtrooms where your firm has cases appear automatically. To cover another room, tap **Join courtroom**.
+1. Open **Today**. Courtrooms where you have a case (as main lawyer or helping junior) appear automatically. To cover another room, tap **Join courtroom**.
 2. Tap a courtroom card to open the room.
 3. The big button already shows the **next item**. When the judge calls it, tap **Now hearing: Item N**. Use **−1 / +1** or type a number if the court jumps.
 4. Other buttons: **Passed over**, **Adjourned**, **Recalled** (pick from passed-over items), **Break / Resume**, **Not sitting**, **Court risen**.
@@ -174,7 +191,7 @@ Each alert comes once. You'll never get a guessed time.
 | No **Install app** option on Android | Use Chrome (not an in-app browser such as WhatsApp's). Open the link, tap **⋮ → Open in Chrome**, then install. |
 | No alerts | Tap **Turn on** on your case page and allow notifications. On iPhone, install it to the home screen first. Check that the phone isn't in battery saver. |
 | "Awaiting approval" | Your firm admin approves you on **Team**. Firm founders never wait. |
-| A client is missing from your list | Only clients assigned to you are shown. Ask a firm admin to add you on **Clients**, or share the client's link and tick yourself. |
+| A client or case is missing from your list | You only see cases you are on. Ask the firm admin (or the case's senior main lawyer) to add you to the case team. |
 | Mic button missing or "Microphone is blocked" | Voice typing works in Chrome, Edge and Safari (not Firefox). Allow the microphone for this site in the browser settings. |
 | Progress says "may be out of date" | Nobody has reported for 20 minutes. Ask the junior in court, or check again soon. |
 | Red dot next to your name | Chat is reconnecting. Courtroom updates still work. |

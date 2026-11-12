@@ -8,7 +8,7 @@ import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
 import { EVENT_TYPES, courtDate } from '../lib/engine.js'
 import { forbidden, notFound, parse } from '../lib/http.js'
-import { clientScope } from '../lib/visibility.js'
+import { caseVisible } from '../lib/visibility.js'
 import {
   activeReporterCount,
   announceEvent,
@@ -35,7 +35,7 @@ courtroomsRouter.get('/courtrooms/today', requireAuth, requireVerified, requireR
   const date = courtDate()
   const [rows, officeCases] = await Promise.all([
     sessionsForUser(user, date),
-    user.officeId ? clientScope(user).then((scope) => officeCasesOn(user.officeId!, date, scope)) : Promise.resolve([]),
+    user.officeId ? officeCasesOn(user.officeId, date, caseVisible(user)) : Promise.resolve([]),
   ])
   const sessions = rows.map(({ session, courtroom }) => ({
     ...sessionView(session),
@@ -86,7 +86,7 @@ courtroomsRouter.get('/sessions/:id', ...staff, async (req, res) => {
   const [events, activeReporters, myCases, members] = await Promise.all([
     recentEvents(id),
     activeReporterCount(id),
-    user.officeId ? clientScope(user).then((scope) => officeCasesIn(user.officeId!, courtroom.id, session.date, scope)) : [],
+    user.officeId ? officeCasesIn(user.officeId, courtroom.id, session.date, caseVisible(user)) : [],
     sessionMembers(id),
   ])
   res.json({

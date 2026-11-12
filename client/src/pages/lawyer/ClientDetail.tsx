@@ -4,21 +4,21 @@ import { PageHeader } from '../../components/AppLayout'
 import { Badge, Banner, Button, Card, EmptyState, PageSpinner } from '../../components/ui'
 import type { Case, Client, Hearing } from '../../lib/api'
 import { formatDate, todayISO } from '../../lib/dates'
+import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
 
 interface Detail {
   client: Client
-  assignees: { id: string; name: string; role: string }[]
-  cases: (Case & { hearings: Hearing[] })[]
+  cases: (Case & { hearings: Hearing[]; mainLawyerName: string | null; helpingJuniorName: string | null; staffHelperName: string | null })[]
 }
 
 const LANG: Record<string, string> = { en: 'English', hi: 'Hindi', gu: 'Gujarati' }
-const ROLE: Record<string, string> = { lawyer: 'Senior lawyer', staff: 'Office staff' }
 
 /** One client: contact details, who looks after them, and every case with its latest hearing. */
 export default function ClientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { data, error } = useApi<Detail>(`/clients/${id}/detail`)
   const today = todayISO()
 
@@ -46,9 +46,12 @@ export default function ClientDetail() {
         title={client.name}
         subtitle={`${active.length} active ${active.length === 1 ? 'case' : 'cases'}${closed.length ? ` · ${closed.length} closed` : ''}`}
         action={
-          <Button onClick={() => navigate(`/cases?new=${client.id}`)} icon={<Plus className="size-5" strokeWidth={1.75} />}>
-            Add case
-          </Button>
+          // New cases: firm admins and senior lawyers (who become the main lawyer).
+          user!.role === 'lawyer' && (
+            <Button onClick={() => navigate(`/cases?new=${client.id}`)} icon={<Plus className="size-5" strokeWidth={1.75} />}>
+              Add case
+            </Button>
+          )
         }
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
@@ -69,18 +72,9 @@ export default function ClientDetail() {
               <Languages className="size-4 text-ink-muted" strokeWidth={1.75} /> Alerts in {LANG[client.language]}
             </li>
           </ul>
-          <p className="mt-4 text-label font-semibold">Looked after by</p>
-          {data.assignees.length ? (
-            <ul className="mt-1 flex flex-wrap gap-2">
-              {data.assignees.map((a) => (
-                <li key={a.id} className="rounded-full border border-line bg-surface-raised px-3 py-1 text-label">
-                  {a.name} <span className="text-caption text-ink-muted">· {ROLE[a.role] ?? a.role}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-label text-ink-muted">Firm admins only. Assign people on the Clients page.</p>
-          )}
+          <p className="mt-4 text-caption text-ink-muted">
+            {user!.isFirmAdmin ? 'You see all of this client’s cases.' : 'You see the cases of this client that you are on.'}
+          </p>
         </Card>
 
         <div data-tour="client-detail-cases" className="flex min-w-0 flex-col gap-3">
@@ -120,6 +114,11 @@ export default function ClientDetail() {
                         {c.status === 'closed' ? 'Last' : 'Next'}: {formatDate(c.hearingDate)}
                         {c.itemNo != null && ` · Item ${c.itemNo}`}
                       </span>
+                    </p>
+                    <p className="mt-1 text-caption text-ink-muted">
+                      Main: <span className="font-semibold text-ink">{c.mainLawyerName ?? '—'}</span>
+                      {c.helpingJuniorName && <> · Junior: {c.helpingJuniorName}</>}
+                      {c.staffHelperName && <> · Staff: {c.staffHelperName}</>}
                     </p>
                     {last?.summary && <p className="mt-2 line-clamp-2 text-label">{last.summary}</p>}
                   </div>

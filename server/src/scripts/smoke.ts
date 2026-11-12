@@ -173,13 +173,13 @@ await lawyer.patch(`/cases/${caseId}`, { itemNo: 8 })
 const mk = await lawyer.post(`/cases/${caseId}/links`, { kind: 'client' })
 check('lawyer creates a client link (token returned once)', mk.status === 201 && typeof mk.body.token === 'string' && mk.body.token.length > 20, mk.body)
 const linkToken = mk.body.token
-check('junior cannot create links', (await junior.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 403)
+check('the helping junior on a case can share its link', (await junior.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 201)
 check('other firm cannot see my links', (await lawyer2.get(`/cases/${caseId}/links`)).status === 404)
-check("staff can't share links for clients not assigned to them", (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 404)
+check("staff not on the case can't see or share it", (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 404)
 const staffId = (await staff.get('/auth/me')).body.user?.id
-const viaShare = await lawyer.post(`/cases/${caseId}/links`, { kind: 'client', assignTo: [staffId] })
-check('sharing a link assigns the chosen people', viaShare.status === 201 && ((await staff.get('/clients')).body.clients ?? []).some((k: any) => k.id === clientId))
-check('assigned staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 201)
+check('firm admin adds a staff helper to the case', (await lawyer.put(`/cases/${caseId}/team`, { helperStaffId: staffId })).body.case?.helperStaffId === staffId)
+check('the staff helper now sees the client', ((await staff.get('/clients')).body.clients ?? []).some((k: any) => k.id === clientId))
+check('the staff helper can share the link', (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 201)
 check('family links no longer exist', (await lawyer.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 400)
 const phoneA = 'device-aaaaaaaaaaaaaaaa'
 const phoneB = 'device-bbbbbbbbbbbbbbbb'
@@ -226,33 +226,67 @@ const fin = (await junior.get(`/sessions/${sid}`)).body.session
 await junior.post(`/sessions/${sid}/events`, { type: 'break_end', baseVersion: fin.version })
 check('push key is available for phone alerts', (await clientNew.get('/c/push-key')).body.publicKey?.length > 20)
 check('other firm cannot revoke my links', (await lawyer2.post(`/links/${re.body.link?.id}/revoke`)).status === 404)
-// ---- who sees which clients ----
+// ---- case teams: who sees what, who assigns what (CLAUDE.md "Case teams") ----
 const names = async (s: Session) => ((await s.get('/clients')).body.clients ?? []).map((c: any) => c.name)
+const titles = async (s: Session) => ((await s.get('/cases')).body.cases ?? []).map((c: any) => c.title)
 const mehtaSees = await names(lawyer)
 const anilSees = await names(lawyer3)
 check('firm admin sees every client', mehtaSees.includes('Ramesh Patel') && mehtaSees.includes('Sunita Joshi'), mehtaSees)
-check('lawyer sees only assigned clients', anilSees.includes('Ramesh Patel') && !anilSees.includes('Sunita Joshi'), anilSees)
+check('a lawyer sees only the clients of their cases', anilSees.includes('Ramesh Patel') && !anilSees.includes('Sunita Joshi'), anilSees)
 const anilCases = ((await lawyer3.get('/cases')).body.cases ?? []).map((c: any) => c.clientName)
-check("lawyer doesn't see unassigned clients' cases", anilCases.length > 0 && !anilCases.includes('Sunita Joshi'), anilCases)
-const juniorCases = ((await junior.get('/cases')).body.cases ?? []).map((c: any) => c.clientName)
-check('juniors still see every firm case (they cover courtrooms)', juniorCases.includes('Sunita Joshi'))
-const sunitaId = ((await lawyer.get('/clients')).body.clients ?? []).find((c: any) => c.name === 'Sunita Joshi')?.id
-const sunitaCase = ((await lawyer.get('/cases')).body.cases ?? []).find((c: any) => c.clientId === sunitaId)
-check("lawyer can't share a link for an unassigned client", (await lawyer3.post(`/cases/${sunitaCase?.id}/links`, { kind: 'client' })).status === 404)
-check('only firm admins change assignments', (await lawyer3.put(`/clients/${sunitaId}/assignees`, { userIds: [] })).status === 403)
+check("a lawyer doesn't see cases they aren't on", anilCases.length > 0 && !anilCases.includes('Sunita Joshi'), anilCases)
+const priyaCases = await titles(junior)
+check('a junior sees only the cases they are on', priyaCases.includes('Patel vs State of Gujarat') && !priyaCases.includes('Patel Textiles vs GSFC'), priyaCases)
+check('staff see the clients of the cases they help on', (await names(staff)).includes('Sunita Joshi'))
+check('people list for the team picker includes juniors', ((await staff.get('/office/people')).body.people ?? []).some((p: any) => p.role === 'junior'))
+
+const allCases = (await lawyer.get('/cases')).body.cases ?? []
+const patelMain = allCases.find((c: any) => c.title === 'Patel vs State of Gujarat')
+const sunitaCase = allCases.find((c: any) => c.title === 'Joshi vs Joshi')
+const sunitaId = sunitaCase?.clientId
 const anilId = (await lawyer3.get('/auth/me')).body.user?.id
-check('firm admin assigns a client', (await lawyer.put(`/clients/${sunitaId}/assignees`, { userIds: [anilId] })).status === 200 && (await names(lawyer3)).includes('Sunita Joshi'))
-const famSunita = await lawyer.post(`/cases/${sunitaCase?.id}/links`, { kind: 'client', assignTo: [] })
-check('sharing a link keeps assignments', famSunita.status === 201 && (await names(lawyer3)).includes('Sunita Joshi'))
-await lawyer.post(`/links/${famSunita.body.link?.id}/revoke`)
-check('people list for the picker', ((await staff.get('/office/people')).body.people ?? []).length >= 3)
+const mehtaId = (await lawyer.get('/auth/me')).body.user?.id
+const nehaId = staffId
+check("a lawyer can't share a link for a case they aren't on", (await lawyer3.post(`/cases/${sunitaCase?.id}/links`, { kind: 'client' })).status === 404)
+check("a senior can't change the main lawyer of their own case", (await lawyer3.put(`/cases/${patelMain?.id}/team`, { mainLawyerId: mehtaId })).status === 403)
+check('a senior main lawyer sets the staff helper', (await lawyer3.put(`/cases/${patelMain?.id}/team`, { helperStaffId: null })).body.case?.helperStaffId === null)
+check('a senior main lawyer sets the helping junior', (await lawyer3.put(`/cases/${patelMain?.id}/team`, { assignedJuniorId: priyaId, helperStaffId: nehaId })).body.case?.assignedJuniorId === priyaId)
+check("juniors can't change a case team", (await junior.put(`/cases/${patelMain?.id}/team`, { helperStaffId: null })).status === 403)
+check("staff can't change a case team", (await staff.put(`/cases/${patelMain?.id}/team`, { helperStaffId: null })).status === 403)
+check("staff can't edit case details", (await staff.patch(`/cases/${patelMain?.id}`, { itemNo: 99 })).status === 403)
+check("a junior can't edit case details", (await junior.patch(`/cases/${patelMain?.id}`, { itemNo: 99 })).status === 403)
+check('staff can never be the main lawyer', (await lawyer.put(`/cases/${sunitaCase?.id}/team`, { mainLawyerId: nehaId })).status === 400)
+check('a junior-led case has no helping junior', (await lawyer.put(`/cases/${sunitaCase?.id}/team`, { mainLawyerId: priyaId, assignedJuniorId: priyaId })).status === 400)
+check("staff can't add cases", (await staff.post('/cases', { clientId: sunitaId, title: 'Staff case', caseNo: 'X/1', courtComplex: 'Smoke Test Court', roomNo: '99', hearingDate: today })).status === 403)
+check("juniors can't add cases", (await junior.post('/cases', { clientId: sunitaId, title: 'Junior case', caseNo: 'X/2', courtComplex: 'Smoke Test Court', roomNo: '99', hearingDate: today })).status === 403)
+check("staff can't add clients", (await staff.post('/clients', { name: 'Smoke Client Staff' })).status === 403)
+check("a senior can't pick someone else as main lawyer", (await lawyer3.post('/cases', { clientId, title: 'Smoke pick', caseNo: 'X/3', courtComplex: 'Smoke Test Court', roomNo: '99', hearingDate: today, mainLawyerId: mehtaId })).status >= 400)
+
+// The firm admin makes Anil the main lawyer of Sunita's case: Anil now sees her and is told.
+await lawyer3.post('/notifications/read', { all: true })
+check('firm admin changes the main lawyer', (await lawyer.put(`/cases/${sunitaCase?.id}/team`, { mainLawyerId: anilId })).body.case?.mainLawyerId === anilId)
+check('the new main lawyer sees the client', (await names(lawyer3)).includes('Sunita Joshi'))
+const anilN = (await lawyer3.get('/notifications')).body
+check('the new main lawyer gets an "assigned" update', anilN.unread >= 1 && anilN.items?.some((n: any) => n.kind === 'assigned' && n.caseId === sunitaCase?.id), anilN)
+check('the firm admin (who made the change) is not notified', !((await lawyer.get('/notifications')).body.items ?? []).some((n: any) => n.kind === 'assigned' && n.caseId === sunitaCase?.id && !n.readAt))
+await lawyer.patch(`/cases/${sunitaCase?.id}`, { itemNo: 23 })
+const anilN2 = (await lawyer3.get('/notifications')).body
+check('the team gets a "details changed" update', anilN2.items?.some((n: any) => n.kind === 'details_changed' && n.caseId === sunitaCase?.id))
+await lawyer3.post('/notifications/read', { caseId: sunitaCase?.id })
+check('opening the case marks its updates read', !((await lawyer3.get('/notifications')).body.items ?? []).some((n: any) => n.caseId === sunitaCase?.id && !n.readAt))
+check('the main lawyer can edit their case', (await lawyer3.patch(`/cases/${sunitaCase?.id}`, { itemNo: 22 })).status === 200)
+check('the main lawyer can edit their client', (await lawyer3.patch(`/clients/${sunitaId}`, { language: 'hi' })).status === 200)
+await lawyer.put(`/cases/${sunitaCase?.id}/team`, { mainLawyerId: mehtaId })
+check('removed from the case: no longer sees the client', !(await names(lawyer3)).includes('Sunita Joshi'))
 
 // ---- hearing outcomes, reminders, calendar, detail pages ----
 const pendingMehta = (await lawyer.get('/hearings/pending')).body.cases ?? []
 const maint = pendingMehta.find((k: any) => k.title === 'Joshi vs Joshi (maintenance)')
 check('firm admin is reminded of a hearing that happened', !!maint, pendingMehta.map((k: any) => k.title))
-check('the assigned lawyer is reminded too', ((await lawyer3.get('/hearings/pending')).body.cases ?? []).some((k: any) => k.id === maint?.id))
-check('juniors get no reminder list', (await junior.get('/hearings/pending')).status === 403)
+check('the staff helper gets no hearing to-do', !((await staff.get('/hearings/pending')).body.cases ?? []).some((k: any) => k.id === maint?.id))
+check('a junior gets their own (empty) to-do list', (await junior.get('/hearings/pending')).status === 200)
+check("staff can't record a hearing outcome", (await staff.post(`/cases/${maint?.id}/outcome`, { outcome: 'closed' })).status === 403)
+await staff.post('/notifications/read', { all: true })
 check('next date must be after the hearing', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_date', nextDate: '2020-01-01' })).status === 400)
 check('next date is required', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_date' })).status === 400)
 const nextDate = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10)
@@ -260,9 +294,11 @@ const rec = await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'next_da
 check('outcome recorded and case moved to the next date', rec.status === 201 && rec.body.case?.hearingDate === nextDate && rec.body.case?.itemNo === null, rec.body)
 check('the next (future) hearing cannot get an outcome yet', (await lawyer.post(`/cases/${maint?.id}/outcome`, { outcome: 'closed' })).status === 400)
 check('reminder cleared after recording', !((await lawyer.get('/hearings/pending')).body.cases ?? []).some((k: any) => k.id === maint?.id))
+check('the staff helper gets a "changes were made" update', ((await staff.get('/notifications')).body.items ?? []).some((n: any) => n.kind === 'outcome_recorded' && n.caseId === maint?.id && !n.readAt))
 const det = (await lawyer.get(`/cases/${maint?.id}/detail`)).body
 check('case detail shows the hearing history with notes', det.hearings?.[0]?.summary === 'Reply filed. Arguments next time.' && det.hearings?.[0]?.prepNotes?.includes('SECRET-PREP'), det)
-check('juniors can open case details', (await junior.get(`/cases/${maint?.id}/detail`)).status === 200)
+check("a junior not on the case can't open it", (await junior.get(`/cases/${maint?.id}/detail`)).status === 404)
+check('the staff helper can open it (read-only)', (await staff.get(`/cases/${maint?.id}/detail`)).body.permissions?.canEdit === false)
 check("lawyer can't open an unassigned client's case", (await lawyer2.get(`/cases/${maint?.id}/detail`)).status === 404)
 const cd = (await lawyer.get(`/clients/${maint?.clientId}/detail`)).body
 check('client detail lists all their cases with hearings', cd.cases?.length >= 2 && cd.cases.some((k: any) => k.hearings?.length >= 1))

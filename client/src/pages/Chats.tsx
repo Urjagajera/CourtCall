@@ -4,7 +4,6 @@ import { PageHeader } from '../components/AppLayout'
 import { ChatPanel } from '../components/ChatPanel'
 import { Banner, cx } from '../components/ui'
 import type { Client } from '../lib/api'
-import { useAuth } from '../lib/auth'
 import { useChat, useUnreadCounts } from '../lib/nexconn'
 import { useApi } from '../lib/useApi'
 
@@ -27,9 +26,9 @@ const ROLE_LABEL: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'J
  * lawyers and staff) private chats with clients. Filters: Lawyers (senior first, then juniors), Staff, Clients.
  */
 export default function Chats() {
-  const { user } = useAuth()
   const chat = useChat()
-  const canChatClients = user!.role === 'lawyer' || user!.role === 'staff'
+  // Everyone chats with the clients of the cases they are on (firm admins: every client).
+  const canChatClients = true
   const clients = useApi<{ clients: (Client & { ncId: string })[] }>(canChatClients ? '/clients' : null)
   const [selected, setSelected] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('lawyers')

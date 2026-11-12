@@ -53,7 +53,7 @@ async function colleague(adminId: string, officeId: string, id: string) {
 }
 
 /** Approve a new member, decline them, deactivate or reactivate an existing one. */
-/** Approved senior lawyers and staff in my firm: who a client can be assigned to. Any member may read it. */
+/** Approved people of my firm (seniors, juniors, staff): who can be put on a case team. Any member may read it. */
 officeRouter.get('/people', async (req, res) => {
   const people = await db
     .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role, isFirmAdmin: schema.users.isFirmAdmin })
@@ -62,7 +62,7 @@ officeRouter.get('/people', async (req, res) => {
       and(
         eq(schema.users.officeId, req.user!.officeId!),
         eq(schema.users.verificationStatus, 'verified'),
-        inArray(schema.users.role, ['lawyer', 'staff']),
+        inArray(schema.users.role, ['lawyer', 'junior', 'staff']),
       ),
     )
     .orderBy(asc(schema.users.role), asc(schema.users.name))

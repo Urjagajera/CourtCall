@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { startChat, useChat } from '../lib/nexconn'
 import { firstName, markTourSeen, tourSeen } from '../lib/tour'
 import { tourStepsFor } from '../lib/tourSteps'
+import { UpdatesProvider, useUpdates } from '../lib/updates'
 import { useTour } from './Tour'
 import { Logo } from './Logo'
 import { cx } from './ui'
@@ -22,16 +23,42 @@ function navFor(role: string): NavItem[] {
     { to: '/calendar', label: 'Calendar', icon: CalendarDays },
     { to: '/chats', label: 'Chat', icon: MessageCircle },
   ]
-  if (role === 'lawyer' || role === 'staff') {
-    items.push({ to: '/clients', label: 'Clients', icon: Briefcase }, { to: '/team', label: 'Team', icon: Users })
-  }
+  // Everyone sees the clients of the cases they are on; the Team page is for lawyers and staff.
+  items.push({ to: '/clients', label: 'Clients', icon: Briefcase })
+  if (role === 'lawyer' || role === 'staff') items.push({ to: '/team', label: 'Team', icon: Users })
   return items
 }
 
 export function AppLayout() {
+  return (
+    <UpdatesProvider>
+      <Shell />
+    </UpdatesProvider>
+  )
+}
+
+/** Number badge for the sidebar / bottom tabs. */
+function CountBadge({ n, compact }: { n: number; compact?: boolean }) {
+  if (n <= 0) return null
+  return (
+    <span
+      aria-label={`${n} new`}
+      className={cx(
+        'tabular flex items-center justify-center rounded-full bg-stopped-fg font-bold text-white',
+        compact ? 'absolute -right-2.5 -top-1.5 h-[1.125rem] min-w-[1.125rem] px-1 text-[0.65rem]' : 'h-5 min-w-5 px-1.5 text-[0.7rem]',
+      )}
+    >
+      {n > 99 ? '99+' : n}
+    </span>
+  )
+}
+
+function Shell() {
   const { user, office } = useAuth()
   const chat = useChat()
   const items = navFor(user!.role)
+  const updates = useUpdates()
+  const countFor = (to: string) => (to === '/cases' ? updates.unread + updates.todos : to === '/chats' ? updates.chatUnread : 0)
 
   // Lawyers and juniors stay connected to Nexconn while signed in (live rooms + chat).
   useEffect(() => {
@@ -80,7 +107,8 @@ export function AppLayout() {
                 )
               }
             >
-              <Icon className="size-5" strokeWidth={1.75} /> {label}
+              <Icon className="size-5" strokeWidth={1.75} /> <span className="flex-1">{label}</span>
+              <CountBadge n={countFor(to)} />
             </NavLink>
           ))}
         </nav>
@@ -125,7 +153,10 @@ export function AppLayout() {
                 {({ isActive }) => (
                   <>
                     {isActive && <span className="absolute top-0 h-1 w-10 rounded-b-full bg-accent" />}
-                    <Icon className="size-6" strokeWidth={1.75} />
+                    <span className="relative">
+                      <Icon className="size-6" strokeWidth={1.75} />
+                      <CountBadge n={countFor(to)} compact />
+                    </span>
                     {label}
                   </>
                 )}
