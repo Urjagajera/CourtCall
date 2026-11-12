@@ -75,7 +75,7 @@ export async function alertClients(session: CourtSession, event: CourtEvent) {
   const fresh = picks.filter(({ r, pick }) => inserted.some((i) => i.caseId === r.caseId && i.key === pick.key))
   if (!fresh.length) return
 
-  // Push goes to phones of active links (client and family) for these cases.
+  // Push goes to phones of active client links for these cases.
   const links = await db
     .select({ id: schema.accessLinks.id, caseId: schema.accessLinks.caseId })
     .from(schema.accessLinks)

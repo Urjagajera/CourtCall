@@ -141,7 +141,7 @@ Done (in order):
 7. Audit and fixes; end-to-end API smoke test
 8. Guided first-login tour per role
 9. Firm roles: firm admin flag, office staff role, join-a-firm by invite code, Team management page
-10. Client WhatsApp links: per-case client/family links (hashed tokens, bound to the first phone, revoke/reissue), firm link sheet with WhatsApp share, client page `/case` with live progress + Nexconn chat with the firm, Client demo button
+10. Client WhatsApp links: per-case client links (hashed tokens, bound to the first phone, revoke/reissue), firm link sheet with WhatsApp share, client page `/case` with live progress + Nexconn chat with the firm, Client demo button
 
 **Not done yet:**
 
@@ -150,7 +150,7 @@ Done (in order):
 13. Done: client history/sign out/tour, firm chat filters, client assignment, platform admin removed. **Languages**: client page + client tour + alerts in en/hi/gu (`client/src/lib/clientI18n.ts`, `server/src/lib/alertText.ts`; client switch saves `clients.language` via `POST /api/c/language`). Staff screens stay English. **Voice typing** in every chat box (`client/src/lib/dictation.ts`, browser SpeechRecognition, text goes into the box, never auto-sent). Next: polish on real phones
 13b. Done (12 Nov 2026): **hearing lifecycle**. `cases.status` (active/closed), `cases.item_no` nullable (cause list not out yet), table `case_hearings` (one row per held hearing: outcome next_date/closed, next date, summary + `share_with_client`, firm-only `prep_notes`). Routes in `server/src/routes/hearings.ts`: `GET /hearings/pending` (reminder: date passed, or court risen / not sitting / moved past the item; lawyers+staff, scoped), `POST /cases/:id/outcome`, `PATCH /hearings/:id`, `GET /cases/:id/detail`, `GET /clients/:id/detail`, `GET /calendar?from&to`. UI: `HearingsToUpdate` card (Today + Cases), `OutcomeSheet`, pages `/cases/:id`, `/clients/:id`, `/calendar` (new nav tab). Client links need a case number; the client page shows the next date, "case ended", and shared summaries in History (never prep notes). Alerts skip closed cases and cases without an item number. Tour steps added for all of these (staff, lawyer, junior: Calendar only).
 
-13c. Done (12 Nov 2026): **client layout** matches the lawyer app (`ClientLayout` in `client/src/pages/client/ClientCase.tsx`): sidebar on laptops, top bar + bottom tabs on phones. Tabs are routes: `/case` (My case), `/case/cases`, `/case/history`, `/case/chat`, `/case/settings` (language, alerts, theme, tour, sign out); `?case=<id>` is kept across tabs. Family links get My case, History, Settings. The client keeps a Nexconn connection on every tab (alerts pop up anywhere). Client tour steps carry routes. `bar_council_no` column dropped (migration 0009) and non-lawyer admin flags cleared (0010) on the shared DB.
+13c. Done (12 Nov 2026): **client layout** matches the lawyer app (`ClientLayout` in `client/src/pages/client/ClientCase.tsx`): sidebar on laptops, top bar + bottom tabs on phones. Tabs are routes: `/case` (My case), `/case/cases`, `/case/history`, `/case/chat`, `/case/settings` (language, alerts, theme, tour, sign out); `?case=<id>` is kept across tabs. The client keeps a Nexconn connection on every tab (alerts pop up anywhere). Client tour steps carry routes. `bar_council_no` column dropped (migration 0009) and non-lawyer admin flags cleared (0010) on the shared DB.
 
 ### Pending tasks (requested by Urja; remove each line when done)
 
@@ -174,7 +174,7 @@ Done (in order):
 
 - Lawyer/staff generates a link `/c/<token>` from **Clients** (share via WhatsApp with a prefilled message). Only a **hash** of the token is stored (`access_links` table already exists).
 - First open binds the link to that device (hash of a random device ID in localStorage) and sets a client session cookie. Another device sees "This link is already in use. Ask your lawyer for a new one."
-- Firm can **revoke** and **reissue** links. **Family links** are status-only (no chat).
+- Firm can **revoke** and **reissue** links. **Family links were removed** (Nov 2026): only client links exist; any old family link returns 410 "turned off" (`link_kind` enum keeps the value).
 - Client case page: "Now 12 → Yours 15 (3 away)", court, status, latest updates, **Chat with lawyer** (Nexconn direct channel with the firm; client Nexconn ID `c<clientId>`).
 - Alerts after each accepted courtroom event: first update of the day, then distance ≤10, ≤5, ≤2, now hearing; plus passed over / recalled / adjourned for that case. Deduplicate with `alert_logs`. Send as `CC:Alert` from the bot + Web Push. Fixed templates; never predict times.
 - **Requirement (Urja, 12 Nov 2026): the client must be told when their turn is 2 cases away.** Built: the `within_2` alert ("Your case is close: Court 4 is at Item 9, yours is Item 11 (2 away). Be near the courtroom.", `close` template in `server/src/lib/alertText.ts`, en/hi/gu). It fires once per hearing day, even if the court jumps straight to 2 or fewer away. Keep it when changing alert rules (unit test in `alertRules.test.ts`).
@@ -185,13 +185,13 @@ Done (in order):
 - `server/src/lib/clientAccess.ts`: token = `randomBytes(24).toString('base64url')`, store `sha256` hash. A separate cookie `cc_client` (JWT `{ lid: linkId }`). Middleware `requireClient` loads the link (not revoked) + case + client + firm.
 - Firm routes (lawyer/staff, verified, same firm as the case):
   - `GET /api/cases/:id/links` lists links (never tokens).
-  - `POST /api/cases/:id/links {kind: client|family, label?}` returns the raw token **once**.
+  - `POST /api/cases/:id/links {kind?: client, label?, assignTo?}` returns the raw token **once**.
   - `POST /api/links/:id/revoke`.
   - `POST /api/links/:id/reissue` revokes the old link and returns a new token.
 - Client routes:
   - `POST /api/c/activate {token, deviceId}`. A revoked link returns 410 "This link was turned off. Ask your lawyer for a new one". A different device returns 409 "This link is already in use on another phone". Otherwise it binds `device_id_hash` on first open and sets the cookie.
   - `GET /api/c/me` returns the case, court, firm name, link kind, today's session state (if the hearing is today), recent events **without reporter names**, and alert history.
-  - `POST /api/c/chat-token` (client links only, not family) issues a Nexconn token for `c<clientId>` and returns contacts (the link creator first, plus anyone who already messaged).
+  - `POST /api/c/chat-token` issues a Nexconn token for `c<clientId>` and returns contacts (the link creator first, plus anyone who already messaged).
   - `POST /api/c/demo` (only when `DEMO_LOGIN=true`) sets the cookie for the seeded demo link, skipping device binding.
 - Frontend: `/c/:token` keeps a random `deviceId` in localStorage, calls activate, then `navigate('/case', { replace: true })`, so the token never stays in the history. `/case` is the client page: Now / Yours / N away, status, updates, chat via `ChatPanel` direct channel, and polls every 10 s. Use `startChat('/c/chat-token')`.
 - Cases page: add a "Client link" button per case. It opens a sheet listing links (active / opened on a phone / revoked), with create, copy, **Share on WhatsApp** (`https://wa.me/91<10-digit phone>?text=…`), revoke and reissue. Warn: "Opening the link yourself locks it to your phone."

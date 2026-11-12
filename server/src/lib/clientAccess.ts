@@ -75,7 +75,8 @@ export async function requireClient(req: Request, _res: Response, next: NextFunc
     .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.cases.courtroomId))
     .where(eq(schema.accessLinks.id, linkId))
   if (!row) throw new HttpError(401, 'This link no longer exists. Ask your lawyer for a new one.')
-  if (row.link.revokedAt) throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
+  // Family links were removed (Nov 2026): any that were shared before stop working.
+  if (row.link.revokedAt || row.link.kind !== 'client') throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
   req.clientCtx = row
   next()
 }

@@ -175,11 +175,12 @@ check('lawyer creates a client link (token returned once)', mk.status === 201 &&
 const linkToken = mk.body.token
 check('junior cannot create links', (await junior.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 403)
 check('other firm cannot see my links', (await lawyer2.get(`/cases/${caseId}/links`)).status === 404)
-check("staff can't share links for clients not assigned to them", (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 404)
+check("staff can't share links for clients not assigned to them", (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 404)
 const staffId = (await staff.get('/auth/me')).body.user?.id
-const viaShare = await lawyer.post(`/cases/${caseId}/links`, { kind: 'family', assignTo: [staffId] })
+const viaShare = await lawyer.post(`/cases/${caseId}/links`, { kind: 'client', assignTo: [staffId] })
 check('sharing a link assigns the chosen people', viaShare.status === 201 && ((await staff.get('/clients')).body.clients ?? []).some((k: any) => k.id === clientId))
-check('assigned staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 201)
+check('assigned staff can create links', (await staff.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 201)
+check('family links no longer exist', (await lawyer.post(`/cases/${caseId}/links`, { kind: 'family' })).status === 400)
 const phoneA = 'device-aaaaaaaaaaaaaaaa'
 const phoneB = 'device-bbbbbbbbbbbbbbbb'
 const clientA = new Session('clientA')
@@ -191,15 +192,10 @@ check('client never sees reporter names', !JSON.stringify(cme.body.updates ?? []
 check('second phone is refused', (await new Session('clientB').post('/c/activate', { token: linkToken, deviceId: phoneB })).status === 409)
 check('same phone can reopen the link', (await new Session('clientA2').post('/c/activate', { token: linkToken, deviceId: phoneA })).status === 200)
 const listed2 = await lawyer.get(`/cases/${caseId}/links`)
-const clientLink = listed2.body.links?.find((l: any) => l.kind === 'client' && !l.revokedAt)
+const clientLink = listed2.body.links?.find((l: any) => l.id === mk.body.link?.id)
 check('firm sees the link as opened, never the token', !!clientLink?.activatedAt && !JSON.stringify(listed2.body).includes(linkToken), listed2.body)
 const ct = await clientA.post('/c/chat-token')
 check('client gets a chat token with firm contacts', ct.status === 200 && ct.body.userId?.startsWith('c') && ct.body.contacts?.length >= 1, { status: ct.status, err: ct.body.error })
-const fam = await lawyer.post(`/cases/${caseId}/links`, { kind: 'family' })
-const famPhone = new Session('family')
-await famPhone.post('/c/activate', { token: fam.body.token, deviceId: 'device-family-1234567' })
-check('family link shows progress', (await famPhone.get('/c/me')).body.kind === 'family')
-check('family link has no chat', (await famPhone.post('/c/chat-token')).status === 403)
 check('firm turns the link off', (await lawyer.post(`/links/${clientLink?.id}/revoke`)).status === 200)
 check('turned-off link stops working at once', (await clientA.get('/c/me')).status === 410)
 const re = await lawyer.post(`/links/${clientLink?.id}/reissue`)
@@ -242,11 +238,11 @@ const juniorCases = ((await junior.get('/cases')).body.cases ?? []).map((c: any)
 check('juniors still see every firm case (they cover courtrooms)', juniorCases.includes('Sunita Joshi'))
 const sunitaId = ((await lawyer.get('/clients')).body.clients ?? []).find((c: any) => c.name === 'Sunita Joshi')?.id
 const sunitaCase = ((await lawyer.get('/cases')).body.cases ?? []).find((c: any) => c.clientId === sunitaId)
-check("lawyer can't share a link for an unassigned client", (await lawyer3.post(`/cases/${sunitaCase?.id}/links`, { kind: 'family' })).status === 404)
+check("lawyer can't share a link for an unassigned client", (await lawyer3.post(`/cases/${sunitaCase?.id}/links`, { kind: 'client' })).status === 404)
 check('only firm admins change assignments', (await lawyer3.put(`/clients/${sunitaId}/assignees`, { userIds: [] })).status === 403)
 const anilId = (await lawyer3.get('/auth/me')).body.user?.id
 check('firm admin assigns a client', (await lawyer.put(`/clients/${sunitaId}/assignees`, { userIds: [anilId] })).status === 200 && (await names(lawyer3)).includes('Sunita Joshi'))
-const famSunita = await lawyer.post(`/cases/${sunitaCase?.id}/links`, { kind: 'family', assignTo: [] })
+const famSunita = await lawyer.post(`/cases/${sunitaCase?.id}/links`, { kind: 'client', assignTo: [] })
 check('sharing a link keeps assignments', famSunita.status === 201 && (await names(lawyer3)).includes('Sunita Joshi'))
 await lawyer.post(`/links/${famSunita.body.link?.id}/revoke`)
 check('people list for the picker', ((await staff.get('/office/people')).body.people ?? []).length >= 3)
@@ -290,7 +286,6 @@ check('client opens one of their other cases', (await demoClient.get(`/c/me?case
 const cases2 = (await clientNew.get('/c/me')).body.cases ?? []
 check('client sees their own cases list', cases2.some((k: any) => k.id === caseId && k.current), cases2)
 check('client cannot open another client’s case', (await clientNew.get(`/c/me?case=${rameshMe.caseId}`)).status === 404)
-check('family link sees only the shared case', (await famPhone.get(`/c/me?case=${rameshMe.caseId}`)).status === 404 && ((await famPhone.get('/c/me')).body.cases ?? []).length === 0)
 check('client signs out of this phone', (await clientNew.post('/c/signout')).status === 200 && (await clientNew.get('/c/me')).status === 401)
 
 // ---- chat ----

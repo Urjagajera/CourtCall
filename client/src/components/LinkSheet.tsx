@@ -1,4 +1,4 @@
-import { Check, Copy, Link2, MessageCircle, Plus, RefreshCw, Smartphone, Users, XCircle } from 'lucide-react'
+import { Check, Copy, Link2, MessageCircle, Plus, RefreshCw, Smartphone, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { Case } from '../lib/api'
 import { api } from '../lib/api'
@@ -10,7 +10,7 @@ import { Badge, Banner, Button, cx } from './ui'
 
 interface LinkRow {
   id: string
-  kind: 'client' | 'family'
+  kind: 'client'
   label: string | null
   activatedAt: string | null
   revokedAt: string | null
@@ -31,7 +31,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   // The raw token exists only right after creating a link; it's never stored or shown again.
-  const [fresh, setFresh] = useState<{ kind: 'client' | 'family'; url: string } | null>(null)
+  const [fresh, setFresh] = useState<{ url: string } | null>(null)
   const [copied, setCopied] = useState(false)
   // Who looks after this client: starts with whoever is already assigned; saved when a link is shared.
   const { user } = useAuth()
@@ -58,7 +58,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
     setError(null)
     try {
       const r = await fn()
-      if (r.token) setFresh({ kind: r.link.kind, url: `${location.origin}/c/${r.token}` })
+      if (r.token) setFresh({ url: `${location.origin}/c/${r.token}` })
       setCopied(false)
       await load()
     } catch (e) {
@@ -67,14 +67,12 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
       setBusy(null)
     }
   }
-  const create = (kind: 'client' | 'family') => run(`new-${kind}`, () => api(`/cases/${c.id}/links`, { body: { kind, assignTo } }))
+  const create = () => run('new-client', () => api(`/cases/${c.id}/links`, { body: { kind: 'client', assignTo } }))
   const revoke = (l: LinkRow) => run(`off-${l.id}`, () => api(`/links/${l.id}/revoke`, { method: 'POST' }))
   const reissue = (l: LinkRow) => run(`re-${l.id}`, () => api(`/links/${l.id}/reissue`, { method: 'POST' }))
 
   const message = fresh
-    ? fresh.kind === 'client'
-      ? `Namaste ${c.clientName}, follow your case "${c.title}" live on CourtCall: ${fresh.url}\nOpen it on your own phone. It works only on the first phone that opens it. No app needed.`
-      : `Follow the case "${c.title}" live on CourtCall (updates only): ${fresh.url}\nIt works only on the first phone that opens it.`
+    ? `Namaste ${c.clientName}, follow your case "${c.title}" live on CourtCall: ${fresh.url}\nOpen it on your own phone. It works only on the first phone that opens it. No app needed.`
     : ''
 
   return (
@@ -91,7 +89,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
       {fresh && (
         <div className="cc-pop mt-4 rounded-lg border-2 border-accent bg-surface-raised p-4">
           <p className="flex items-center gap-2 text-label font-semibold">
-            <Link2 className="size-4" strokeWidth={1.75} /> New {fresh.kind === 'client' ? 'client' : 'family'} link ready
+            <Link2 className="size-4" strokeWidth={1.75} /> New client link ready
           </p>
           <p className="mt-2 break-all rounded-md border border-line bg-surface p-2 text-caption">{fresh.url}</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -131,21 +129,12 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
         <p className="mt-2 text-caption text-ink-muted">Saved when you share a link. Only these people (and firm admins) see this client, their cases and chat.</p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button loading={busy === 'new-client'} disabled={!c.caseNo} onClick={() => create('client')} icon={<Plus className="size-4" strokeWidth={1.75} />}>
-          Client link
-        </Button>
-        <Button
-          variant="secondary"
-          loading={busy === 'new-family'}
-          disabled={!c.caseNo}
-          onClick={() => create('family')}
-          icon={<Users className="size-4" strokeWidth={1.75} />}
-        >
-          Family link
+      <div className="mt-4">
+        <Button className="w-full" loading={busy === 'new-client'} disabled={!c.caseNo} onClick={create} icon={<Plus className="size-4" strokeWidth={1.75} />}>
+          Create client link
         </Button>
       </div>
-      <p className="mt-2 text-caption text-ink-muted">Client links include chat with your firm. Family links show progress only.</p>
+      <p className="mt-2 text-caption text-ink-muted">The client sees live progress for their cases and can chat with your firm.</p>
 
       <ul className="mt-4 divide-y divide-line border-t border-line">
         {links === null && <li className="py-3 text-label text-ink-muted">Loading…</li>}
@@ -156,7 +145,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
             <li key={l.id} className={cx('flex flex-wrap items-center gap-3 py-3', off && 'opacity-60')}>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-1.5 text-label font-semibold">
-                  {l.kind === 'client' ? 'Client link' : 'Family link'}
+                  Client link
                   {off ? (
                     <Badge tone="stopped">Turned off</Badge>
                   ) : l.activatedAt ? (

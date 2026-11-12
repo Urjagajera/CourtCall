@@ -56,7 +56,8 @@ linksRouter.get('/cases/:id/links', ...firm, async (req, res) => {
   res.json({ links: rows.filter((r) => r.link.label !== DEMO_LINK_LABEL).map((r) => view(r.link, r.createdByName)) })
 })
 
-async function createLink(caseId: string, kind: 'client' | 'family', label: string | null, userId: string) {
+async function createLink(caseId: string, label: string | null, userId: string) {
+  const kind = 'client' as const
   const token = newLinkToken()
   const [link] = await db
     .insert(schema.accessLinks)
@@ -72,7 +73,8 @@ async function createLink(caseId: string, kind: 'client' | 'family', label: stri
 linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
   const body = parse(
     z.object({
-      kind: z.enum(['client', 'family']).default('client'),
+      // Family links were removed (Nov 2026): every link is a client link. Old callers may still send kind.
+      kind: z.literal('client').default('client'),
       label: z.string().trim().max(60).optional(),
       assignTo: z.array(z.uuid()).max(50).optional(),
     }),
@@ -83,7 +85,7 @@ linksRouter.post('/cases/:id/links', ...firm, async (req, res) => {
   if (!c.caseNo) throw badRequest('Add the case number before sharing a link')
   if (c.status === 'closed') throw badRequest('This case is closed. Reopen it with a new case to share a link')
   await assignClient(c.clientId, c.officeId, [...(req.user!.isFirmAdmin ? [] : [req.user!.id]), ...(body.assignTo ?? [])])
-  const { link, token } = await createLink(c.id, body.kind, body.label || null, req.user!.id)
+  const { link, token } = await createLink(c.id, body.label || null, req.user!.id)
   res.status(201).json({ link: view(link, req.user!.name), token })
 })
 
@@ -102,6 +104,6 @@ linksRouter.post('/links/:id/revoke', ...firm, async (req, res) => {
 linksRouter.post('/links/:id/reissue', ...firm, async (req, res) => {
   const old = await linkInMyFirm(String(req.params.id), req.user!)
   if (!old.revokedAt) await db.update(schema.accessLinks).set({ revokedAt: new Date() }).where(eq(schema.accessLinks.id, old.id))
-  const { link, token } = await createLink(old.caseId, old.kind, old.label, req.user!.id)
+  const { link, token } = await createLink(old.caseId, old.label, req.user!.id)
   res.status(201).json({ link: view(link, req.user!.name), token })
 })

@@ -35,7 +35,7 @@ import { useTheme, type ThemePref } from '../../lib/theme'
 import { clientTourSteps } from '../../lib/tourSteps'
 
 interface ClientView {
-  kind: 'client' | 'family'
+  kind: 'client'
   clientName: string
   language: Lang
   firmName: string
@@ -373,12 +373,6 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
                 </ul>
               )}
             </Card>
-            {data.kind === 'family' && (
-              <Card className="flex items-start gap-3">
-                <Users className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} />
-                <p className="text-label">{t.family}</p>
-              </Card>
-            )}
             <p className="flex items-start gap-2 text-caption text-ink-muted">
               <Info className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.75} />
               {t.disclaimer}
@@ -657,8 +651,7 @@ const ALL_TABS: Tab[] = [
   { key: 'chat', label: (t) => t.navChat, icon: MessageCircle },
   { key: 'settings', label: (t) => t.navSettings, icon: SettingsIcon },
 ]
-/** Family links: no chat and only the shared case. */
-const tabsFor = (kind: 'client' | 'family') => ALL_TABS.filter((x) => kind === 'client' || (x.key !== 'chat' && x.key !== 'cases'))
+const tabsFor = (_kind: 'client') => ALL_TABS
 const pathOf = (key: TabKey) => (key === 'home' ? '/case' : `/case/${key}`)
 
 /** Same frame as the lawyer app: sidebar on laptops, top bar + bottom tabs on phones. */

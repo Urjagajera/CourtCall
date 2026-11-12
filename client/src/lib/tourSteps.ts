@@ -325,7 +325,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
 }
 
 /** Tour for a client opening their case page (no account; opened from a WhatsApp link). */
-export function clientTourSteps(firstName: string, kind: 'client' | 'family', lang: ClientLang = 'en'): TourStep[] {
+export function clientTourSteps(firstName: string, kind: 'client', lang: ClientLang = 'en'): TourStep[] {
   const T = CLIENT_TOUR[lang]
   // Each section is its own tab (/case, /case/cases, /case/history, /case/chat, /case/settings).
   const step = (id: string, [title, body]: T2, target?: string, route?: string, optional?: boolean): TourStep => ({ id: `client-${id}`, title, body, target, route, optional })

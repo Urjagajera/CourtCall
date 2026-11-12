@@ -156,7 +156,7 @@ Juniors report while standing in a courtroom, holding a phone in one hand. Every
 - **Hero card:** "Your case: Item 15, Court 4" with the progress bar and a big current-item number.
 - The latest update is written in a full sentence, for example: "Latest reported progress: Item 12 is being heard (2 min ago)".
 - The fixed disclaimer is always visible in small text: *"CourtCall shows the latest reported courtroom progress. It does not predict hearing time."*
-- Maroon **Chat with lawyer** button. Family links don't show it.
+- Maroon **Chat with lawyer** button.
 - **Enable alerts** card for Web Push permission. It appears once and is easy to dismiss.
 
 ## 10. Lawyer dashboard

@@ -28,7 +28,7 @@ clientRouter.post('/activate', async (req, res) => {
   )
   const [link] = await db.select().from(schema.accessLinks).where(eq(schema.accessLinks.tokenHash, sha256(token)))
   if (!link) throw new HttpError(404, 'This link is not valid. Check that you opened the full link from WhatsApp.')
-  if (link.revokedAt) throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
+  if (link.revokedAt || link.kind !== 'client') throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
   const device = sha256(deviceId)
   if (link.deviceIdHash && link.deviceIdHash !== device) {
     throw new HttpError(409, 'This link is already in use on another phone. Ask your lawyer for a new link.')
@@ -59,7 +59,7 @@ clientRouter.post('/signout', (_req, res) => {
 
 /**
  * Everything the client page shows: one case (live), the client's other cases, and day-by-day history.
- * `?case=<id>` opens another case of the SAME client (client links only; family links see one case).
+ * `?case=<id>` opens another case of the SAME client.
  * Never other clients, other firms, or reporter names.
  */
 clientRouter.get('/me', requireClient, async (req, res) => {
@@ -113,7 +113,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
       .where(and(eq(schema.alertLogs.caseId, theCase.id), ne(schema.alertLogs.message, '')))
       .orderBy(desc(schema.alertLogs.createdAt))
       .limit(80),
-    // The client's cases with this firm (family links: only the shared case).
+    // The client's cases with this firm.
     ctx.link.kind === 'client'
       ? db
           .select({
@@ -176,7 +176,6 @@ clientRouter.get('/me', requireClient, async (req, res) => {
 clientRouter.post('/language', requireClient, async (req, res) => {
   const { language } = parse(z.object({ language: z.enum(['en', 'hi', 'gu']) }), req.body)
   const ctx = req.clientCtx!
-  // A family link only changes what that phone shows, not the client's alerts.
   if (ctx.link.kind === 'client') await db.update(schema.clients).set({ language }).where(eq(schema.clients.id, ctx.client.id))
   res.json({ ok: true })
 })
@@ -212,12 +211,11 @@ clientRouter.post('/push/off', requireClient, async (req, res) => {
 })
 
 /**
- * Nexconn token for the client's private chat with the firm (client links only, not family links).
+ * Nexconn token for the client's private chat with the firm.
  * Contacts: the person who shared the link first, then the firm's other lawyers and staff.
  */
 clientRouter.post('/chat-token', requireClient, async (req, res) => {
   const ctx = req.clientCtx!
-  if (ctx.link.kind !== 'client') throw new HttpError(403, 'Chat is not available on a family link')
   if (!nexconnEnabled) throw new HttpError(503, 'Chat is not configured on this server')
   const ncId = ncClientId(ctx.client.id)
   const token = await issueToken(ncId, ctx.client.name)

@@ -92,7 +92,6 @@ Your firm's clients and cases are **never** visible to other firms. Only courtro
 2. **Cases → Add case:** client, case number, court complex (e.g. "Gujarat High Court"), court number, next hearing date, item number from the cause list (or later, when it's out), and the junior who will be in court.
 3. **Share the case with the client:** on **Cases**, tap the **link icon** on the case, then **Client link → Share on WhatsApp**. The message and link are filled in for you.
    - The link **locks to the first phone that opens it**, so don't open it yourself.
-   - **Family link**: progress only, no chat. Good for a relative waiting outside court.
    - Lost or new phone? Tap **New link**. To stop a link at once, tap **Turn off**.
 
 ### After every hearing: record what happened
@@ -151,7 +150,6 @@ Open **Chat**:
 3. In **Settings**, tap **Turn on** under **Get alerts on this phone** to get notifications.
 4. Install it (section 1) so it opens from your home screen next time.
 5. The guided tour runs on your first visit. **Sign out** removes your case and alerts from this phone; to come back, open the WhatsApp link again.
-6. A **family link** shows only **My case**, **History** and **Settings** (no chat, no other cases).
 
 The link works on **your phone only**. If you change phones, ask your lawyer for a new link.
 

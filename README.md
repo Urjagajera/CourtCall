@@ -302,12 +302,11 @@ After every accepted courtroom update, CourtCall checks every case in that court
 
 - Each alert is sent **once** (deduplicated per case per day), and at most one per update, so clients are never flooded. A big jump sends only the nearest alert. Undo never alerts. No alert ever predicts a time.
 - Delivered three ways: an instant banner on the client's page (Nexconn message from the CourtCall bot), a **phone notification** if the client tapped **Turn on** under "Get alerts on this phone" (Web Push; Android Chrome and desktop, iPhone only after Add to Home Screen), and the "Latest updates" list on their page.
-- Family links get the same alerts on their page and as notifications.
 - To see it: open the **Client** demo in one window and turn alerts on, then as **Junior lawyer** report **Now hearing** in Court 4 until Item 5, 10, 13 and 15.
 
 ### Client links (how the firm shares a case)
 
-- On **Cases**, tap the link icon on a case. **Client link** makes a private link with chat; **Family link** makes one with progress only.
+- On **Cases**, tap the link icon on a case. **Create client link** makes a private link with live progress and chat.
 - **Share on WhatsApp** opens WhatsApp with a ready message to the client's number (+91 is added to 10-digit numbers). **Copy link** works for any other app. The full link is shown only once.
 - The link **locks to the first phone that opens it**. The same phone can always reopen it; any other phone sees "This link is already in use on another phone". Don't open a client's link yourself.
 - **Turn off** stops a link at once. **New link** turns the old one off and makes a fresh one (lost or new phone).
