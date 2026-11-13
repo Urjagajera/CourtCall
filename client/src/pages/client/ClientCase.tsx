@@ -35,6 +35,7 @@ import { ClientLangContext, LANGS, agoIn, dateIn, useClientLang, useClientText, 
 import { MSG_ALERT, MSG_BRIEFING, sendText, startChat, stopChat, useChat, useIncomingMessages, useUnreadCounts, type Message } from '../../lib/nexconn'
 import { setCallLogWriter, setCallNames, startVoiceCall } from '../../lib/calls'
 import { BriefingCall } from '../../components/BriefingCall'
+import { todayISO } from '../../lib/dates'
 import { CallOverlay } from '../../components/CallOverlay'
 import { pushState, turnOffPush, turnOnPush, type PushState } from '../../lib/push'
 import { useTheme, type ThemePref } from '../../lib/theme'
@@ -60,6 +61,28 @@ interface ClientView {
   briefing: { text: string; at: string } | null
   appearingLawyer: string | null
   cases: { id: string; title: string; caseNo: string | null; hearingDate: string; itemNo: number | null; status: 'active' | 'closed'; courtComplex: string; roomNo: string; current: boolean }[]
+}
+
+/** Local date (YYYY-MM-DD) of a message time, to compare with todayISO(). */
+const dayOf = (ms: number) => {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+/** A briefing this phone answered or put off today doesn't ring again (e.g. when chat reconnects). */
+const seenKey = (caseId: string | null) => `cc-briefing-seen:${caseId ?? 'any'}:${todayISO()}`
+function briefingSeen(caseId: string | null) {
+  try {
+    return localStorage.getItem(seenKey(caseId)) === '1'
+  } catch {
+    return false
+  }
+}
+function markBriefingSeen(caseId: string | null) {
+  try {
+    localStorage.setItem(seenKey(caseId), '1')
+  } catch {
+    /* storage blocked */
+  }
 }
 
 const LANG_KEY = 'cc-client-lang'
@@ -168,11 +191,15 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
   // Alerts arrive instantly over Nexconn (client links): show them and refresh the page.
   const [flash, setFlash] = useState<string | null>(null)
   // The hearing-day briefing rings as "CourtCall is calling" (Nexconn CC:Briefing, or the phone notification link).
-  const [ringing, setRinging] = useState<string | null>(null)
+  const [ringing, setRinging] = useState<{ text: string; caseId: string | null } | null>(null)
   const onIncoming = useCallback(
     (m: Message) => {
       if (m.messageType === MSG_BRIEFING) {
-        setRinging((m.content as { text?: string }).text ?? null)
+        const content = m.content as { text?: string; caseId?: string }
+        // Nexconn re-delivers stored messages when the page reconnects: only ring for a briefing sent today
+        // that this phone hasn't already answered or put off.
+        const sentToday = m.sentTime ? todayISO() === dayOf(m.sentTime) : true
+        if (content.text && sentToday && !briefingSeen(content.caseId ?? null)) setRinging({ text: content.text, caseId: content.caseId ?? null })
         load()
         return
       }
@@ -186,7 +213,7 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
   const wantsBriefing = params.get('briefing') === '1'
   useEffect(() => {
     if (!wantsBriefing || !data) return
-    if (data.briefing) setRinging(data.briefing.text)
+    if (data.briefing) setRinging({ text: data.briefing.text, caseId: data.caseId })
     const next = new URLSearchParams(params)
     next.delete('briefing')
     setParams(next, { replace: true })
@@ -295,7 +322,17 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
           </Banner>
         </button>
       )}
-      {ringing && <BriefingCall text={ringing} firm={data.firmName} onClose={() => setRinging(null)} onCallLawyer={callLawyer} />}
+      {ringing && (
+        <BriefingCall
+          text={ringing.text}
+          firm={data.firmName}
+          onClose={() => {
+            markBriefingSeen(ringing.caseId)
+            setRinging(null)
+          }}
+          onCallLawyer={callLawyer}
+        />
+      )}
       <PageHeader title={title} subtitle={tab === 'home' ? c.title : data.firmName} />
       {tab === 'home' && data.briefing && (
         <Card data-tour="client-briefing" className="mb-4 border-2 border-accent/40">
@@ -304,7 +341,7 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
           </p>
           <p className="mt-2 text-body">{data.briefing.text}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setRinging(data.briefing!.text)} icon={<Volume2 className="size-4" strokeWidth={1.75} />}>
+            <Button variant="secondary" size="sm" onClick={() => setRinging({ text: data.briefing!.text, caseId: data.caseId })} icon={<Volume2 className="size-4" strokeWidth={1.75} />}>
               {t.listen}
             </Button>
             {callLawyer && (
