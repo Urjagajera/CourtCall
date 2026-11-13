@@ -69,7 +69,7 @@ export default function Cases() {
               </h2>
               <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                 {list.map((c) => (
-                  <Card key={c.id} className="flex items-start gap-3">
+                  <Card key={c.id} className="flex min-w-0 items-start gap-3">
                     <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-md bg-accent text-accent-ink">
                       <span className="text-caption">Item</span>
                       <span className="tabular text-h2 font-bold leading-none">{c.itemNo ?? '—'}</span>
@@ -78,12 +78,14 @@ export default function Cases() {
                       <Link to={`/cases/${c.id}`} className="block truncate text-body font-semibold hover:underline">
                         {c.title}
                       </Link>
-                      <p className="flex items-center gap-1 text-label text-ink-muted">
-                        <UserRound className="size-3.5" strokeWidth={1.75} /> {c.clientName}
+                      <p className="flex flex-wrap items-center gap-x-2 text-label text-ink-muted">
+                        <span className="flex items-center gap-1">
+                          <UserRound className="size-3.5 shrink-0" strokeWidth={1.75} /> {c.clientName}
+                        </span>
                         {c.caseNo && (
-                          <>
-                            <Hash className="ml-1 size-3.5" strokeWidth={1.75} /> {c.caseNo}
-                          </>
+                          <span className="flex items-center gap-1 break-all">
+                            <Hash className="size-3.5 shrink-0" strokeWidth={1.75} /> {c.caseNo}
+                          </span>
                         )}
                       </p>
                       <p className="flex items-center gap-1 text-label text-ink-muted">

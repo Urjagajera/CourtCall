@@ -83,23 +83,28 @@ function Shell() {
   const [toast, setToast] = useState<ToastData | null>(null)
   const dismissToast = useCallback(() => setToast(null), [])
   const { reload: reloadUpdates } = updates
+  const role = user!.role
   useIncomingMessages(
     useCallback(
       (m: Message) => {
         if (m.messageType !== MSG_STAFF_ALERT) return
         const c = m.content as { text?: string; kind?: 'close' | 'now' | 'done'; url?: string }
         if (!c.text) return
+        // Nexconn re-delivers stored messages when chat reconnects (every page load): only pop up fresh alerts.
+        if (m.sentTime && Date.now() - m.sentTime > 5 * 60_000) return
         const url = c.url
+        // Staff can't record outcomes, so "over" just opens the case for them.
+        const update = c.kind === 'done' && role !== 'staff'
         setToast({
           id: Date.now(),
           tone: c.kind === 'done' ? 'waiting' : 'hearing',
           message: c.text,
-          action: url ? { label: c.kind === 'done' ? 'Update' : 'Open', onClick: () => navigate(url) } : undefined,
+          action: url ? { label: update ? 'Update' : 'Open', onClick: () => navigate(url) } : undefined,
           durationMs: 12000,
         })
         if (c.kind === 'done') reloadUpdates() // the "Hearings to update" count changes
       },
-      [navigate, reloadUpdates],
+      [navigate, reloadUpdates, role],
     ),
   )
 
