@@ -123,7 +123,7 @@ export default function Chats() {
     <>
       <PageHeader title="Chat" subtitle="Private to your firm. Powered by Nexconn." />
       {chat.status === 'error' && <Banner tone="stopped">{chat.error}</Banner>}
-      <div className="grid gap-4 lg:h-[calc(100vh-12rem)] lg:grid-cols-[22rem_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-12rem)] lg:grid-cols-[22rem_minmax(0,1fr)]">
         <div
           data-tour="chat-list"
           className={cx('flex min-h-0 flex-col gap-2 rounded-lg border border-line bg-surface p-2', active && 'hidden lg:flex')}
@@ -182,7 +182,7 @@ export default function Chats() {
         </div>
 
         {active ? (
-          <div className="flex min-h-[70vh] flex-col gap-2 lg:min-h-0">
+          <div className="flex min-h-[70vh] min-w-0 flex-col gap-2 lg:min-h-0">
             <div className="flex items-center gap-2">
               <button onClick={() => setSelected(null)} aria-label="Back to conversations" className="flex size-10 items-center justify-center rounded-md hover:bg-surface lg:hidden">
                 <ArrowLeft className="size-5" strokeWidth={1.75} />
@@ -200,7 +200,7 @@ export default function Chats() {
                   disabled={chat.status !== 'ready'}
                   aria-label={`Call ${active.title}`}
                   title="Voice call (Nexconn)"
-                  className="flex h-11 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink disabled:opacity-50"
+                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink disabled:opacity-50"
                 >
                   <Phone className="size-4" strokeWidth={1.75} /> Call
                 </button>

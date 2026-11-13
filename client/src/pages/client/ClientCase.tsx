@@ -204,7 +204,9 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
         return
       }
       if (m.messageType !== MSG_ALERT) return
-      setFlash((m.content as { text?: string }).text ?? 'New update on your case')
+      // Re-delivered old alerts (page reconnects) only refresh the page; the banner is for alerts from the last few minutes.
+      const fresh = !m.sentTime || Date.now() - m.sentTime < 5 * 60_000
+      if (fresh) setFlash((m.content as { text?: string }).text ?? 'New update on your case')
       load()
     },
     [load],

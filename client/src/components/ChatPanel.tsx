@@ -154,7 +154,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
                   disabled={voice.listening}
                   aria-label={`Voice typing language: ${VOICE_LANGS.find((l) => l.code === pickedVoice)?.name}. Tap to change.`}
                   title="Voice typing language"
-                  className="flex h-11 min-w-10 items-center justify-center rounded-md border border-line px-2 text-label font-semibold text-ink-muted hover:text-ink disabled:opacity-50"
+                  className="flex h-11 min-w-10 shrink-0 items-center justify-center rounded-md border border-line px-2 text-label font-semibold text-ink-muted hover:text-ink disabled:opacity-50"
                 >
                   {VOICE_LANGS.find((l) => l.code === pickedVoice)?.short}
                 </button>
@@ -178,7 +178,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
             type="submit"
             disabled={sending || !text.trim() || chat.status !== 'ready'}
             aria-label="Send"
-            className="flex size-11 items-center justify-center rounded-md bg-accent text-accent-ink disabled:opacity-50"
+            className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-5 animate-spin" strokeWidth={1.75} /> : <Send className="size-5" strokeWidth={1.75} />}
           </button>
