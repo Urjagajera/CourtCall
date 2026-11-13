@@ -1,6 +1,6 @@
 # CourtCall: setup steps for Kushi (Windows)
 
-This file takes you from nothing to a working copy of CourtCall on your laptop, and explains how to push your work so it goes live on **https://courtcall-kappa.vercel.app** without breaking it.
+This file takes you from nothing to a working copy of CourtCall on your laptop, and explains how to push your work so it goes live on **https://courtcall-kappa.vercel.app** without breaking it. Parts E and F are ready-made prompts for Kushi's Claude and Urja's Claude.
 
 **How it is set up (decided by Urja, 13 Nov 2026):**
 
@@ -333,3 +333,97 @@ The live database is updated first, then the code goes live.
 | You pushed, but the live site didn't change | Ask Urja to check Vercel → **Deployments**. A common cause: your Git email doesn't match your GitHub account (B2). |
 | The live site broke after your push | Tell Urja right away. She can promote the previous deployment in Vercel in one click. |
 | Local database suddenly very slow | Free Supabase projects slow down after very heavy use (for example running the smoke test many times in a row). Wait an hour; check Supabase → **Reports**. |
+
+---
+
+## Part E: Prompt for Kushi's Claude
+
+Paste this as the **first message** every time you start a new Claude Code session in the `CourtCall` folder:
+
+````text
+You are working on CourtCall with Kushi, on her Windows laptop. Before doing anything, read CLAUDE.md and step.md in this repo completely. They hold the project's rules and decisions; follow them exactly.
+
+HOW THIS LAPTOP IS SET UP
+- server/.env points to Kushi's OWN Supabase database and her OWN Nexconn app. The live site (https://courtcall-kappa.vercel.app) uses Urja's database and Nexconn app. Never ask for, accept or use the live database URL or live keys.
+- Run the project: `npm run dev` from the repo root (website http://localhost:5173, API http://localhost:4000, health http://localhost:4000/api/health). After pulling: `npm run setup` and `npm --prefix server run db:migrate`. New day: `npm --prefix server run seed:demo`.
+- It's Windows: use PowerShell or Git Bash syntax that works on Windows.
+
+AT THE START OF EVERY SESSION
+1. Run `git status` and `git pull --rebase`. If there are uncommitted changes you didn't make, stop and ask Kushi.
+2. Ask Kushi which feature she wants to work on, and remind her to tell Urja so they don't edit the same files.
+3. Check the API is healthy (start `npm run dev` if needed).
+
+RULES YOU MUST FOLLOW (from CLAUDE.md)
+- Decisions made by Urja are fixed unless Kushi says Urja agreed to change them. These include: case teams (main lawyer / helping junior / one staff helper, who can assign what), per-case visibility, only senior lawyers can be firm admins, no Bar Council number, no family links, client links need a case number, the hearing outcome flow, and the "Nexconn Chat SDK and Call SDK are the backbone" rule. If a request conflicts with one of them, explain the conflict and ask; don't assume.
+- If anything in a request is unclear, ask Kushi before building. Don't invent features.
+- Enforce permissions on the server, not only in the UI.
+- Never predict hearing times; only show reported progress.
+- Follow design.md and the colour tokens in client/src/index.css; check every screen at 375 px (phone) and laptop width.
+- Add guided-tour steps (client/src/lib/tourSteps.ts) for any major new screen, and keep GUIDE.md, README.md and CLAUDE.md up to date in the same commit.
+- Copy: short plain sentences, no "please", no "successfully".
+- Commit messages: one plain human sentence. NO AI attribution lines (no "Co-Authored-By", no "Generated with").
+
+BEFORE EVERY COMMIT (all must pass; show Kushi the results)
+1. `cd client; npx tsc -b; cd ..`
+2. `cd server; npx tsc --noEmit; cd ..`
+3. `npm test`
+4. If the API changed: `npm --prefix server run smoke`, then `npm --prefix server run smoke:cleanup` (this uses Kushi's own database; don't run it many times in a row, free Supabase slows down). Add smoke checks for new API rules.
+5. Look at the change in a browser at phone and laptop width.
+If something fails, fix it or tell Kushi exactly what failed. Never skip a check or say it passed when it didn't.
+
+PUSHING
+- First `git pull --rebase`, then check `git status`.
+- If the change has NO new file in server/drizzle/: commit and `git push` to main. Vercel deploys in 1–2 minutes. Then open https://courtcall-kappa.vercel.app/api/health and tell Kushi to try the change on the live site.
+- If the change HAS a new file in server/drizzle/ (a database migration): NEVER push it to main. Push to a branch: `git push origin HEAD:kushi-<short-name>`. Then write the MIGRATION REQUEST below for Kushi to send to Urja.
+
+DATABASE CHANGES
+- Before running `npm --prefix server run db:generate -- --name <what>`, ask Kushi to confirm with Urja that nobody else is creating a migration (migration numbers must not clash).
+- Prefer additive changes (new tables, new nullable columns or columns with defaults). If something must be removed or renamed, stop and explain to Kushi: it needs two steps (code first, then a later migration), and Urja decides.
+- Read the generated SQL and show it to Kushi. Never edit a migration that was already applied anywhere. Apply it only to Kushi's database (`npm --prefix server run db:migrate`).
+
+MIGRATION REQUEST (write this for Kushi to send to Urja)
+  Branch: kushi-<short-name>
+  Migration file(s): server/drizzle/00xx_<name>.sql
+  What it does: <plain sentence per statement>
+  Safe for the live site before the code arrives? <yes: only adds things / no: explain>
+  Code that depends on it: <files / features>
+  Checks run: client tsc ✓, server tsc ✓, npm test ✓, smoke N passed ✓, browser ✓
+
+NEVER DO
+- Never push a migration to main, run migrations or seed/smoke against the live database, or change Vercel settings, vercel.json or api/index.js without Urja.
+- Never force-push, rewrite history, or delete branches.
+- Never commit server/.env or print secrets; never paste secrets into chat.
+- Never edit an applied migration.
+- Never change a decision listed in CLAUDE.md on your own.
+- Never claim something works without having run it.
+
+AT THE END OF EACH TASK
+Tell Kushi in plain words: what changed, what was checked (with results), what was pushed and where (main or branch), and anything still to do, including any MIGRATION REQUEST to send to Urja.
+````
+
+---
+
+## Part F: Prompt for Urja's Claude (handling Kushi's migration request)
+
+When Kushi sends a migration request, paste this into **your** Claude Code (in your `CourtCall` folder, whose `server/.env` points to the **live** database), followed by Kushi's request:
+
+````text
+Kushi sent a MIGRATION REQUEST (below). My server/.env points to the LIVE database used by https://courtcall-kappa.vercel.app. Follow CLAUDE.md and step.md, and do this carefully, in order. Stop and ask me before any step that changes the live database or main.
+
+1. `git status` (must be clean), `git fetch`, then `git checkout <branch>` and `git pull`.
+2. Review the branch against main (`git diff main...HEAD`): summarise what changed and flag anything that breaks a rule in CLAUDE.md.
+3. Migrations:
+   - List the new files in server/drizzle/. Check their numbers don't clash with main (no two migrations with the same number; server/drizzle/meta/_journal.json must be consistent). If they clash, stop and explain how to fix it.
+   - Read every SQL statement and tell me in plain words what it does. Is it additive (safe while the old code is live)? If it drops or renames anything, STOP: it must be split into two steps (code first, drop later) and I decide.
+4. Run the checks on the branch: client `npx tsc -b`, server `npx tsc --noEmit`, `npm test`. Do NOT run seed:demo or the smoke test (they would write to the live database).
+5. Show me the exact command and ask for my OK, then apply the migration to the live database: `npm --prefix server run db:migrate`. Then confirm with `npm --prefix server run db:check` that the new tables/columns exist.
+6. Check the live site still works BEFORE merging: https://courtcall-kappa.vercel.app/api/health must show "db":"connected".
+7. Merge: `git checkout main`, `git pull --rebase`, `git merge <branch>`, run the client and server type checks again, then `git push`. No AI attribution lines in any commit message.
+8. After Vercel deploys (1–2 minutes): check /api/health again and try the feature on the live site.
+9. Report to me in plain words: what was migrated, check results, live health, and a short message I can send Kushi ("merged and live" or what she needs to fix).
+
+If any step fails, stop, don't continue to the next one, and tell me what happened.
+
+KUSHI'S REQUEST:
+<paste it here>
+````
