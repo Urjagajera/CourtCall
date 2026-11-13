@@ -93,7 +93,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
       .from(schema.courtSessions)
       .where(and(eq(schema.courtSessions.courtroomId, courtroom.id), eq(schema.courtSessions.date, today)))
     if (s) {
-      session = sessionView(s)
+      session = sessionView(s, ctx.office.staleMinutes)
       const events = await recentEvents(s.id, 20)
       // Hide undone updates and the undo entries themselves: clients only see what stands.
       const undone = new Set(events.filter((e) => e.type === 'correction').map((e) => e.correctsEventId))

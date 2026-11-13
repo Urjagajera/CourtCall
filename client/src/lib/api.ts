@@ -49,6 +49,9 @@ export interface Office {
   /** The signed-in user founded this firm. */
   isFounder?: boolean
   ownerId?: string
+  /** Firm settings: minutes without an update before a courtroom shows as stale; WhatsApp country code. */
+  staleMinutes?: number
+  phoneCountryCode?: string
 }
 
 export interface Client {

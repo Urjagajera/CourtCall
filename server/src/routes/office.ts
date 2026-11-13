@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { db, schema } from '../db/index.js'
 import { publicUser, requireAuth, requireFirmAdmin, requireVerified } from '../lib/auth.js'
 import { badRequest, forbidden, notFound, parse } from '../lib/http.js'
+import { forgetOfficeSettings } from '../lib/officeSettings.js'
 
 // The user's own firm: everyone can see the team; firm admins manage it.
 export const officeRouter = Router()
@@ -31,7 +32,14 @@ officeRouter.get('/', async (req, res) => {
     .orderBy(asc(schema.users.createdAt))
   const admin = user.isFirmAdmin
   res.json({
-    office: { id: office.id, name: office.name, inviteCode: admin ? office.inviteCode : undefined, ownerId: office.ownerId },
+    office: {
+      id: office.id,
+      name: office.name,
+      inviteCode: admin ? office.inviteCode : undefined,
+      ownerId: office.ownerId,
+      staleMinutes: office.staleMinutes,
+      phoneCountryCode: office.phoneCountryCode,
+    },
     // Non-admins only see active colleagues (no pending or deactivated accounts, no contact details).
     members: admin
       ? members.map(publicUser)
@@ -125,4 +133,24 @@ officeRouter.post('/invite-code', requireFirmAdmin, async (req, res) => {
     .where(eq(schema.offices.id, office.id))
     .returning()
   res.json({ inviteCode: updated.inviteCode })
+})
+
+/** Firm settings (firm admins): when a courtroom counts as stale for this firm, and the WhatsApp country code. */
+officeRouter.patch('/settings', requireFirmAdmin, async (req, res) => {
+  const office = await myOffice(req.user!.officeId)
+  const body = parse(
+    z.object({
+      staleMinutes: z.number().int().min(5, 'At least 5 minutes').max(120, 'At most 120 minutes').optional(),
+      phoneCountryCode: z
+        .string()
+        .trim()
+        .transform((v) => v.replace(/^\+/, ''))
+        .pipe(z.string().regex(/^[1-9]\d{0,3}$/, 'Use 1 to 4 digits, like 91'))
+        .optional(),
+    }),
+    req.body,
+  )
+  const [updated] = await db.update(schema.offices).set(body).where(eq(schema.offices.id, office.id)).returning()
+  forgetOfficeSettings(office.id)
+  res.json({ settings: { staleMinutes: updated.staleMinutes, phoneCountryCode: updated.phoneCountryCode } })
 })

@@ -20,6 +20,13 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 13 Nov 2026 (Urja): firm settings and court suggestions (migration 0014)
+
+**Do this after pulling:** `npm --prefix server run db:migrate` (on your own Supabase; Urja already ran it on the live database).
+
+- Team page → **Firm settings** (firm admins): when a courtroom counts as stale (default 20 minutes) and the WhatsApp country code (default 91).
+- Court complex and court no. fields now suggest courts and rooms already in CourtCall instead of a fixed example.
+
 ### 13 Nov 2026 (Urja): demo guide rewritten for the video
 
 README **Part 3: Demo guide** now matches every feature (case teams, updates, hearing outcomes, calendar, firm alerts, briefing, calls, client tabs, languages). **"Suggested walkthrough"** is the timed video script (about 7 minutes). Nothing to run. If you change a feature, update the matching lines there.

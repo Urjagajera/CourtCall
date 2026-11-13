@@ -64,6 +64,10 @@ export const offices = pgTable('offices', {
   // Lawyers, juniors and staff join a firm with this code; a firm admin then approves them.
   inviteCode: text('invite_code').notNull().unique(),
   nexconnTeamGroupId: text('nexconn_team_group_id'),
+  // Firm settings (Team page, firm admins): minutes without an update before a courtroom shows "stale"
+  // to this firm, and the country code added to 10-digit client numbers for WhatsApp links.
+  staleMinutes: integer('stale_minutes').notNull().default(20),
+  phoneCountryCode: text('phone_country_code').notNull().default('91'),
   createdAt: createdAt(),
 })
 

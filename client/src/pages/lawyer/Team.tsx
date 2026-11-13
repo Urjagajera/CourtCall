@@ -1,8 +1,8 @@
-import { Briefcase, Check, ClipboardList, Copy, Crown, KeyRound, RefreshCw, ShieldCheck, UserMinus, UserPlus, Users, X, type LucideIcon } from 'lucide-react'
+import { Briefcase, Check, ClipboardList, Copy, Crown, KeyRound, Settings2, RefreshCw, ShieldCheck, UserMinus, UserPlus, Users, X, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
-import { Badge, Banner, Button, Card, EmptyState, PageSpinner, cx } from '../../components/ui'
+import { Badge, Banner, Button, Card, EmptyState, Input, PageSpinner, cx } from '../../components/ui'
 import { api, type Office, type User } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useApi } from '../../lib/useApi'
@@ -11,9 +11,9 @@ type Member = Pick<User, 'id' | 'name' | 'role' | 'isFirmAdmin' | 'verificationS
 type FirmRole = 'lawyer' | 'junior' | 'staff'
 
 const ROLE: Record<FirmRole, { label: string; plural: string; icon: LucideIcon; can: string }> = {
-  lawyer: { label: 'Senior lawyer', plural: 'Senior lawyers', icon: Briefcase, can: 'Clients, cases, courtrooms, client chat' },
-  junior: { label: 'Junior lawyer', plural: 'Junior lawyers', icon: Users, can: 'Joins courtrooms and reports progress' },
-  staff: { label: 'Office staff', plural: 'Office staff', icon: ClipboardList, can: 'Cases, clients, client chat; courtrooms read-only' },
+  lawyer: { label: 'Senior lawyer', plural: 'Senior lawyers', icon: Briefcase, can: 'Adds clients and cases, leads cases, reports in courtrooms' },
+  junior: { label: 'Junior lawyer', plural: 'Junior lawyers', icon: Users, can: 'Their own cases; joins courtrooms and reports progress' },
+  staff: { label: 'Office staff', plural: 'Office staff', icon: ClipboardList, can: 'Helps on cases read-only; courtrooms read-only' },
 }
 
 export default function Team() {
@@ -118,6 +118,8 @@ export default function Team() {
                 })}
               </ul>
             </Card>
+
+            <FirmSettings office={data.office} admin={admin} onSaved={() => { reload(); refresh() }} />
           </div>
 
           <div className="flex min-w-0 flex-col gap-4">
@@ -273,5 +275,80 @@ function Person({ m, ownerId, self }: { m: Member; ownerId: string; self?: boole
         </p>
       </div>
     </div>
+  )
+}
+
+/** Firm settings: firm admins change them, everyone else sees them. */
+function FirmSettings({ office, admin, onSaved }: { office: Office; admin: boolean; onSaved: () => void }) {
+  const [stale, setStale] = useState(String(office.staleMinutes ?? 20))
+  const [code, setCode] = useState(office.phoneCountryCode ?? '91')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const changed = Number(stale) !== (office.staleMinutes ?? 20) || code.replace(/^\+/, '') !== (office.phoneCountryCode ?? '91')
+
+  async function save() {
+    setBusy(true)
+    setMsg(null)
+    try {
+      await api('/office/settings', { method: 'PATCH', body: { staleMinutes: Number(stale), phoneCountryCode: code } })
+      setMsg({ ok: true, text: 'Saved.' })
+      onSaved()
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Could not save' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card data-tour="firm-settings">
+      <p className="flex items-center gap-2 text-h2">
+        <Settings2 className="size-5" strokeWidth={1.75} /> Firm settings
+      </p>
+      {admin ? (
+        <form
+          className="mt-3 flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault()
+            save()
+          }}
+        >
+          <Input
+            label="Mark a courtroom stale after (minutes)"
+            type="number"
+            inputMode="numeric"
+            min={5}
+            max={120}
+            required
+            className="tabular"
+            hint="With no update for this long, your firm sees the room as “may be out of date”. 5 to 120."
+            value={stale}
+            onChange={(e) => setStale(e.target.value)}
+          />
+          <Input
+            label="WhatsApp country code"
+            inputMode="numeric"
+            required
+            className="tabular"
+            hint="Added to 10-digit client numbers when you share a link on WhatsApp."
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          {msg && <Banner tone={msg.ok ? 'hearing' : 'stopped'}>{msg.text}</Banner>}
+          <Button type="submit" variant="secondary" loading={busy} disabled={!changed}>
+            Save settings
+          </Button>
+        </form>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-1 text-label">
+          <li>
+            Courtroom marked stale after <span className="tabular font-semibold">{office.staleMinutes ?? 20} min</span>
+          </li>
+          <li>
+            WhatsApp country code <span className="tabular font-semibold">+{office.phoneCountryCode ?? '91'}</span>
+          </li>
+        </ul>
+      )}
+    </Card>
   )
 }

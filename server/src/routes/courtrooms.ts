@@ -6,6 +6,7 @@ import { waitUntil } from '@vercel/functions'
 import { sendAlerts } from '../lib/alerts.js'
 import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
+import { officeSettings } from '../lib/officeSettings.js'
 import { EVENT_TYPES, courtDate } from '../lib/engine.js'
 import { forbidden, notFound, parse } from '../lib/http.js'
 import { caseVisible } from '../lib/visibility.js'
@@ -33,12 +34,13 @@ const staff = [requireAuth, requireVerified, requireRole('lawyer', 'junior')]
 courtroomsRouter.get('/courtrooms/today', requireAuth, requireVerified, requireRole('lawyer', 'junior', 'staff'), async (req, res) => {
   const user = req.user!
   const date = courtDate()
-  const [rows, officeCases] = await Promise.all([
+  const [rows, officeCases, settings] = await Promise.all([
     sessionsForUser(user, date),
     user.officeId ? officeCasesOn(user.officeId, date, caseVisible(user)) : Promise.resolve([]),
+    officeSettings(user.officeId),
   ])
   const sessions = rows.map(({ session, courtroom }) => ({
-    ...sessionView(session),
+    ...sessionView(session, settings.staleMinutes),
     courtroom: { id: courtroom.id, courtComplex: courtroom.courtComplex, roomNo: courtroom.roomNo },
     myCases: officeCases.filter((c) => c.courtroomId === courtroom.id),
   }))
@@ -83,14 +85,15 @@ courtroomsRouter.get('/sessions/:id', ...staff, async (req, res) => {
   const user = req.user!
   const id = parse(z.uuid(), req.params.id)
   const { session, courtroom } = await loadMemberSession(id, user.id)
-  const [events, activeReporters, myCases, members] = await Promise.all([
+  const [events, activeReporters, myCases, members, settings] = await Promise.all([
     recentEvents(id),
     activeReporterCount(id),
     user.officeId ? officeCasesIn(user.officeId, courtroom.id, session.date, caseVisible(user)) : [],
     sessionMembers(id),
+    officeSettings(user.officeId),
   ])
   res.json({
-    session: sessionView(session),
+    session: sessionView(session, settings.staleMinutes),
     courtroom: { id: courtroom.id, courtComplex: courtroom.courtComplex, roomNo: courtroom.roomNo },
     events,
     activeReporters,

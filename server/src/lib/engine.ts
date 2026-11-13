@@ -129,9 +129,9 @@ export function decide(state: SessionState, input: EventInput, target?: Correcti
   }
 }
 
-export function isStale(status: SessionStatus, lastEventAt: Date | null, now = Date.now()) {
+export function isStale(status: SessionStatus, lastEventAt: Date | null, now = Date.now(), staleAfterMs = STALE_AFTER_MS) {
   if (!lastEventAt || status === 'risen' || status === 'not_sitting' || status === 'not_started') return false
-  return now - lastEventAt.getTime() > STALE_AFTER_MS
+  return now - lastEventAt.getTime() > staleAfterMs
 }
 
 /** Court days follow Indian time even when the server runs in UTC. */

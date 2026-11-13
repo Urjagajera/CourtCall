@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Case } from '../lib/api'
 import { api } from '../lib/api'
 import { formatDate } from '../lib/dates'
+import { useAuth } from '../lib/auth'
 import { Sheet } from './Sheet'
 import { Badge, Banner, Button, cx } from './ui'
 
@@ -16,15 +17,16 @@ interface LinkRow {
   createdByName: string | null
 }
 
-/** wa.me needs digits with country code. Indian 10-digit numbers get +91. */
-function whatsappUrl(phone: string | null, text: string) {
+/** wa.me needs digits with country code. 10-digit numbers get the firm's country code (Team → Firm settings). */
+function whatsappUrl(phone: string | null, text: string, countryCode: string) {
   const digits = (phone ?? '').replace(/\D/g, '')
-  const to = digits.length === 10 ? `91${digits}` : digits
+  const to = digits.length === 10 ? `${countryCode}${digits}` : digits
   return `https://wa.me/${to}?text=${encodeURIComponent(text)}`
 }
 
 /** Create, share (WhatsApp), turn off and reissue the private links for one case. */
 export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: string | null; onClose: () => void }) {
+  const { office } = useAuth()
   const [links, setLinks] = useState<LinkRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -84,7 +86,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
           <p className="mt-2 break-all rounded-md border border-line bg-surface p-2 text-caption">{fresh.url}</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <a
-              href={whatsappUrl(clientPhone, message)}
+              href={whatsappUrl(clientPhone, message, office?.phoneCountryCode ?? '91')}
               target="_blank"
               rel="noreferrer"
               className="flex h-11 items-center justify-center gap-2 rounded-md bg-accent text-label font-semibold text-accent-ink hover:bg-accent-strong"

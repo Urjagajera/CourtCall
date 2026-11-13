@@ -171,6 +171,8 @@ authRouter.get('/me', async (req, res) => {
           // Only firm admins see the invite code.
           inviteCode: user.isFirmAdmin ? office.inviteCode : undefined,
           isFounder: office.ownerId === user.id,
+          staleMinutes: office.staleMinutes,
+          phoneCountryCode: office.phoneCountryCode,
         }
       : null,
   })

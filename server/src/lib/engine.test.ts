@@ -90,3 +90,10 @@ test('court date uses India time', () => {
   // 20:00 UTC on Nov 11 is 01:30 IST on Nov 12
   assert.equal(courtDate(new Date('2026-11-11T20:00:00Z')), '2026-11-12')
 })
+
+test('stale time follows the firm setting', () => {
+  const now = Date.now()
+  const tenMinAgo = new Date(now - 10 * 60 * 1000)
+  assert.equal(isStale('hearing', tenMinAgo, now), false)
+  assert.equal(isStale('hearing', tenMinAgo, now, 5 * 60 * 1000), true)
+})

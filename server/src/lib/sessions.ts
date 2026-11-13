@@ -124,7 +124,8 @@ export async function isMember(sessionId: string, userId: string) {
 }
 
 /** Shape sent to staff (lawyers/juniors). Clients get a reduced view elsewhere. */
-export function sessionView(s: CourtSession) {
+/** `staleMinutes`: the viewer's firm setting (offices.stale_minutes); 20 when unknown. */
+export function sessionView(s: CourtSession, staleMinutes = 20) {
   return {
     id: s.id,
     courtroomId: s.courtroomId,
@@ -134,7 +135,7 @@ export function sessionView(s: CourtSession) {
     status: s.status,
     version: s.version,
     lastEventAt: s.lastEventAt,
-    stale: isStale(s.status, s.lastEventAt),
+    stale: isStale(s.status, s.lastEventAt, Date.now(), staleMinutes * 60 * 1000),
   }
 }
 

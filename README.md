@@ -213,7 +213,7 @@ All demo accounts are already verified, so they can use every feature straight a
 
 | Role | Who | Can do | Approved by |
 |---|---|---|---|
-| **Firm admin** | A senior lawyer with admin rights (juniors and office staff can never be firm admins). The founder is always one. | Everything their role can do, plus the **Team** page: approve or decline new people, change roles (senior lawyer / junior / staff), make or remove other firm admins, deactivate and reactivate people, and make a new invite code | Founder: nobody (starts right away). Others: another firm admin |
+| **Firm admin** | A senior lawyer with admin rights (juniors and office staff can never be firm admins). The founder is always one. | Everything their role can do, plus the **Team** page: approve or decline new people, change roles (senior lawyer / junior / staff), make or remove other firm admins, deactivate and reactivate people, make a new invite code, and change **Firm settings** (when a courtroom counts as stale, WhatsApp country code) | Founder: nobody (starts right away). Others: another firm admin |
 | **Senior lawyer** | Advocates of the firm | Adds clients and cases (and becomes the case's main lawyer); on cases they lead: edits details, records hearing outcomes, sets the briefing, picks the helping junior and staff helper; courtrooms (join and report), chats, calls | Founder: nobody. Joining lawyers: a firm admin |
 | **Junior lawyer** | Juniors who go to court | Sees only the cases they are on; as main lawyer records outcomes and edits the case; join courtrooms, report progress, room chat, chats, calls; never assigns anyone | A firm admin |
 | **Office staff** | Clerks and office employees | Staff helper on cases: sees those cases, clients and chats **read-only**; watches today's courtrooms **read-only** (never reports); can't add or edit cases or clients | A firm admin |
@@ -249,6 +249,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - Sees **every** case and client of the firm, and can do everything on them: add and edit cases and clients, set any case team (**Case team → Edit team**: main lawyer, helping junior, staff helper), record hearing outcomes, set and send briefings.
 - Runs the firm on the **Team** page:
   - **Invite code** `MEHTA4` with copy and **Make a new code**.
+  - **Firm settings:** minutes without an update before a courtroom shows as stale for this firm (default 20), and the WhatsApp country code added to 10-digit client numbers (default 91).
   - **Waiting for your approval:** approve or decline people who joined with the code.
   - **People:** change anyone's role, **Make admin / Remove admin** (senior lawyers only), **Deactivate** and reactivate.
   - The founder can't be deactivated or demoted, and nobody can edit their own account.

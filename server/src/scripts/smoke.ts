@@ -90,6 +90,17 @@ check('staff sees today read-only', (await staff.get('/courtrooms/today')).statu
 check('staff cannot join a courtroom', (await staff.post('/courtrooms/join', { courtComplex: 'Smoke Test Court', roomNo: '99' })).status === 403)
 check('staff gets a chat token', (await staff.post('/chat/token')).status === 200)
 
+// Firm settings (Team page): firm admins only, validated, and shown in /auth/me.
+check('firm settings default to 20 min and +91', me.body.office?.staleMinutes >= 5 && typeof me.body.office?.phoneCountryCode === 'string', me.body.office)
+const settingsBefore = { staleMinutes: me.body.office?.staleMinutes ?? 20, phoneCountryCode: me.body.office?.phoneCountryCode ?? '91' }
+check('non-admin cannot change firm settings', (await lawyer3.patch('/office/settings', { staleMinutes: 30 })).status === 403)
+check('stale time below 5 minutes is refused', (await lawyer.patch('/office/settings', { staleMinutes: 2 })).status === 400)
+check('bad country code is refused', (await lawyer.patch('/office/settings', { phoneCountryCode: 'abc' })).status === 400)
+const setRes = await lawyer.patch('/office/settings', { staleMinutes: 30, phoneCountryCode: '+44' })
+check('firm admin changes firm settings', setRes.body.settings?.staleMinutes === 30 && setRes.body.settings?.phoneCountryCode === '44', setRes.body)
+check('settings show in /auth/me', (await lawyer.get('/auth/me')).body.office?.staleMinutes === 30)
+await lawyer.patch('/office/settings', settingsBefore)
+
 const stamp = Date.now()
 const newbie = new Session('newbie')
 const reg = await newbie.post('/auth/register/member', { name: 'Smoke Clerk', email: `clerk${stamp}@smoke.test`, phone: '9800000001', password: 'password123', role: 'staff', inviteCode: 'mehta4' })

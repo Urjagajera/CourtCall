@@ -67,7 +67,7 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 | Role | Can do |
 |---|---|
-| **Firm admin** (senior lawyers only) | Everything a senior lawyer can do, plus manage the firm on **Team**: approve or decline people, change roles, make other senior lawyers firm admins (never juniors or office staff), deactivate people who leave, and make a new invite code |
+| **Firm admin** (senior lawyers only) | Everything a senior lawyer can do, plus manage the firm on **Team**: approve or decline people, change roles, make other senior lawyers firm admins (never juniors or office staff), deactivate people who leave, make a new invite code, and change **Firm settings** (stale time for courtrooms, WhatsApp country code) |
 | **Senior lawyer** | Clients, cases, courtrooms (join and report), team chat, private chat with clients |
 | **Junior lawyer** | Join courtrooms, report progress, courtroom chat, team chat |
 | **Office staff** | Clients, cases, team chat, client chat; see today's courtrooms (read-only) |
