@@ -13,12 +13,14 @@ import {
   ListOrdered,
   Lock,
   Pencil,
+  Phone,
   UserRound,
   Users,
 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
+import { BriefingCard } from '../../components/BriefingCard'
 import { TeamSheet } from '../../components/CaseTeam'
 import { LinkSheet } from '../../components/LinkSheet'
 import { OutcomeSheet } from '../../components/OutcomeSheet'
@@ -27,6 +29,7 @@ import { Badge, Banner, Button, Card, PageSpinner, Textarea } from '../../compon
 import { api, type Case, type Hearing } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatDate, todayISO } from '../../lib/dates'
+import { startVoiceCall } from '../../lib/calls'
 import { useApi } from '../../lib/useApi'
 import { useUpdates } from '../../lib/updates'
 
@@ -35,6 +38,8 @@ interface Detail {
   hearings: Hearing[]
   team: { mainLawyer: TeamPerson | null; helpingJunior: TeamPerson | null; staffHelper: TeamPerson | null }
   permissions: { canEdit: boolean; canManageTeam: boolean; canChangeMainLawyer: boolean }
+  appearingLawyer: TeamPerson | null
+  briefing: { text: string; at: string } | null
   links: { active: number; openedOnPhone: boolean }
   needsOutcome: boolean
 }
@@ -91,9 +96,19 @@ export default function CaseDetail() {
         subtitle={c.clientName}
         action={
           c.status === 'active' ? (
-            <Button variant="secondary" onClick={() => setLinkOpen(true)} icon={<Link2 className="size-5" strokeWidth={1.75} />}>
-              Client link
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => startVoiceCall(`c${c.clientId.replace(/-/g, '')}`, c.clientName)}
+                icon={<Phone className="size-5" strokeWidth={1.75} />}
+                title="Voice call in CourtCall (Nexconn). The client must have opened their link."
+              >
+                Call client
+              </Button>
+              <Button variant="secondary" onClick={() => setLinkOpen(true)} icon={<Link2 className="size-5" strokeWidth={1.75} />}>
+                Client link
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -144,6 +159,18 @@ export default function CaseDetail() {
               </Row>
             </dl>
           </Card>
+
+          <BriefingCard
+            key={`${c.hearingDate}-${c.rememberNote ?? ''}-${c.appearingLawyerId ?? ''}`}
+            caseId={c.id}
+            hearingDate={c.hearingDate}
+            active={c.status === 'active'}
+            canEdit={canEdit}
+            appearingLawyerId={c.appearingLawyerId ?? null}
+            rememberNote={c.rememberNote ?? null}
+            briefing={data.briefing}
+            onChanged={reload}
+          />
 
           <Card data-tour="case-team">
             <div className="flex items-center justify-between gap-2">

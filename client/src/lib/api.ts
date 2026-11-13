@@ -75,6 +75,9 @@ export interface Case {
   mainLawyerId: string | null
   assignedJuniorId: string | null
   helperStaffId: string | null
+  /** Hearing-day briefing: who appears for the client, and a note read to them. */
+  appearingLawyerId?: string | null
+  rememberNote?: string | null
   /** What the signed-in person may do (from the server). */
   canEdit?: boolean
   canManageTeam?: boolean

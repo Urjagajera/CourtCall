@@ -2,7 +2,10 @@ import { Briefcase, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, Se
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { MSG_STAFF_ALERT, startChat, useChat, useIncomingMessages, type Message } from '../lib/nexconn'
+import { setCallLogWriter, setCallNames } from '../lib/calls'
+import { MSG_STAFF_ALERT, sendText, startChat, useChat, useIncomingMessages, type Message } from '../lib/nexconn'
+import { useApi } from '../lib/useApi'
+import { CallOverlay } from './CallOverlay'
 import { firstName, markTourSeen, tourSeen } from '../lib/tour'
 import { tourStepsFor } from '../lib/tourSteps'
 import { UpdatesProvider, useUpdates } from '../lib/updates'
@@ -59,6 +62,14 @@ function Shell() {
   const chat = useChat()
   const items = navFor(user!.role)
   const updates = useUpdates()
+  // In-app calls (Nexconn Call SDK): names for incoming callers (colleagues + clients), and a call log line in the chat.
+  const callClients = useApi<{ clients: { ncId: string; name: string }[] }>('/clients')
+  useEffect(() => {
+    setCallNames((id) => chat.team?.members.find((m) => m.ncId === id)?.name ?? callClients.data?.clients.find((k) => k.ncId === id)?.name)
+    setCallLogWriter((peerId, text) => {
+      sendText('direct', peerId, text).catch(() => {})
+    })
+  }, [chat.team, callClients.data])
   const countFor = (to: string) => (to === '/cases' ? updates.unread + updates.todos : to === '/chats' ? updates.chatUnread : 0)
 
   // Lawyers and juniors stay connected to Nexconn while signed in (live rooms + chat).
@@ -164,6 +175,7 @@ function Shell() {
           <Outlet />
         </main>
         <Toast toast={toast} onDismiss={dismissToast} />
+        <CallOverlay />
 
         {/* Phone bottom tabs */}
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">

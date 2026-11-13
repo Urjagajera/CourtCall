@@ -15,6 +15,7 @@ import { courtDate } from '../lib/engine.js'
 import { HttpError, parse } from '../lib/http.js'
 import { issueToken, ncClientId, ncStaffId } from '../lib/nexconn.js'
 import { pushEnabled } from '../lib/push.js'
+import { todaysBriefing } from '../lib/briefing.js'
 import { recentEvents, sessionView } from '../lib/sessions.js'
 
 // The client's side: open a WhatsApp-shared link, see their own case, chat with the firm.
@@ -103,7 +104,7 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     }
   }
 
-  const [history, cases, hearings] = await Promise.all([
+  const [history, cases, hearings, briefing, appearing] = await Promise.all([
     // Every alert ever sent for this case, with the court day it belongs to (newest first).
     db
       .select({ date: schema.courtSessions.date, message: schema.alertLogs.message, at: schema.alertLogs.createdAt })
@@ -143,6 +144,11 @@ clientRouter.get('/me', requireClient, async (req, res) => {
       .from(schema.caseHearings)
       .where(eq(schema.caseHearings.caseId, theCase.id))
       .orderBy(desc(schema.caseHearings.date)),
+    // Today's hearing-day briefing (the "CourtCall is calling" screen replays it).
+    theCase.hearingDate === today ? todaysBriefing(theCase.id) : Promise.resolve(null),
+    theCase.appearingLawyerId
+      ? db.select({ name: schema.users.name }).from(schema.users).where(eq(schema.users.id, theCase.appearingLawyerId)).then((r) => r[0]?.name ?? null)
+      : Promise.resolve(null),
   ])
 
   res.json({
@@ -167,6 +173,8 @@ clientRouter.get('/me', requireClient, async (req, res) => {
     updates,
     alerts: history.filter((h) => h.date === today).map(({ message, at }) => ({ message, at })),
     history,
+    briefing,
+    appearingLawyer: appearing,
     hearings: hearings.map(({ shareWithClient, summary, ...h }) => ({ ...h, summary: shareWithClient ? summary : null })),
     cases: cases.map((c) => ({ ...c, current: c.id === theCase.id })),
   })
@@ -231,13 +239,14 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
         or(
           and(eq(schema.users.isFirmAdmin, true), eq(schema.users.role, 'lawyer')),
           inArray(schema.users.id, db.select({ id: schema.cases.mainLawyerId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
+          inArray(schema.users.id, db.select({ id: schema.cases.appearingLawyerId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
           inArray(schema.users.id, db.select({ id: schema.cases.assignedJuniorId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
           inArray(schema.users.id, db.select({ id: schema.cases.helperStaffId }).from(schema.cases).where(eq(schema.cases.clientId, ctx.client.id))),
         ),
       ),
     )
-  // The main lawyer of the case this link is for comes first.
-  const first = ctx.case.mainLawyerId ?? ctx.link.createdBy ?? ctx.office.ownerId
+  // "Call my lawyer" and the chat start with the appearing lawyer, else the main lawyer of this link's case.
+  const first = ctx.case.appearingLawyerId ?? ctx.case.mainLawyerId ?? ctx.link.createdBy ?? ctx.office.ownerId
   people.sort((a, b) => Number(b.id === first) - Number(a.id === first))
   res.json({
     appKey: config.nexconn.appKey,

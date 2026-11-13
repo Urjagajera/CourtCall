@@ -101,6 +101,13 @@ const shared = {
     title: 'Case team',
     body: 'Every case has a main lawyer, an optional helping junior and one staff helper. Only these people (and firm admins) see the case. The firm admin picks the main lawyer; a senior main lawyer picks the helping junior and staff helper.',
   },
+  caseBriefing: {
+    id: 'case-briefing',
+    target: 'case-briefing',
+    optional: true,
+    title: 'Hearing-day briefing',
+    body: 'On the hearing day between 9 and 10 AM, the client gets a CourtCall voice message: court, item, who appears for them, and your Remember note in their language. Set the appearing lawyer and the note here; the main lawyer can also send it now. "Call client" starts a voice call over Nexconn.',
+  },
   caseHearings: {
     id: 'case-hearings',
     target: 'case-hearings',
@@ -238,6 +245,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
       },
       shared.caseDetails,
       shared.caseTeam,
+      shared.caseBriefing,
       shared.caseHearings,
       {
         id: 'clients',
@@ -280,6 +288,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
     },
     shared.caseDetails,
     shared.caseTeam,
+    shared.caseBriefing,
     shared.caseHearings,
     {
       id: 'clients',
@@ -307,11 +316,12 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
 
 type ClientLang = 'en' | 'hi' | 'gu'
 type T2 = [title: string, body: string]
-type TourText = { welcome: (n: string) => T2 } & Record<'progress' | 'updates' | 'alerts' | 'chat' | 'cases' | 'history' | 'menu' | 'finish', T2>
+type TourText = { welcome: (n: string) => T2 } & Record<'progress' | 'briefing' | 'updates' | 'alerts' | 'chat' | 'cases' | 'history' | 'menu' | 'finish', T2>
 const CLIENT_TOUR: Record<ClientLang, TourText> = {
   en: {
     welcome: (n) => [`Namaste ${n}, welcome to CourtCall`, 'This page shows how far the court has reached with your case, live. Here is a quick look around. Tap End tour anytime.'],
     progress: ['Your case, live', '"Now" is the item the court is hearing. "Your item" is your number on today\'s list. It shows how many cases are before yours and when it was last reported. CourtCall never guesses a time.'],
+    briefing: ["Today's briefing", "On your hearing day, CourtCall calls you in the morning with your court, item number and your lawyer's message, read aloud in your language. Tap Listen to hear it again, or Call my lawyer to talk to them in CourtCall."],
     updates: ['Latest updates', 'Everything reported in your courtroom today, and every alert you were sent.'],
     alerts: ['Alerts on this phone', 'Tap Turn on to get a notification when the court is 10, 5 and 2 cases away, and when your case is heard, passed over or adjourned.'],
     chat: ['Chat with your lawyer', 'Message your firm privately. Type, or tap the microphone and speak. Your lawyer sees it in CourtCall straight away.'],
@@ -323,6 +333,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
   hi: {
     welcome: (n) => [`नमस्ते ${n}, CourtCall में आपका स्वागत है`, 'यह पेज लाइव दिखाता है कि कोर्ट आपके केस तक कितना पहुँची। चलिए जल्दी से देखते हैं। कभी भी टूर बंद कर सकते हैं।'],
     progress: ['आपका केस, लाइव', '"अभी" वह आइटम है जिसकी सुनवाई चल रही है। "आपका आइटम" आज की सूची में आपका नंबर है। आपसे पहले कितने केस हैं और आखिरी अपडेट कब आया, यह भी दिखता है। CourtCall कभी समय का अंदाज़ा नहीं लगाता।'],
+    briefing: ['आज की जानकारी', 'सुनवाई के दिन सुबह CourtCall आपको कॉल करके कोर्ट, आइटम नंबर और आपके वकील का संदेश आपकी भाषा में सुनाता है। फिर से सुनने के लिए "सुनें" दबाएँ, या CourtCall में बात करने के लिए "वकील को कॉल करें"।'],
     updates: ['ताज़ा अपडेट', 'आज आपके कोर्टरूम में जो भी बताया गया, और आपको भेजे गए सभी अलर्ट।'],
     alerts: ['इस फ़ोन पर अलर्ट', '"चालू करें" दबाएँ: जब आपका केस 10, 5 और 2 केस दूर हो, और जब सुनवाई हो, पास ओवर हो या स्थगित हो, तब सूचना मिलेगी।'],
     chat: ['अपने वकील से चैट', 'अपनी फ़र्म को निजी संदेश भेजें। लिखें, या माइक दबाकर बोलें। वकील इसे तुरंत CourtCall में देखते हैं।'],
@@ -334,6 +345,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
   gu: {
     welcome: (n) => [`નમસ્તે ${n}, CourtCallમાં તમારું સ્વાગત છે`, 'આ પેજ લાઇવ બતાવે છે કે કોર્ટ તમારા કેસ સુધી કેટલી પહોંચી. ચાલો ઝડપથી જોઈએ. ગમે ત્યારે ટૂર બંધ કરી શકો છો.'],
     progress: ['તમારો કેસ, લાઇવ', '"હમણાં" એ આઇટમ છે જેની સુનાવણી ચાલે છે. "તમારી આઇટમ" આજની યાદીમાં તમારો નંબર છે. તમારા પહેલાં કેટલા કેસ છે અને છેલ્લો અપડેટ ક્યારે આવ્યો તે પણ દેખાય છે. CourtCall ક્યારેય સમયનો અંદાજ લગાવતું નથી.'],
+    briefing: ['આજની માહિતી', 'સુનાવણીના દિવસે સવારે CourtCall તમને કૉલ કરીને કોર્ટ, આઇટમ નંબર અને તમારા વકીલનો સંદેશ તમારી ભાષામાં સંભળાવે છે. ફરી સાંભળવા "સાંભળો" દબાવો, અથવા CourtCallમાં વાત કરવા "વકીલને કૉલ કરો".'],
     updates: ['તાજા અપડેટ', 'આજે તમારા કોર્ટરૂમમાં જે જણાવાયું તે બધું, અને તમને મોકલેલા બધા અલર્ટ.'],
     alerts: ['આ ફોન પર અલર્ટ', '"ચાલુ કરો" દબાવો: જ્યારે તમારો કેસ 10, 5 અને 2 કેસ દૂર હોય, અને જ્યારે સુનાવણી થાય, પાસ ઓવર થાય કે મુલતવી રહે ત્યારે સૂચના મળશે.'],
     chat: ['તમારા વકીલ સાથે ચેટ', 'તમારી ફર્મને ખાનગી સંદેશ મોકલો. લખો, અથવા માઇક દબાવીને બોલો. વકીલ તેને તરત CourtCallમાં જુએ છે.'],
@@ -351,6 +363,7 @@ export function clientTourSteps(firstName: string, kind: 'client', lang: ClientL
   const step = (id: string, [title, body]: T2, target?: string, route?: string, optional?: boolean): TourStep => ({ id: `client-${id}`, title, body, target, route, optional })
   const steps: TourStep[] = [
     step('welcome', T.welcome(firstName), undefined, '/case'),
+    step('briefing', T.briefing, 'client-briefing', '/case', true),
     step('progress', T.progress, 'client-progress', '/case'),
     step('updates', T.updates, 'client-updates', '/case', true),
   ]

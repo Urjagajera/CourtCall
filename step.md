@@ -97,7 +97,8 @@ This installs the root, `server` and `client` packages. It takes a few minutes.
 1. Go to https://console.nexconn.ai and sign up / sign in.
 2. Create a new app (name it `courtcall-kushi`).
 3. Open the app's **Key Management** page and copy the **App Key** and **App Secret**.
-4. Note which **data center** the app is in. If it is Singapore, the Server API address is `https://api.sg-light-api.com` (already the default). If the console shows a different data center, copy the Server API address it shows for your app.
+4. Switch on the app's **voice/video call (VoIP)** service in the console. Without it, in-app calls fail with "The call could not connect".
+5. Note which **data center** the app is in. If it is Singapore, the Server API address is `https://api.sg-light-api.com` (already the default). If the console shows a different data center, copy the Server API address it shows for your app.
 
 ### B7. Create your `server/.env` file
 
@@ -130,6 +131,7 @@ Open `server\.env` in VS Code or Notepad and fill it in:
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | The two keys you generated |
 | `VAPID_SUBJECT` | `mailto:` followed by your email |
 | `DEMO_LOGIN` | Leave `true` |
+| `CRON_SECRET` | Optional locally (only the 9 AM briefing job needs it; use "Send briefing now" on a case instead) |
 
 Save the file. Never commit it (it's already ignored by Git).
 

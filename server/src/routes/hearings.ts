@@ -6,6 +6,7 @@ import { requireAuth, requireRole, requireVerified } from '../lib/auth.js'
 import { upsertCourtroom } from '../lib/courtrooms.js'
 import { courtDate } from '../lib/engine.js'
 import { HttpError, badRequest, forbidden, notFound, parse } from '../lib/http.js'
+import { todaysBriefing } from '../lib/briefing.js'
 import { notify } from '../lib/notify.js'
 import { canEditCase, canManageTeam, caseVisible, clientScope, firmAdminIds, inScope, teamOf } from '../lib/visibility.js'
 
@@ -30,6 +31,8 @@ const caseCols = {
   assignedJuniorId: schema.cases.assignedJuniorId,
   mainLawyerId: schema.cases.mainLawyerId,
   helperStaffId: schema.cases.helperStaffId,
+  appearingLawyerId: schema.cases.appearingLawyerId,
+  rememberNote: schema.cases.rememberNote,
   officeId: schema.cases.officeId,
 }
 
@@ -120,6 +123,9 @@ const outcomeInput = z
     summary: z.string().trim().max(1000).optional(),
     shareWithClient: z.boolean().default(false),
     prepNotes: z.string().trim().max(2000).optional(),
+    // For the next hearing's 9 AM briefing to the client.
+    appearingLawyerId: z.uuid().nullable().optional(),
+    rememberNote: z.string().trim().max(400).optional(),
   })
   .refine((b) => b.outcome === 'closed' || !!b.nextDate, { path: ['nextDate'], message: 'Choose the next hearing date' })
 
@@ -133,6 +139,13 @@ hearingsRouter.post('/cases/:id/outcome', ...anyStaff, async (req, res) => {
   if (body.outcome === 'next_date' && body.nextDate! <= c.hearingDate) throw badRequest('The next date must be after this hearing', { nextDate: ['The next date must be after this hearing'] })
   if ((body.courtComplex && !body.roomNo) || (!body.courtComplex && body.roomNo)) throw badRequest('Send both court and room to change the courtroom')
 
+  if (body.appearingLawyerId) {
+    const [u] = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(and(eq(schema.users.id, body.appearingLawyerId), eq(schema.users.officeId, c.officeId), eq(schema.users.role, 'lawyer'), eq(schema.users.verificationStatus, 'verified')))
+    if (!u) throw badRequest('The appearing lawyer must be an approved senior lawyer of your firm')
+  }
   const nextRoom = body.courtComplex && body.roomNo ? await upsertCourtroom(body.courtComplex, body.roomNo) : null
   const result = await db.transaction(async (tx) => {
     const [hearing] = await tx
@@ -157,7 +170,13 @@ hearingsRouter.post('/cases/:id/outcome', ...anyStaff, async (req, res) => {
       .set(
         body.outcome === 'closed'
           ? { status: 'closed' }
-          : { hearingDate: body.nextDate!, itemNo: body.itemNo ?? null, ...(nextRoom ? { courtroomId: nextRoom.id } : {}) },
+          : {
+              hearingDate: body.nextDate!,
+              itemNo: body.itemNo ?? null,
+              ...(nextRoom ? { courtroomId: nextRoom.id } : {}),
+              ...(body.appearingLawyerId !== undefined ? { appearingLawyerId: body.appearingLawyerId } : {}),
+              rememberNote: body.rememberNote || null,
+            },
       )
       .where(eq(schema.cases.id, c.id))
       .returning()
@@ -206,8 +225,8 @@ hearingsRouter.patch('/hearings/:id', ...anyStaff, async (req, res) => {
 /** Everything about one case: details, case team, hearing history, links, and what this person may change. */
 hearingsRouter.get('/cases/:id/detail', ...anyStaff, async (req, res) => {
   const c = await caseInScope(req, String(req.params.id))
-  const ids = teamOf(c)
-  const [hearings, people, links] = await Promise.all([
+  const ids = [...teamOf(c), ...(c.appearingLawyerId ? [c.appearingLawyerId] : [])]
+  const [hearings, people, links, briefing] = await Promise.all([
     hearingsOf([c.id]),
     ids.length
       ? db.select({ id: schema.users.id, name: schema.users.name, role: schema.users.role }).from(schema.users).where(inArray(schema.users.id, ids))
@@ -216,6 +235,7 @@ hearingsRouter.get('/cases/:id/detail', ...anyStaff, async (req, res) => {
       .select({ kind: schema.accessLinks.kind, activatedAt: schema.accessLinks.activatedAt, revokedAt: schema.accessLinks.revokedAt })
       .from(schema.accessLinks)
       .where(eq(schema.accessLinks.caseId, c.id)),
+    todaysBriefing(c.id),
   ])
   const pending = (await pendingOutcomes(req)).some((p) => p.id === c.id)
   const who = (id: string | null) => people.find((p) => p.id === id) ?? null
@@ -223,6 +243,8 @@ hearingsRouter.get('/cases/:id/detail', ...anyStaff, async (req, res) => {
     case: c,
     hearings,
     team: { mainLawyer: who(c.mainLawyerId), helpingJunior: who(c.assignedJuniorId), staffHelper: who(c.helperStaffId) },
+    appearingLawyer: who(c.appearingLawyerId),
+    briefing,
     permissions: { canEdit: canEditCase(req.user!, c), canManageTeam: canManageTeam(req.user!, c), canChangeMainLawyer: req.user!.isFirmAdmin },
     links: { active: links.filter((l) => !l.revokedAt).length, openedOnPhone: links.some((l) => !l.revokedAt && l.activatedAt) },
     needsOutcome: pending,

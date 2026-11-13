@@ -14,6 +14,7 @@ import {
 } from '@nexconn/chat'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { api } from './api'
+import { installCallEngine, startCallEngine } from './calls'
 
 export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
@@ -21,6 +22,8 @@ export const MSG_ALERT = 'CC:Alert'
 export const MSG_NOTICE = 'CC:Notice'
 /** Firm alert for the people on a case: client is 2 away, being heard, hearing over (shown as a pop-up). */
 export const MSG_STAFF_ALERT = 'CC:StaffAlert'
+/** Hearing-day briefing for a client: opens the "CourtCall is calling" screen. */
+export const MSG_BRIEFING = 'CC:Briefing'
 /** The CourtCall bot's own direct channel never counts towards chat unread totals. */
 export const BOT_ID = 'courtcallbot'
 export const MSG_TEXT = 'RC:TxtMsg'
@@ -71,13 +74,15 @@ export function startChat(tokenPath = '/chat/token') {
     try {
       const t = await api<TokenResponse>(tokenPath, { method: 'POST' })
       if (initializedKey !== t.appKey) {
-        // initialize() must run exactly once per page lifecycle.
+        // initialize() must run exactly once per page lifecycle. The Call SDK must be installed before it.
+        installCallEngine()
         NCEngine.initialize({ appKey: t.appKey, logLevel: LogLevel.ERROR })
         NCEngine.registerCustomMessages([
           { messageType: MSG_PROGRESS, isPersisted: true, isCounted: false },
           { messageType: MSG_ALERT, isPersisted: true, isCounted: true },
           { messageType: MSG_NOTICE, isPersisted: false, isCounted: false },
           { messageType: MSG_STAFF_ALERT, isPersisted: true, isCounted: false },
+          { messageType: MSG_BRIEFING, isPersisted: true, isCounted: true },
         ])
         NCEngine.addMessageHandler(
           'courtcall',
@@ -102,6 +107,8 @@ export function startChat(tokenPath = '/chat/token') {
       const r = await NCEngine.connect({ token: t.token })
       if (!r.isOk) throw new Error(`Chat connection failed (code ${r.code})`)
       setState({ status: 'ready', myId: r.data?.userId ?? t.userId, team: t.team ?? null, contacts: t.contacts ?? [] })
+      // In-app voice calls (Nexconn Call SDK) ride on the same connection.
+      startCallEngine()
     } catch (e) {
       setState({ status: 'error', error: e instanceof Error ? e.message : 'Chat unavailable' })
     } finally {

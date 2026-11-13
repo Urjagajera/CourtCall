@@ -375,6 +375,8 @@ The repo is ready for **Vercel's free Hobby plan**: one project serves the websi
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push keys |
 | `DEMO_LOGIN` | `true` (one-tap demo buttons for judges) |
 | `DB_POOL_MAX` | `3` |
+| `CRON_SECRET` | a long random string (protects the 9 AM hearing-day briefing job; Vercel sends it automatically) |
+| `MYMEMORY_EMAIL` | optional: an email address, raises the free translation limit for the Remember note |
 
 5. Click **Deploy**. When it finishes, Vercel shows your address, for example `https://courtcall.vercel.app`.
 6. Add one more variable, `CLIENT_ORIGIN` = that address, then **Deployments → ⋯ → Redeploy**.

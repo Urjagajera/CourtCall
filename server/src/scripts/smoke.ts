@@ -337,6 +337,18 @@ const cal = (await lawyer.get(`/calendar?from=2026-01-01&to=${monthEnd}`)).body.
 check('calendar shows held and upcoming hearings', cal.some((e: any) => e.kind === 'held') && cal.some((e: any) => e.kind === 'upcoming' && e.caseId === maint?.id))
 check('calendar rejects a backwards range', (await lawyer.get('/calendar?from=2026-12-01&to=2026-01-01')).status === 400)
 
+// ---- hearing-day briefing (on the smoke case, hearing today; main lawyer = firm admin, Priya helps, Neha is staff helper) ----
+check('appearing lawyer must be a senior lawyer', (await lawyer.patch(`/cases/${caseId}`, { appearingLawyerId: staffId })).status === 400)
+check('main lawyer sets the appearing lawyer and Remember note', (await lawyer.patch(`/cases/${caseId}`, { appearingLawyerId: anilId, rememberNote: 'Bring your ID card.' })).body.case?.rememberNote === 'Bring your ID card.')
+check("staff helper can't send the briefing", (await staff.post(`/cases/${caseId}/briefing`)).status === 403)
+check("helping junior can't send the briefing", (await junior.post(`/cases/${caseId}/briefing`)).status === 403)
+const brief = await lawyer.post(`/cases/${caseId}/briefing`)
+check('briefing sent with court, item, appearing lawyer and the note', brief.status === 201 && /Smoke vs Test/.test(brief.body.briefing?.text) && /Anil Shah/.test(brief.body.briefing?.text) && /Bring your ID card/.test(brief.body.briefing?.text), brief.body)
+check('briefing only once per day', (await lawyer.post(`/cases/${caseId}/briefing`)).status === 409)
+const afterBrief = (await lawyer.get(`/cases/${caseId}/detail`)).body
+check('Remember note cleared after the briefing; case page shows it was sent', afterBrief.case?.rememberNote === null && !!afterBrief.briefing?.at, afterBrief.briefing)
+check('cron endpoint is locked without CRON_SECRET', [401, 503].includes((await anon.get('/cron/briefings')).status))
+
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
 const rameshMe = (await demoClient.get('/c/me')).body

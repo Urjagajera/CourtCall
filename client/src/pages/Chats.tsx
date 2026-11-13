@@ -1,9 +1,10 @@
-import { ArrowLeft, Briefcase, ClipboardList, Crown, Lock, Search, UserRound, Users, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Briefcase, ClipboardList, Crown, Lock, Search, UserRound, Users, type LucideIcon, Phone } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../components/AppLayout'
 import { ChatPanel } from '../components/ChatPanel'
 import { Banner, cx } from '../components/ui'
 import type { Client } from '../lib/api'
+import { startVoiceCall } from '../lib/calls'
 import { useChat, useUnreadCounts } from '../lib/nexconn'
 import { useApi } from '../lib/useApi'
 
@@ -186,13 +187,24 @@ export default function Chats() {
               <button onClick={() => setSelected(null)} aria-label="Back to conversations" className="flex size-10 items-center justify-center rounded-md hover:bg-surface lg:hidden">
                 <ArrowLeft className="size-5" strokeWidth={1.75} />
               </button>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-h2">{active.title}</p>
                 <p className="text-caption text-ink-muted">
                   {active.sub}
                   {active.admin && ' · Firm admin'}
                 </p>
               </div>
+              {active.kind === 'direct' && (
+                <button
+                  onClick={() => startVoiceCall(active.id, active.title)}
+                  disabled={chat.status !== 'ready'}
+                  aria-label={`Call ${active.title}`}
+                  title="Voice call (Nexconn)"
+                  className="flex h-11 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink disabled:opacity-50"
+                >
+                  <Phone className="size-4" strokeWidth={1.75} /> Call
+                </button>
+              )}
             </div>
             <ChatPanel
               key={active.key}

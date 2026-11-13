@@ -120,6 +120,13 @@ You see these as a **pop-up** anywhere in CourtCall. To get them on your **phone
    - The link **locks to the first phone that opens it**, so don't open it yourself.
    - Lost or new phone? Tap **New link**. To stop a link at once, tap **Turn off**.
 
+### Hearing-day briefing and calls
+
+- On a case page, **Hearing-day briefing**: choose the **Appearing lawyer** (a senior lawyer) and write a **Remember** note for the client (for example "Bring your Aadhaar card and reach court by 10:30"). You can also set both when you record the next date after a hearing.
+- On the hearing day between **9 and 10 AM**, the client gets a **"CourtCall is calling"** voice message in their language: court, item number, who appears for them, and your note (translated automatically). The note is then cleared for the next hearing.
+- The main lawyer or a firm admin can tap **Send briefing now** on the hearing day (once a day). The case page shows when it was sent.
+- **Voice calls inside CourtCall** (Nexconn): **Call** in any one-to-one chat, **Call client** on a case page. The client can tap **Call my lawyer**. Calls ring on the other person's open CourtCall page.
+
 ### After every hearing: record what happened
 
 When a hearing is over (the date has passed, or the court has risen or moved past the item), the people who look after that client see **"Hearings to update"** on **Today** and **Cases**.
@@ -171,7 +178,8 @@ Open **Chat**:
    - **My case**: **Now** (the item the court is hearing), **Your item** (your number on today's list), how many cases are before yours, when it was last reported, the next hearing date and the latest updates.
    - **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
    - **History**: earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it).
-   - **Chat**: message the people at the firm who look after you. Type, or tap the **mic** and speak (in your page language).
+   - **Chat**: message the people at the firm who look after you. Type, or tap the **mic** and speak (in your page language). Tap **Call my lawyer** for a voice call inside CourtCall.
+   - **Hearing-day briefing**: on the morning of your hearing, CourtCall "calls" you: tap **Answer** to hear your court, item number and your lawyer's message in your language. It stays on **My case** under **Today's briefing** (tap **Listen** to hear it again).
    - **Settings**: language (English, हिन्दी, ગુજરાતી; your alerts switch too), **Get alerts on this phone**, light or dark, **Take the tour again**, and **Sign out**.
 3. In **Settings**, tap **Turn on** under **Get alerts on this phone** to get notifications.
 4. Install it (section 1) so it opens from your home screen next time.

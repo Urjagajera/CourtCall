@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import { formatDate } from '../lib/dates'
 import { Sheet } from './Sheet'
-import { Banner, Button, Input, Textarea, cx } from './ui'
+import { useApi } from '../lib/useApi'
+import type { Person } from './CaseTeam'
+import { Banner, Button, Input, Select, Textarea, cx } from './ui'
 
 export interface OutcomeCase {
   id: string
@@ -14,6 +16,7 @@ export interface OutcomeCase {
   itemNo: number | null
   courtComplex: string
   roomNo: string
+  appearingLawyerId?: string | null
 }
 
 /**
@@ -30,6 +33,11 @@ export function OutcomeSheet({ c, onClose, onSaved }: { c: OutcomeCase; onClose:
   const [summary, setSummary] = useState('')
   const [share, setShare] = useState(true)
   const [prepNotes, setPrepNotes] = useState('')
+  // For the next hearing's 9 AM briefing to the client.
+  const people = useApi<{ people: Person[] }>('/office/people')
+  const seniors = (people.data?.people ?? []).filter((p) => p.role === 'lawyer')
+  const [appearing, setAppearing] = useState(c.appearingLawyerId ?? '')
+  const [remember, setRemember] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -48,6 +56,7 @@ export function OutcomeSheet({ c, onClose, onSaved }: { c: OutcomeCase; onClose:
           summary: summary || undefined,
           shareWithClient: share,
           prepNotes: prepNotes || undefined,
+          ...(outcome === 'next_date' ? { appearingLawyerId: appearing || null, rememberNote: remember.trim() || undefined } : {}),
         },
       })
       onSaved()
@@ -111,6 +120,22 @@ export function OutcomeSheet({ c, onClose, onSaved }: { c: OutcomeCase; onClose:
               <input type="checkbox" className="size-5 accent-[var(--accent)]" checked={changeCourt} onChange={(e) => setChangeCourt(e.target.checked)} />
               Different court or room next time
             </label>
+            <Select label="Appearing lawyer next time" value={appearing} onChange={(e) => setAppearing(e.target.value)}>
+              <option value="">Not set (the main lawyer, if a senior)</option>
+              {seniors.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+            <Textarea
+              label="Remember (for the client, next hearing)"
+              placeholder="e.g. Bring your Aadhaar card and reach court by 10:30."
+              hint="Read to the client in their language on the morning of the next hearing."
+              maxLength={400}
+              value={remember}
+              onChange={(e) => setRemember(e.target.value)}
+            />
             {changeCourt && (
               <div className="grid grid-cols-[1fr_7rem] gap-3">
                 <Input label="Court complex" value={courtComplex} onChange={(e) => setCourtComplex(e.target.value)} />

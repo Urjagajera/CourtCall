@@ -11,13 +11,16 @@ import {
   Landmark,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   MessageCircle,
   Monitor,
   Moon,
+  Phone,
   RefreshCw,
   Settings as SettingsIcon,
   Sun,
   Users,
+  Volume2,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -29,7 +32,10 @@ import { Badge, Banner, Button, Card, PageSpinner, cx } from '../../components/u
 import { api } from '../../lib/api'
 import { EVENT_META, clockTime, statusMeta, useNow, usePolling, type EventType, type SessionState } from '../../lib/court'
 import { ClientLangContext, LANGS, agoIn, dateIn, useClientLang, useClientText, type Lang } from '../../lib/clientI18n'
-import { MSG_ALERT, startChat, stopChat, useChat, useIncomingMessages, useUnreadCounts, type Message } from '../../lib/nexconn'
+import { MSG_ALERT, MSG_BRIEFING, sendText, startChat, stopChat, useChat, useIncomingMessages, useUnreadCounts, type Message } from '../../lib/nexconn'
+import { setCallLogWriter, setCallNames, startVoiceCall } from '../../lib/calls'
+import { BriefingCall } from '../../components/BriefingCall'
+import { CallOverlay } from '../../components/CallOverlay'
 import { pushState, turnOffPush, turnOnPush, type PushState } from '../../lib/push'
 import { useTheme, type ThemePref } from '../../lib/theme'
 import { clientTourSteps } from '../../lib/tourSteps'
@@ -50,6 +56,9 @@ interface ClientView {
   caseId: string
   today: string
   history: { date: string; message: string; at: string }[]
+  /** Today's hearing-day briefing ("CourtCall is calling"), if sent. */
+  briefing: { text: string; at: string } | null
+  appearingLawyer: string | null
   cases: { id: string; title: string; caseNo: string | null; hearingDate: string; itemNo: number | null; status: 'active' | 'closed'; courtComplex: string; roomNo: string; current: boolean }[]
 }
 
@@ -158,8 +167,15 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
 
   // Alerts arrive instantly over Nexconn (client links): show them and refresh the page.
   const [flash, setFlash] = useState<string | null>(null)
+  // The hearing-day briefing rings as "CourtCall is calling" (Nexconn CC:Briefing, or the phone notification link).
+  const [ringing, setRinging] = useState<string | null>(null)
   const onIncoming = useCallback(
     (m: Message) => {
+      if (m.messageType === MSG_BRIEFING) {
+        setRinging((m.content as { text?: string }).text ?? null)
+        load()
+        return
+      }
       if (m.messageType !== MSG_ALERT) return
       setFlash((m.content as { text?: string }).text ?? 'New update on your case')
       load()
@@ -167,9 +183,25 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
     [load],
   )
   useIncomingMessages(onIncoming)
+  const wantsBriefing = params.get('briefing') === '1'
+  useEffect(() => {
+    if (!wantsBriefing || !data) return
+    if (data.briefing) setRinging(data.briefing.text)
+    const next = new URLSearchParams(params)
+    next.delete('briefing')
+    setParams(next, { replace: true })
+  }, [wantsBriefing, data, params, setParams])
 
   // Client links stay connected to Nexconn on every tab, so alerts pop up wherever the client is.
   const chat = useChat()
+  const lawyerContact = chat.myId?.startsWith('c') ? chat.contacts[0] : undefined
+  const callLawyer = lawyerContact ? () => startVoiceCall(lawyerContact.ncId, lawyerContact.name) : undefined
+  useEffect(() => {
+    setCallNames((id) => chat.contacts.find((p) => p.ncId === id)?.name)
+    setCallLogWriter((peerId, text) => {
+      sendText('direct', peerId, text).catch(() => {})
+    })
+  }, [chat.contacts])
   const isClientLink = data?.kind === 'client'
   useEffect(() => {
     if (!isClientLink) return
@@ -263,7 +295,26 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
           </Banner>
         </button>
       )}
+      {ringing && <BriefingCall text={ringing} firm={data.firmName} onClose={() => setRinging(null)} onCallLawyer={callLawyer} />}
       <PageHeader title={title} subtitle={tab === 'home' ? c.title : data.firmName} />
+      {tab === 'home' && data.briefing && (
+        <Card data-tour="client-briefing" className="mb-4 border-2 border-accent/40">
+          <p className="flex items-center gap-2 text-h2">
+            <Megaphone className="size-5" strokeWidth={1.75} /> {t.briefingTitle}
+          </p>
+          <p className="mt-2 text-body">{data.briefing.text}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setRinging(data.briefing!.text)} icon={<Volume2 className="size-4" strokeWidth={1.75} />}>
+              {t.listen}
+            </Button>
+            {callLawyer && (
+              <Button size="sm" onClick={callLawyer} icon={<Phone className="size-4" strokeWidth={1.75} />}>
+                {t.callLawyer}
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       {tab === 'home' && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
@@ -505,9 +556,20 @@ function ClientChat({ firm }: { firm: string }) {
 
   return (
     <section data-tour="client-chat" aria-label="Chat with your lawyer" className="flex flex-col gap-2">
-      <p className="flex items-center gap-2 text-label text-ink-muted">
-        <MessageCircle className="size-4" strokeWidth={1.75} /> {t.chatWith(firm)}
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="flex flex-1 items-center gap-2 text-label text-ink-muted">
+          <MessageCircle className="size-4" strokeWidth={1.75} /> {t.chatWith(firm)}
+        </p>
+        {active && (
+          <button
+            onClick={() => startVoiceCall(active, names[active] ?? firm)}
+            aria-label={`${t.callLawyer}: ${names[active] ?? firm}`}
+            className="flex h-11 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink"
+          >
+            <Phone className="size-4" strokeWidth={1.75} /> {t.callLawyer}
+          </button>
+        )}
+      </div>
       {contacts.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           {contacts.map((p) => (
@@ -726,6 +788,7 @@ function ClientLayout({ children, data, tabs }: { children: React.ReactNode; dat
         </header>
 
         <main className={cx('mx-auto w-full max-w-[1600px] flex-1 px-4 pt-5 lg:px-10 lg:pb-10 lg:pt-8', data ? 'pb-28' : 'pb-10')}>{children}</main>
+        <CallOverlay />
 
         {/* Phone bottom tabs */}
         {data && (

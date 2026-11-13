@@ -212,6 +212,10 @@ export const cases = pgTable(
     assignedJuniorId: uuid('assigned_junior_id').references(() => users.id, { onDelete: 'set null' }),
     /** At most one office staff helper. */
     helperStaffId: uuid('helper_staff_id').references(() => users.id, { onDelete: 'set null' }),
+    /** Senior lawyer who will appear in court; said in the client's hearing-day briefing. */
+    appearingLawyerId: uuid('appearing_lawyer_id').references(() => users.id, { onDelete: 'set null' }),
+    /** Client-facing "Remember" note for the next hearing, spoken in the 9 AM briefing, then cleared. */
+    rememberNote: text('remember_note'),
     createdAt: createdAt(),
   },
   (t) => [

@@ -13,7 +13,7 @@ import { pushToLinks, pushToUsers } from './push.js'
 
 // Nexconn users must exist before they can receive messages; people are registered on their first alert.
 const registered = new Set<string>()
-async function ensureNexconnUser(ncId: string, name: string) {
+export async function ensureNexconnUser(ncId: string, name: string) {
   if (registered.has(ncId)) return
   await issueToken(ncId, name)
   registered.add(ncId)

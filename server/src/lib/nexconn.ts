@@ -24,6 +24,8 @@ export const MSG_ALERT = 'CC:Alert'
 export const MSG_NOTICE = 'CC:Notice' // badge refresh for staff, not stored
 /** Firm alert for the people on a case: client is 2 away, being heard, hearing over. */
 export const MSG_STAFF_ALERT = 'CC:StaffAlert'
+/** Hearing-day briefing for a client (9 AM or "Send briefing now"): opens the "CourtCall is calling" screen. */
+export const MSG_BRIEFING = 'CC:Briefing'
 
 export class NexconnError extends Error {
   code: number

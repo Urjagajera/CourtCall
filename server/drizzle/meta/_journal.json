@@ -92,6 +92,13 @@
       "when": 1794477636746,
       "tag": "0012_case_teams_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794554335559,
+      "tag": "0013_briefing_fields",
+      "breakpoints": true
     }
   ]
 }
