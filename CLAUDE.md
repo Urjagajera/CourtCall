@@ -213,6 +213,7 @@ Done (in order):
 
 ## 7. Working conventions
 
+- **Team setup and pushing safely:** see **step.md** (Kushi uses her own Supabase + Nexconn app; the live site uses Urja's). Changes that add a migration go to a branch first: Urja applies the migration to the live DB, then merges (decided 13 Nov 2026).
 - **Git:** work on `main`. Always `git pull --rebase` before starting and before pushing. Push small, finished pieces. Tell each other which module you're working on so two people don't edit the same files.
 - **Commit messages:** plain human sentences. For a module, commit `start: <module> - …` when it begins and `done: <module> - …` when it's finished and verified. No AI attribution lines in commit messages.
 - **Before committing:** client `npx tsc -b` (in `client/`), server `npx tsc --noEmit` (in `server/`), `npm test`, and the smoke test for API changes. Check UI changes in a browser on phone (375px) and laptop widths, light and dark.

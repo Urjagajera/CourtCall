@@ -37,6 +37,8 @@ CourtCall/
 
 ## Part 1: First-time setup (do this once)
 
+> **Joining the team (Kushi)?** Follow **[step.md](step.md)** instead: it sets you up with your own database and Nexconn app so the live site is never affected, and explains how to push safely.
+
 ### 1. Install the tools
 
 - **Node.js 20.19 or newer** (22 LTS recommended): https://nodejs.org. Check with:
@@ -116,7 +118,7 @@ cd server && npx web-push generate-vapid-keys && cd ..
 npm --prefix server run db:migrate
 ```
 
-Check that it worked. You should see `11 tables: ...`:
+Check that it worked. It prints how many tables there are and their names:
 
 ```bash
 npm --prefix server run db:check
@@ -132,19 +134,13 @@ npm --prefix server run nexconn:check
 
 ### 9. Add demo data (recommended)
 
-This creates an admin, two law offices that share Court 4, juniors, clients and today's cases:
+This creates two law offices that share Court 4, their lawyers, juniors and staff, clients and today's cases:
 
 ```bash
 npm --prefix server run seed:demo
 ```
 
 All demo users, their data and a step-by-step walkthrough are in **[Part 3: Demo guide](#part-3-demo-guide)**.
-
-If you want your own admin account as well:
-
-```bash
-npm --prefix server run create-admin -- you@example.com YourStrongPassword "Your Name"
-```
 
 Setup is done. Continue with Part 2.
 
