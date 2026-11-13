@@ -1,6 +1,6 @@
 # CourtCall: setup steps for Kushi (Windows)
 
-This file takes you from nothing to a working copy of CourtCall on your laptop, and explains how to push your work so it goes live on **https://courtcall-kappa.vercel.app** without breaking it. Parts E and F are ready-made prompts for Kushi's Claude and Urja's Claude.
+This file takes you from nothing to a working copy of CourtCall on your laptop, and explains how to push your work so it goes live on **https://courtcall-kappa.vercel.app** without breaking it. Parts E and F are ready-made prompts for Kushi's Claude and Urja's Claude. **After every pull, read "What's new" below first.**
 
 **How it is set up (decided by Urja, 13 Nov 2026):**
 
@@ -13,6 +13,49 @@ This file takes you from nothing to a working copy of CourtCall on your laptop, 
 Your tests, demo data and chat messages never touch the live site. Only your **code** reaches it, through GitHub.
 
 > **Never paste secrets** (database password, Nexconn App Secret, `JWT_SECRET`, VAPID private key) into chat, Claude, commits or issues. They only go in `server/.env`, which Git ignores.
+
+---
+
+## What's new (latest first): read this after every pull
+
+Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
+
+### 13 Nov 2026 (Urja): hearing-day briefing, in-app calls, API freeze fix
+
+**Do this after pulling** (in the `CourtCall` folder):
+
+1. `npm run setup`: the Nexconn packages changed. `@nexconn/chat` and `@nexconn/engine` are now pinned to exactly **26.2.0**, and `@nexconn/call` **26.2.1** (the web Call SDK) was added. The Call SDK only works with chat/engine 26.2.0, so **don't upgrade them** (npm would refuse anyway).
+2. `npm --prefix server run db:migrate`: new migration **0013** adds `cases.appearing_lawyer_id` and `cases.remember_note` to your database. (It is already applied on the live database.)
+3. In **your** Nexconn console (console.nexconn.ai → your app), switch on the **voice/video call (VoIP) service** ("Call Plus" in the SDK logs). Without it every call fails with error **80006 "VoIP service not active"** and the app shows "The call could not connect".
+4. Optional: add `CRON_SECRET=` (any long random string) to your `server/.env` only if you want to test the 9 AM job locally. Otherwise use **Send briefing now** on a case.
+5. If you switched your `DATABASE_URL` to the session pooler (port 5432) because of the freezes, you can keep it or go back to 6543: the freeze is fixed in code now (see below).
+
+**What was built:**
+
+- **Hearing-day briefing.** On each case page there's a **Hearing-day briefing** card: **Appearing lawyer** (a senior lawyer) and a **Remember** note for the client. The outcome sheet also asks for both for the next hearing. On the hearing day between 9 and 10 AM (Vercel Cron, `vercel.json` → `/api/cron/briefings`, protected by `CRON_SECRET`), or when the main lawyer / firm admin taps **Send briefing now**, the client gets a **"CourtCall is calling"** screen (Nexconn bot message `CC:Briefing` + phone notification). **Answer** reads the briefing aloud in their language (court, item or "not out yet", appearing lawyer, the note). Once per case per day; the note is cleared after it's sent.
+- **Free translation** of the Remember note into Hindi/Gujarati with the **MyMemory** public API (`server/src/lib/translate.ts`; Urja: no paid APIs, so no Claude API). If it fails, the note is used as typed.
+- **In-app voice calls** with the **Nexconn Call SDK** (`client/src/lib/calls.ts`, `components/CallOverlay.tsx`): **Call** in every one-to-one chat, **Call client** on the case page, **Call my lawyer** for clients (appearing lawyer first, then main lawyer). Audio only, one call at a time, ringtone, and the caller posts a "📞 Voice call · 2 min 31 s" line in the chat.
+- Tour steps (lawyer + client, en/hi/gu), GUIDE.md and README (new Vercel variable `CRON_SECRET`, optional `MYMEMORY_EMAIL`) are updated. Smoke test: **190 checks** (8 new for the briefing).
+
+**What was fixed:**
+
+- **API freeze** (the one you found, thanks!): `max_pipeline: 1` in `server/src/db/index.ts`. postgres.js no longer stacks several queries on one connection, which is what froze Supabase's transaction pooler. 30 heavy parallel requests now pass. **Keep this setting.**
+- The briefing screen rang again for an old briefing when chat reconnected (Nexconn re-delivers stored messages). It now rings only for a briefing sent **today**, once per phone.
+
+**Status / still open:**
+
+- **Calls are not working on the live site yet**: Nexconn answers **80006 "VoIP service not active"** for the live App Key (retested 13 Nov, 07:51 UTC). The code works up to Nexconn's refusal; Urja is checking the Nexconn console (right app / right service / activation time). Don't change the call code because of this error.
+- `CRON_SECRET` still has to be added in Vercel by Urja; until then the automatic 9 AM briefing doesn't run (Send briefing now works).
+- **Real phone-call fallback** for the briefing (Exotel/Twilio) is deferred: not needed for the demo.
+- **Client accounts by email** (instead of WhatsApp links) is still a pending idea in CLAUDE.md, not started.
+
+### 13 Nov 2026 (Kushi): firm alerts when a client's turn comes
+
+Done by you: case team + firm admins get a pop-up and phone notification when their client's case is 2 away, being heard, and over (with the hearing form). Reviewed and tested by Urja's Claude: all checks pass.
+
+### 12 Nov 2026 (Urja): case teams, visibility, update badges, Bar Council removed
+
+- Every case has a **main lawyer** (senior or junior), an optional **helping junior** and one **staff helper**; you only see cases you're on (firm admins see all). Only **senior lawyers** can be firm admins. **Updates** list + number badges on Cases and Chat. Family links and the Bar Council number were removed. Rules are in CLAUDE.md section 4; don't change them without asking Urja.
 
 ---
 
