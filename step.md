@@ -47,7 +47,7 @@ Each entry says what changed and **what you must do**. Full technical details ar
 - **Calls are not working on the live site yet**: Nexconn answers **80006 "VoIP service not active"** for the live App Key (retested 13 Nov, 07:51 UTC). The code works up to Nexconn's refusal; Urja is checking the Nexconn console (right app / right service / activation time). Don't change the call code because of this error.
 - `CRON_SECRET` still has to be added in Vercel by Urja; until then the automatic 9 AM briefing doesn't run (Send briefing now works).
 - **Real phone-call fallback** for the briefing (Exotel/Twilio) is deferred: not needed for the demo.
-- **Client accounts by email** (instead of WhatsApp links) is still a pending idea in CLAUDE.md, not started.
+- **Client accounts by email** (task C): **dropped for the hackathon** by Urja (13 Nov). Clients keep the WhatsApp link with no password. Don't build it.
 
 ### 13 Nov 2026 (Kushi): firm alerts when a client's turn comes
 
