@@ -42,7 +42,7 @@ export default function Clients() {
       ) : data?.clients.length ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {data.clients.map((c) => (
-            <Card key={c.id} className="flex items-center gap-3">
+            <Card key={c.id} className="flex min-w-0 items-center gap-3">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-base text-ink">
                 <UserRound className="size-5" strokeWidth={1.75} />
               </span>
@@ -50,7 +50,7 @@ export default function Clients() {
                 <Link to={`/clients/${c.id}`} className="block truncate text-body font-semibold hover:underline">
                   {c.name}
                 </Link>
-                <p className="flex items-center gap-1 text-label text-ink-muted">
+                <p className="flex flex-wrap items-center gap-1 text-label text-ink-muted">
                   {c.phone && (
                     <>
                       <Phone className="size-3.5" strokeWidth={1.75} /> {c.phone} ·{' '}
@@ -58,9 +58,9 @@ export default function Clients() {
                   )}
                   {LANG[c.language]}
                 </p>
-                <p className="flex items-center gap-1 truncate text-caption text-ink-muted">
-                  <FolderOpen className="size-3.5" strokeWidth={1.75} />
-                  {c.caseCount ? `${c.caseCount} ${c.caseCount === 1 ? 'case' : 'cases'}` : 'No case yet: add one from their page'}
+                <p className="flex min-w-0 items-center gap-1 text-caption text-ink-muted">
+                  <FolderOpen className="size-3.5 shrink-0" strokeWidth={1.75} />
+                  <span className="truncate">{c.caseCount ? `${c.caseCount} ${c.caseCount === 1 ? 'case' : 'cases'}` : 'No case yet: add one from their page'}</span>
                 </p>
               </div>
               {c.canEdit && (

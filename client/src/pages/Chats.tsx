@@ -101,8 +101,8 @@ export default function Chats() {
           <c.icon className="size-5" strokeWidth={1.75} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 truncate text-label font-semibold">
-            {c.title}
+          <span className="flex min-w-0 items-center gap-1.5 text-label font-semibold">
+            <span className="truncate">{c.title}</span>
             {c.admin && <Crown className="size-3.5 shrink-0" strokeWidth={2} aria-label="Firm admin" />}
           </span>
           <span className="flex items-center gap-1 text-caption opacity-80">
