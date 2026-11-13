@@ -38,7 +38,7 @@ npm run dev                            # web http://localhost:5173, API http://l
 
 If two people share the **same** Supabase database, they share demo data and migrations: coordinate before running `db:generate` (see section 8).
 
-Useful checks: `npm test` (courtroom rule unit tests), `npm --prefix server run smoke` (100+ check end-to-end API test, needs the API running and `DEMO_LOGIN=true`; then run `npm --prefix server run smoke:cleanup`), `db:ping`, `db:check`, `nexconn:check`.
+Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 201 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
 
 ---
 
@@ -49,32 +49,45 @@ Useful checks: `npm test` (courtroom rule unit tests), `npm --prefix server run 
 | Frontend | React 19 + Vite + TypeScript, Tailwind CSS v4, React Router, lucide-react icons |
 | Backend | Node + Express (async route errors handled), TypeScript, Zod validation, JWT in an httpOnly cookie (`cc_session`) |
 | Database | Postgres on Supabase (project region: Tokyo, ~145 ms per query from India), Drizzle ORM + drizzle-kit migrations |
-| Real-time | Nexconn Chat SDK for web (`@nexconn/engine`, `@nexconn/chat` 26.x) + Nexconn Server API (signed REST) |
-| Push | Web Push (VAPID) — planned |
+| Real-time | Nexconn Chat SDK for web (`@nexconn/engine`, `@nexconn/chat` **pinned 26.2.0**) + Nexconn Call SDK (`@nexconn/call` 26.2.1, needs exactly chat/engine 26.2.0) + Nexconn Server API (signed REST) |
+| Push | Web Push (VAPID) for clients and staff (`server/src/lib/push.ts`, `client/public/sw.js`) |
+| Hosting | Vercel Hobby (free), region hnd1 (Tokyo), daily cron for briefings |
+| Free services | Browser speech (briefing read aloud, voice typing), MyMemory translation (no key). No paid APIs |
 
 ```
 client/src/
-  pages/landing/     public landing page (interactive hero, firm network, display board, live demo)
+  pages/landing/     public landing page (interactive hero, firm network, display board, live demo; simulations on purpose)
   pages/auth/        sign in, sign up (create firm / join firm), demo logins, pending approval
-  pages/lawyer/      Today, Cases, Clients, Team (also used by staff)
+  pages/lawyer/      Today, Cases, CaseDetail, Clients, ClientDetail, Calendar, Team (also used by juniors and staff)
   pages/court/Room   courtroom room: report progress, room chat, history
-  pages/admin/       CourtCall verification (platform team)
-  pages/Chats        team room + client chats
-  components/        AppLayout, ChatPanel, Tour (guided tour), Sheet, ConfirmSheet, ui.tsx
-  lib/               api, auth, nexconn (SDK wrapper), tour + tourSteps, theme, court helpers
+  pages/client/      OpenLink (/c/:token) and ClientCase (client app: My case, Cases, History, Chat, Settings)
+  pages/Chats        team room, one-to-one chats, client chats (Call button)
+  pages/Settings     theme, phone alerts, tour; AppStart routes /app to staff or client
+  components/        AppLayout, ChatPanel (text, voice typing, voice notes), CallOverlay, BriefingCall, BriefingCard,
+                     CaseTeam, CourtFields, HearingsToUpdate, LinkSheet, OutcomeSheet, UpdatesCard, Tour, Sheet, ui.tsx
+  lib/               api, auth, nexconn (Chat SDK wrapper), calls (Call SDK), voiceNote, usage, dictation, push,
+                     updates, clientI18n, tour + tourSteps, theme, court, dates
 server/src/
   db/schema.ts       all tables and enums
   lib/engine.ts      pure courtroom event rules (unit tested in engine.test.ts)
+  lib/alertRules.ts  which client / firm alert to send (unit tested); alertText.ts = en/hi/gu wording
+  lib/alerts.ts      sends alerts after each courtroom event (Nexconn bot DM + Web Push, dedupe in alert_logs)
+  lib/briefing.ts    hearing-day briefing; translate.ts = MyMemory
   lib/sessions.ts    courtroom sessions, joining, applying events, Nexconn room sync
+  lib/visibility.ts  case-team rules: who sees and edits what
   lib/nexconn.ts     Server API client (signing, failover, IDs, groups, messages)
-  lib/demo.ts        demo accounts (shared by seed + demo login)
-  routes/            auth, office (team), clients, cases, courtrooms, chat, admin
-  scripts/           seed-demo, smoke, cleanup-smoke, create-admin, db-check, db-ping, nexconn-check
-server/drizzle/      SQL migrations (never edit applied ones; add new)
+  lib/               also: auth, clientAccess (client links), notify (update badges), push, officeSettings, courtrooms, demo
+  routes/            auth, office (team, settings), usage, clients, cases, hearings, links, client (/c), courtrooms,
+                     chat, notifications, push, cron
+  scripts/           seed-demo, smoke, cleanup-smoke, db-check, db-ping, nexconn-check
+server/drizzle/      SQL migrations 0000-0015 (never edit applied ones; add new)
+api/index.js         Vercel function that serves the API from server/dist
+README.md            setup, run, demo guide (Part 3 = video script), deploy
+GUIDE.md             user guide (repo only)
+step.md              team setup + "What's new" log for Kushi
 design.md            design system — every screen follows it
 PLAN.md              original product plan and schedule
 ```
-
 ---
 
 ## 4. Roles and permissions
@@ -86,7 +99,7 @@ PLAN.md              original product plan and schedule
 | `staff` (office clerk) | Staff helper on cases (max one per case): sees those cases, clients and chats read-only; team room; today's courtrooms **read-only**, never reports; can't add or edit cases or clients | A firm admin |
 | `admin` | Removed (Nov 2026). The enum value stays in the DB but nothing uses it | — |
 
-- **Firm admin** is a flag (`users.is_firm_admin`), not a role. The founder (`offices.owner_id`) always has it and can't be deactivated or demoted. Only **senior lawyers** can be firm admins (never juniors or office staff): enforced in `PATCH /office/members/:id`, and `withAdminRule()` in `lib/auth.ts` ignores the flag on anyone else. Moving an admin to junior/staff removes it. They approve/decline/deactivate people, change roles, and rotate the invite code (`/api/office/*`).
+- **Firm admin** is a flag (`users.is_firm_admin`), not a role. The founder (`offices.owner_id`) always has it and can't be deactivated or demoted. Only **senior lawyers** can be firm admins (never juniors or office staff): enforced in `PATCH /office/members/:id`, and `withAdminRule()` in `lib/auth.ts` ignores the flag on anyone else. Moving an admin to junior/staff removes it. They approve/decline/deactivate people, change roles, rotate the invite code, change firm settings (`PATCH /api/office/settings`) and see the weekly usage (`GET /api/office/usage`).
 - People join a firm with its 6-character invite code (`/api/auth/register/member` with a role) and wait in `pending` until approved. "Deactivated" = `verification_status = 'rejected'`.
 - Firm data is **never** shared with other firms; courtroom progress is the only thing shared between firms.
 - **Case teams decide visibility** (`server/src/lib/visibility.ts`: `caseVisible`, `clientScope`, `canEditCase`, `canManageTeam`, `validateTeam`): each case has `main_lawyer_id` (senior or junior), `assigned_junior_id` (helping junior, senior-led cases only) and `helper_staff_id` (one staff). Firm admins see everything; everyone else sees only cases they are on, the clients of those cases (plus clients they added that have no case yet), their links and chats, and only those case rows on Today/rooms/Calendar. Team changes: `PUT /api/cases/:id/team` (firm admin: all; senior main lawyer: helping junior + staff helper only). Clients chat with the people on their cases + firm admins. The old per-client `client_assignments` table is no longer used (kept for history).
@@ -100,7 +113,7 @@ PLAN.md              original product plan and schedule
 **Product**
 - Clients get **link-based access, no password** (WhatsApp-shared link bound to the first device). Clients are often older and on cheap phones; a login would push them back to calling the lawyer.
 - Courtrooms are shared rooms across firms: one `court_session` per courtroom per day. Courtroom names match **case-insensitively** so different firms land in the same room.
-- Never predict hearing times. Show "latest reported progress", who reported it and when; mark rooms **stale** after 20 minutes without updates.
+- Never predict hearing times. Show "latest reported progress", who reported it and when; mark rooms **stale** after a quiet spell (firm setting, default 20 minutes).
 
 **Courtroom update rules** (`server/src/lib/engine.ts`, unit tested)
 - Every update carries `baseVersion`. If the room has moved on, the server returns **409 conflict** with the latest state ("Someone else reported a newer update"). A late update never overwrites newer progress.
@@ -109,10 +122,12 @@ PLAN.md              original product plan and schedule
 - Events: now_hearing, passed_over, recalled, adjourned, break_start, break_end, court_not_sitting, court_risen, correction.
 
 **Nexconn** (`server/src/lib/nexconn.ts`, `client/src/lib/nexconn.ts`)
-- **Core rule (Urja, 12 Nov 2026): Nexconn's Chat SDK and Call SDK are the backbone of CourtCall and must "light up" across the whole system.** For every feature, first design how it runs on Nexconn: realtime updates as Chat SDK messages (`CC:Progress`, `CC:Alert`, planned `CC:Briefing`), conversations as Nexconn channels, voice as Call SDK calls (planned "Call my lawyer" / "Call client" and the hearing-day briefing). Use other services only where Nexconn can't do the job (e.g. the Call SDK can't dial phone numbers) and say so. Make the usage visible in the UI, the demo video and the write-up.
+- **Core rule (Urja, 12 Nov 2026): Nexconn's Chat SDK and Call SDK are the backbone of CourtCall and must "light up" across the whole system.** For every feature, first design how it runs on Nexconn: realtime updates as Chat SDK messages (`CC:Progress`, `CC:Alert`, `CC:StaffAlert`, `CC:Notice`, `CC:Briefing`), conversations as Nexconn channels, voice notes as HD voice messages, voice as Call SDK calls ("Call my lawyer", "Call client", Call in every one-to-one chat). Use other services only where Nexconn can't do the job (e.g. the Call SDK can't dial phone numbers) and say so. Make the usage visible in the UI, the demo video and the write-up.
 - IDs: staff `u<uuid without dashes>`, clients `c<…>`, courtroom group `s<sessionId>`, firm team group `o<officeId>`, bot user `courtcallbot`.
 - Server signs requests: `SHA1(appSecret + nonce + timestamp)` lowercase hex; fails over to the `api-b.` backup domain.
-- Custom message types: `CC:Progress` (structured courtroom update posted into the room group by the bot) and `CC:Alert` (client alerts). The web SDK's real field is `isPersisted` — the docs misspell it `isPersited`; trust the `.d.ts` types over the docs.
+- Message types: `CC:Progress` (courtroom update posted into the room group by the bot), `CC:Alert` (client alerts), `CC:StaffAlert` (firm alerts, pop-up), `CC:Notice` (update-badge ping, not stored or counted), `CC:Briefing` (hearing-day briefing, opens "CourtCall is calling"), plus the SDK's own `RC:TxtMsg` and `RC:HQVCMsg` (voice notes, max 60 s, sent with `Helper.createSendHDVoiceMessageParams` + `sendMediaMessage`). The web SDK's real field is `isPersisted` — the docs misspell it `isPersited`; trust the `.d.ts` types over the docs.
+- Calls: `NCCallEngine.install()` before `NCEngine.initialize`; audio only, one call at a time. They need the **VoIP service switched on** for the Nexconn app (error 80006 until then; still off on 14 Nov 2026).
+- Calls and voice notes are invisible to our database, so the app reports each one to `usage_events` (Team page usage card).
 - Nexconn failures are logged and never break the core courtroom flow (`safely()`).
 - Rooms reload instantly on a `CC:Progress` message; polling stays as a slow fallback.
 
@@ -142,17 +157,12 @@ Done (in order):
 8. Guided first-login tour per role
 9. Firm roles: firm admin flag, office staff role, join-a-firm by invite code, Team management page
 10. Client WhatsApp links: per-case client links (hashed tokens, bound to the first phone, revoke/reissue), firm link sheet with WhatsApp share, client page `/case` with live progress + Nexconn chat with the firm, Client demo button
-
-**Not done yet:**
-
 11. Automatic client alerts: rules in `server/src/lib/alertRules.ts` (unit tested), sending in `alerts.ts` (dedupe via `alert_logs`, Nexconn bot DM `CC:Alert`, Web Push in `push.ts`), client page banner + "Turn on alerts" (`client/public/sw.js`, `client/src/lib/push.ts`)
 12. Deployed on Vercel Hobby (free): **https://courtcall-kappa.vercel.app**. Installable app (PWA): `client/public/manifest.webmanifest`, icons, `sw.js` (offline page + push), service worker registration (`client/src/lib/install.ts`; the in-app install card was removed on request, Android users get an APK built with PWABuilder), app opens at `/app` which routes staff/clients. User guide `GUIDE.md` lives in the repo only (not shown inside the app); keep it updated with features. `vercel.json` builds server + client, serves client/dist, rewrites /api/* to the function pi/index.js (imports server/dist), region hnd1 (Tokyo). Alerts use waitUntil on Vercel. Every push to `main` redeploys.
-13. Done: client history/sign out/tour, firm chat filters, client assignment, platform admin removed. **Languages**: client page + client tour + alerts in en/hi/gu (`client/src/lib/clientI18n.ts`, `server/src/lib/alertText.ts`; client switch saves `clients.language` via `POST /api/c/language`). Staff screens stay English. **Voice typing** in every chat box (`client/src/lib/dictation.ts`, browser SpeechRecognition, text goes into the box, never auto-sent). Next: polish on real phones
+13. Done: client history/sign out/tour, firm chat filters, client assignment, platform admin removed. **Languages**: client page + client tour + alerts in en/hi/gu (`client/src/lib/clientI18n.ts`, `server/src/lib/alertText.ts`; client switch saves `clients.language` via `POST /api/c/language`). Staff screens stay English. **Voice typing** in every chat box (`client/src/lib/dictation.ts`, browser SpeechRecognition, text goes into the box, never auto-sent). Phone layout pass done 13 Nov 2026 (every screen at 375 px, light and dark); real-phone checks still to do.
 13b. Done (12 Nov 2026): **hearing lifecycle**. `cases.status` (active/closed), `cases.item_no` nullable (cause list not out yet), table `case_hearings` (one row per held hearing: outcome next_date/closed, next date, summary + `share_with_client`, firm-only `prep_notes`). Routes in `server/src/routes/hearings.ts`: `GET /hearings/pending` (reminder: date passed, or court risen / not sitting / moved past the item; lawyers+staff, scoped), `POST /cases/:id/outcome`, `PATCH /hearings/:id`, `GET /cases/:id/detail`, `GET /clients/:id/detail`, `GET /calendar?from&to`. UI: `HearingsToUpdate` card (Today + Cases), `OutcomeSheet`, pages `/cases/:id`, `/clients/:id`, `/calendar` (new nav tab). Client links need a case number; the client page shows the next date, "case ended", and shared summaries in History (never prep notes). Alerts skip closed cases and cases without an item number. Tour steps added for all of these (staff, lawyer, junior: Calendar only).
 
 13c. Done (12 Nov 2026): **client layout** matches the lawyer app (`ClientLayout` in `client/src/pages/client/ClientCase.tsx`): sidebar on laptops, top bar + bottom tabs on phones. Tabs are routes: `/case` (My case), `/case/cases`, `/case/history`, `/case/chat`, `/case/settings` (language, alerts, theme, tour, sign out); `?case=<id>` is kept across tabs. The client keeps a Nexconn connection on every tab (alerts pop up anywhere). Client tour steps carry routes. `bar_council_no` column dropped (migration 0009) and non-lawyer admin flags cleared (0010) on the shared DB.
-
-### Pending tasks (requested by Urja; remove each line when done)
 
 13d. Done (12 Nov 2026): **case teams, per-case visibility and update badges** (`lib/visibility.ts`, `routes/cases.ts` `PUT /:id/team`, `lib/notify.ts`, `routes/notifications.ts`, table `notifications`, client `lib/updates.tsx`, `components/CaseTeam.tsx`, `UpdatesCard.tsx`, nav badges in `AppLayout.tsx`). Rules decided by Urja (do not change without asking):
   - **Each case has a team:** one **main lawyer** (a senior or a junior), an optional **helping junior** (only when the main lawyer is a senior; replaces "Junior in court", column `assigned_junior_id`), and at most **one staff helper**. Staff are never main lawyer.
@@ -184,14 +194,18 @@ Done (in order):
   - **Usage** (migration 0015, additive): table `usage_events` (office, kind `call` | `voice_note` | `firm_alert`, user or client, seconds). Calls (caller only, on hang-up, `lib/calls.ts`) and voice notes are reported by the app through `client/src/lib/usage.ts` (`POST /api/usage` staff, `POST /api/c/usage` clients; audience set in `startChat`); firm alerts are recorded in `deliverToFirm` (alerts.ts) because their `alert_logs` rows can't be told apart from silent bookkeeping rows. `GET /api/office/usage` (firm admin, `routes/usage.ts`) counts last 7 days + total: courtroom updates (court_events of the firm, no corrections), client alerts (alert_logs with a message, not staff_/briefing), firm alerts, briefings, hearings recorded, calls (+ minutes), voice notes, clients with an active link. Team page card **This week in CourtCall** (`FirmUsage` in Team.tsx) + tour step. `smoke:cleanup` removes the smoke run's usage rows (marker `seconds = 4321` and firm alerts since the smoke accounts were made).
   - **Voice notes** in every chat (`ChatPanel`, `lib/voiceNote.ts`): empty box → the send button records (MediaRecorder: webm/opus on Android, mp4 on iPhone), max 60 s (Nexconn HD voice limit), Send or Cancel. Sent with `Helper.createSendHDVoiceMessageParams(file)` + `channel.sendMediaMessage` (`sendVoiceNote` in `lib/nexconn.ts`, type `RC:HQVCMsg`); played with an `<audio>` from the Nexconn `remoteUrl`. Tested in Chrome with a generated stream (the browser pane has no mic); **still to test on a real Android phone and an iPhone** (an iPhone may not play webm notes recorded on Android).
 
+### Not done yet
+
+Open items for Urja (setup, not code): switch on **VoIP** in the Nexconn console (calls), add **`CRON_SECRET`** in Vercel and redeploy (automatic morning briefing; the cron route returns 503 without it), check the **Nexconn plan expiry**, optional `assetlinks.json` for the Android APK, test **voice notes** on a real Android phone and an iPhone.
+
 - [ ] **Real phone-call fallback for the briefing** (agreed 12 Nov 2026, deferred by Urja 13 Nov: not needed for the demo). For clients who haven't opened the in-app briefing within ~15 min (or never opened their link), a robot-voice call to `clients.phone` via a telephony provider (Exotel for India or Twilio; NOT Nexconn, whose Call SDK can't dial phone numbers). Needs a paid account + keys and Indian caller-ID/DLT registration for production.
 
 - [x] **Notify the lawyer when their client's turn comes** (requested 12 Nov 2026; **done by Kushi, 13 Nov 2026**, see 13e below; original request kept for reference). When a client's case is close (2 away) and when it is being heard, the people who look after that client (assigned lawyers/staff, plus firm admins; see `lib/visibility.ts`) get a notification: a phone/browser notification (Web Push for staff, which doesn't exist yet; only clients have push today) and a CourtCall bot message in the app. When the hearing ends (court moves past the item, adjourned, risen), notify again with a direct link that opens the existing outcome form (`OutcomeSheet`: next date or case ended, "what happened" note shareable with the client, firm-only prep notes) for that case. Today this only shows as the in-app "Hearings to update" card on Today/Cases. Reuse the alert pipeline in `server/src/lib/alerts.ts` (same triggers and `alert_logs` dedupe, but a separate key prefix such as `staff_within_2`, `staff_now_hearing`, `staff_done`, stored with an empty client message so clients never see it). Needs: staff push subscription table + "Turn on alerts" in Settings, a deep link like `/cases/:id?update=1` that opens the sheet, a setting to mute, smoke tests and tour/GUIDE updates.
 
 - [ ] ~~**Client accounts by email instead of WhatsApp links**~~ **Dropped for the hackathon (Urja, 13 Nov 2026):** it reverses the core "WhatsApp link, no password" decision, needs a migration + email service, and 9 days are left; completeness beats new scope. Kept here only as a post-hackathon idea. (Originally requested 12 Nov 2026.) When a firm adds a client, CourtCall creates a proper client account and **emails the client their sign-in details** so they can use the website (and the installed app) like everyone else, instead of the current WhatsApp link bound to one phone. To decide when building it: email provider (e.g. Resend / SES), the client must have an email (make it required on Add client), set-password link that expires instead of mailing a plain password, sign-in page for clients, what happens to existing links (keep as fallback or migrate), family access, and updating the client tour, GUIDE.md and smoke tests.
 
-14. Real-user testing with actual lawyers/juniors/clients (traction bonus); record usage numbers
-15. Demo video + PDF write-up + submit by 22 Nov
+14. Real-user testing with actual lawyers/juniors/clients (traction bonus); record usage numbers from Team → **This week in CourtCall**
+15. Demo video (script: README "Suggested walkthrough") + write-up (Claude Doc "CourtCall: hackathon write-up": fill in pricing, real-user numbers, video link; export to PDF) + submit by 22 Nov
 
 ### Plan for 10–11 (client links + alerts)
 
