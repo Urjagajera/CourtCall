@@ -1,13 +1,14 @@
 import { Briefcase, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, Settings, Users, type LucideIcon } from 'lucide-react'
-import { useEffect } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { startChat, useChat } from '../lib/nexconn'
+import { MSG_STAFF_ALERT, startChat, useChat, useIncomingMessages, type Message } from '../lib/nexconn'
 import { firstName, markTourSeen, tourSeen } from '../lib/tour'
 import { tourStepsFor } from '../lib/tourSteps'
 import { UpdatesProvider, useUpdates } from '../lib/updates'
 import { useTour } from './Tour'
 import { Logo } from './Logo'
+import { Toast, type ToastData } from './Toast'
 import { cx } from './ui'
 
 interface NavItem {
@@ -64,6 +65,32 @@ function Shell() {
   useEffect(() => {
     if (user!.role !== 'admin') startChat()
   }, [user])
+
+  // Firm alerts (CC:StaffAlert from the CourtCall bot): a client's case is 2 away, being heard, or over.
+  // Shown as a pop-up on any page; "over" opens the case with the outcome form.
+  const navigate = useNavigate()
+  const [toast, setToast] = useState<ToastData | null>(null)
+  const dismissToast = useCallback(() => setToast(null), [])
+  const { reload: reloadUpdates } = updates
+  useIncomingMessages(
+    useCallback(
+      (m: Message) => {
+        if (m.messageType !== MSG_STAFF_ALERT) return
+        const c = m.content as { text?: string; kind?: 'close' | 'now' | 'done'; url?: string }
+        if (!c.text) return
+        const url = c.url
+        setToast({
+          id: Date.now(),
+          tone: c.kind === 'done' ? 'waiting' : 'hearing',
+          message: c.text,
+          action: url ? { label: c.kind === 'done' ? 'Update' : 'Open', onClick: () => navigate(url) } : undefined,
+          durationMs: 12000,
+        })
+        if (c.kind === 'done') reloadUpdates() // the "Hearings to update" count changes
+      },
+      [navigate, reloadUpdates],
+    ),
+  )
 
   // First login: start the guided tour once the first page has rendered.
   const tour = useTour()
@@ -136,6 +163,7 @@ function Shell() {
         <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pb-28 pt-5 lg:px-10 lg:pb-10 lg:pt-8">
           <Outlet />
         </main>
+        <Toast toast={toast} onDismiss={dismissToast} />
 
         {/* Phone bottom tabs */}
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">

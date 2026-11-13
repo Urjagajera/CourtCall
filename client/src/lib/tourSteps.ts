@@ -119,7 +119,7 @@ const shared = {
     id: 'settings',
     target: 'nav-settings',
     title: 'Settings',
-    body: 'Switch between light and dark mode, restart this tour, or sign out.',
+    body: 'Turn on phone alerts for your cases (when a client is 2 away, being heard, and when the hearing is over), switch between light and dark mode, restart this tour, or sign out.',
   },
 } satisfies Record<string, TourStep>
 

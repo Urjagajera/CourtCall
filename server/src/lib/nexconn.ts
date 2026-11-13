@@ -22,6 +22,8 @@ export const BOT_NAME = 'CourtCall'
 export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
 export const MSG_NOTICE = 'CC:Notice' // badge refresh for staff, not stored
+/** Firm alert for the people on a case: client is 2 away, being heard, hearing over. */
+export const MSG_STAFF_ALERT = 'CC:StaffAlert'
 
 export class NexconnError extends Error {
   code: number

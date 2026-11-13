@@ -2,6 +2,8 @@
 // End-to-end check of every API flow as the demo users. Courtroom tests use an isolated
 // "Smoke Test Court / 99" room so demo courtrooms are not touched. Cleans up what it creates.
 const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4000/api'
+// Read-only database access, only to confirm background work (firm alerts) that has no API of its own.
+import { sql } from '../db/index.js'
 
 type Res = { status: number; body: any }
 class Session {
@@ -164,6 +166,34 @@ check('item event without item rejected', (await junior.post(`/sessions/${sid}/e
 s = (await junior2.get(`/sessions/${sid}`)).body
 check('history visible to other office', s.events?.length >= 7 && s.events.some((e: any) => e.officeName === 'Mehta & Associates'), s.events?.length)
 check('lawyer today shows room with distance data', (await lawyer.get('/courtrooms/today')).body.sessions?.some((x: any) => x.id === sid && x.currentItem != null))
+
+// ---- firm alerts: the case team + firm admins hear when their client's case is 2 away, being heard, over ----
+// The smoke case is Item 8. Alerts run in the background after each reply, so wait for them.
+async function firmKeys() {
+  for (let i = 0; i < 20; i++) {
+    const rows = await sql`select alert_key, message from alert_logs where case_id = ${caseId} and session_id = ${sid} and alert_key like 'staff_%'`
+    if (rows.length && i > 1) return rows
+    await new Promise((r) => setTimeout(r, 250))
+  }
+  return await sql`select alert_key, message from alert_logs where case_id = ${caseId} and session_id = ${sid} and alert_key like 'staff_%'`
+}
+async function reportItem(item: number) {
+  const v = (await junior.get(`/sessions/${sid}`)).body.session.version
+  return junior.post(`/sessions/${sid}/events`, { type: 'now_hearing', item, baseVersion: v, confirm: true })
+}
+check('court moves to Item 6 (client is 2 away)', (await reportItem(6)).status === 201)
+let fk = await firmKeys()
+check('firm alert: client is 2 away', fk.some((r: any) => r.alert_key === 'staff_within_2'), fk)
+check('court moves to Item 8 (client being heard)', (await reportItem(8)).status === 201)
+await new Promise((r) => setTimeout(r, 1500))
+fk = await firmKeys()
+check('firm alert: client being heard', fk.some((r: any) => r.alert_key === 'staff_now_hearing'), fk)
+check('court moves past to Item 9', (await reportItem(9)).status === 201)
+await new Promise((r) => setTimeout(r, 1500))
+fk = await firmKeys()
+check('firm alert: hearing over (with a link to record the outcome)', fk.some((r: any) => r.alert_key === 'staff_done'), fk)
+check('firm alerts are sent once each', fk.length === 3, fk)
+check('firm alerts are never shown to the client (empty message)', fk.every((r: any) => r.message === ''), fk)
 
 // ---- client links ----
 check('no client link before the case number is added', (await lawyer.post(`/cases/${caseId}/links`, { kind: 'client' })).status === 400)
@@ -328,6 +358,17 @@ check('client signs out of this phone', (await clientNew.post('/c/signout')).sta
 const tok = await junior.post('/chat/token')
 check('chat token for junior (with team room)', tok.status === 200 && !!tok.body.token && !!tok.body.team?.groupId, { status: tok.status, err: tok.body.error })
 check('old platform admin api is gone', (await lawyer.get('/admin/lawyers')).status === 404)
+
+// ---- phone alerts for lawyers and staff (Settings) ----
+const fakeSub = { endpoint: `https://push.example.com/smoke-${Date.now()}`, keys: { p256dh: 'BSmokeTestKey0123456789', auth: 'smokeAuth01' } }
+check('visitors cannot turn on staff phone alerts', (await new Session('visitor').post('/push', fakeSub)).status === 401)
+check('staff push key available', (await staff.get('/push/key')).status === 200)
+check('staff member turns on phone alerts', (await staff.post('/push', fakeSub)).status === 201)
+check('phone alerts are on for them', (await staff.post('/push/status', { endpoint: fakeSub.endpoint })).body.on === true)
+check('not on for someone else using the same browser', (await lawyer.post('/push/status', { endpoint: fakeSub.endpoint })).body.on === false)
+check("someone else can't turn them off", (await lawyer.post('/push/off', { endpoint: fakeSub.endpoint })).status === 200 && (await staff.post('/push/status', { endpoint: fakeSub.endpoint })).body.on === true)
+check('staff member turns phone alerts off', (await staff.post('/push/off', { endpoint: fakeSub.endpoint })).status === 200 && (await staff.post('/push/status', { endpoint: fakeSub.endpoint })).body.on === false)
+check('bad subscription rejected', (await staff.post('/push', { endpoint: 'not-a-url' })).status === 400)
 const founder = new Session('founder')
 const fr = await founder.post('/auth/register/lawyer', { name: 'Smoke Founder', email: `founder${Date.now()}@smoke.test`, phone: '9800000003', password: 'password123', officeName: 'Smoke Firm' })
 check('a new firm founder can start straight away', fr.status === 201 && fr.body.user?.verificationStatus === 'verified' && fr.body.user?.isFirmAdmin === true, fr.body)
@@ -339,6 +380,7 @@ await lawyer.post('/auth/logout')
 check('after logout me has no user', (await lawyer.get('/auth/me')).body.user === null)
 
 console.log(`\n${pass} passed, ${failures.length} failed`)
+await sql.end()
 if (failures.length) {
   console.log('\nFailures:\n' + failures.map((f) => ' - ' + f).join('\n'))
   process.exit(1)

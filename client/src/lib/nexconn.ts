@@ -19,6 +19,8 @@ export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
 /** "Something new on a case" ping for staff: not stored, not counted as unread chat. */
 export const MSG_NOTICE = 'CC:Notice'
+/** Firm alert for the people on a case: client is 2 away, being heard, hearing over (shown as a pop-up). */
+export const MSG_STAFF_ALERT = 'CC:StaffAlert'
 /** The CourtCall bot's own direct channel never counts towards chat unread totals. */
 export const BOT_ID = 'courtcallbot'
 export const MSG_TEXT = 'RC:TxtMsg'
@@ -75,6 +77,7 @@ export function startChat(tokenPath = '/chat/token') {
           { messageType: MSG_PROGRESS, isPersisted: true, isCounted: false },
           { messageType: MSG_ALERT, isPersisted: true, isCounted: true },
           { messageType: MSG_NOTICE, isPersisted: false, isCounted: false },
+          { messageType: MSG_STAFF_ALERT, isPersisted: true, isCounted: false },
         ])
         NCEngine.addMessageHandler(
           'courtcall',

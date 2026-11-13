@@ -17,7 +17,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/AppLayout'
 import { TeamSheet } from '../../components/CaseTeam'
 import { LinkSheet } from '../../components/LinkSheet'
@@ -60,6 +60,15 @@ export default function CaseDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, updates.items])
   const canEdit = data?.permissions.canEdit ?? false
+
+  // "Hearing over" alerts link here with ?update=1: open the outcome form straight away (if it is still needed).
+  const [params, setParams] = useSearchParams()
+  const wantsUpdate = params.get('update') === '1'
+  useEffect(() => {
+    if (!wantsUpdate || !data) return
+    if (data.needsOutcome && canEdit) setOutcomeOpen(true)
+    setParams({}, { replace: true })
+  }, [wantsUpdate, data, canEdit, setParams])
 
   if (error) {
     return (

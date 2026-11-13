@@ -14,6 +14,7 @@ import { hearingsRouter } from './routes/hearings.js'
 import { notificationsRouter } from './routes/notifications.js'
 import { linksRouter } from './routes/links.js'
 import { officeRouter } from './routes/office.js'
+import { pushRouter } from './routes/push.js'
 
 export const app = express()
 
@@ -44,6 +45,8 @@ app.use('/api/c', clientRouter)
 // Hearing outcomes, reminders, calendar, client/case detail pages.
 app.use('/api', hearingsRouter)
 app.use('/api/notifications', notificationsRouter)
+// Phone alerts for lawyers and staff (clients use /api/c/push).
+app.use('/api/push', pushRouter)
 app.use('/api', courtroomsRouter)
 
 app.use('/api', (_req, res) => {

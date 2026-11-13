@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseAlert, type AlertEvent } from './alertRules.js'
+import { chooseAlert, chooseStaffAlert, staffRecipients, type AlertEvent } from './alertRules.js'
 
 const ev = (type: AlertEvent['type'], item: number | null = null, version = 1): AlertEvent => ({ type, item, version })
 const run = (event: AlertEvent, currentItem: number | null, sent: string[] = [], caseItem = 15) =>
@@ -67,4 +67,53 @@ test('alerts use the client language (Hindi, Gujarati)', () => {
   assert.match(chooseAlert({ ...base, lang: 'hi' })!.message, /कोर्ट 4.*3 बाकी/)
   assert.match(chooseAlert({ ...base, lang: 'gu' })!.message, /કોર્ટ 4.*3 બાકી/)
   assert.match(chooseAlert(base)!.message, /Court 4 is at Item 12/)
+})
+
+// ---------- firm (staff) alerts ----------
+
+const staff = (event: AlertEvent, currentItem: number | null, sent: string[] = [], caseItem = 15) =>
+  chooseStaffAlert({ event, currentItem, caseItem, roomNo: '4', clientName: 'Ramesh Patel', sent: new Set(sent) })
+
+test('firm is told when the client is 2 away, once', () => {
+  assert.equal(staff(ev('now_hearing', 10), 10), null)
+  const a = staff(ev('now_hearing', 13), 13)
+  assert.equal(a?.key, 'staff_within_2')
+  assert.equal(a?.kind, 'close')
+  assert.match(a!.message, /Ramesh Patel's case is close: Court 4 is at Item 13, theirs is Item 15 \(2 away\)/)
+  assert.equal(staff(ev('now_hearing', 14), 14, ['staff_within_2']), null)
+})
+
+test('firm is told when the case is being heard (implies the 2-away alert)', () => {
+  const a = staff(ev('now_hearing', 15), 15)
+  assert.equal(a?.key, 'staff_now_hearing')
+  assert.deepEqual(a?.implied, ['staff_within_2'])
+  assert.equal(staff(ev('now_hearing', 15), 15, ['staff_now_hearing']), null)
+})
+
+test('firm is told when the hearing is over: moved past, adjourned, risen, not sitting', () => {
+  const past = staff(ev('now_hearing', 16), 16, ['staff_now_hearing'])
+  assert.equal(past?.key, 'staff_done')
+  assert.equal(past?.kind, 'done')
+  assert.match(past!.message, /Record what happened/)
+  assert.equal(staff(ev('adjourned', 15), 12)?.key, 'staff_done')
+  assert.equal(staff(ev('court_risen'), 12)?.key, 'staff_done')
+  assert.equal(staff(ev('court_not_sitting'), null)?.key, 'staff_done')
+  // Only once per day, whatever comes after.
+  assert.equal(staff(ev('court_risen'), 16, ['staff_done']), null)
+})
+
+test('a passed-over case is not reported as over when the court moves past it', () => {
+  assert.equal(staff(ev('passed_over', 15), 15), null)
+  assert.equal(staff(ev('now_hearing', 16), 16, ['passed_over:v3']), null)
+  assert.equal(staff(ev('recalled', 15, 9), 17, ['passed_over:v3'])?.kind, 'now')
+})
+
+test('firm alerts ignore breaks and corrections', () => {
+  assert.equal(staff(ev('break_start'), 13), null)
+  assert.equal(staff(ev('correction'), 13), null)
+})
+
+test('recipients: team + firm admins, once each; the reporter is skipped unless the hearing is over', () => {
+  assert.deepEqual(staffRecipients(['main', 'junior', null], ['admin', 'main'], 'junior', 'close'), ['main', 'admin'])
+  assert.deepEqual(staffRecipients(['main', 'junior', null], ['admin'], 'junior', 'done'), ['main', 'junior', 'admin'])
 })

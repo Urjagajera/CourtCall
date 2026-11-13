@@ -99,6 +99,15 @@ Who sees what:
 - **Chat** in the menu shows how many messages you haven't read yet.
 - Opening a case marks its updates as read; **Mark all read** clears the list.
 
+### Alerts when your client's turn comes
+
+If you are on a case (main lawyer, helping junior or staff helper) or a firm admin, CourtCall tells you when:
+- your client's case is **2 away** ("be ready"),
+- it is **being heard**,
+- the hearing is **over** (the court moved past it, adjourned it, rose or isn't sitting). Tap **Update** to open the case with the hearing form ready: next date, what happened, notes.
+
+You see these as a **pop-up** anywhere in CourtCall. To get them on your **phone** as well, go to **Settings → Phone alerts → Turn on** and allow notifications (on iPhone, add CourtCall to the Home Screen first). Turn it off there any time. If you reported the update yourself, you only get the "over" alert.
+
 ---
 
 ## 4. Every court day

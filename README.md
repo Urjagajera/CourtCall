@@ -300,6 +300,20 @@ After every accepted courtroom update, CourtCall checks every case in that court
 - Delivered three ways: an instant banner on the client's page (Nexconn message from the CourtCall bot), a **phone notification** if the client tapped **Turn on** under "Get alerts on this phone" (Web Push; Android Chrome and desktop, iPhone only after Add to Home Screen), and the "Latest updates" list on their page.
 - To see it: open the **Client** demo in one window and turn alerts on, then as **Junior lawyer** report **Now hearing** in Court 4 until Item 5, 10, 13 and 15.
 
+### Firm alerts (automatic)
+
+The same courtroom updates also alert **the firm**: the people on the case (main lawyer, helping junior, staff helper) and the firm admins. The person who reported the update is skipped (they are in the courtroom), except for "over".
+
+| When | Alert |
+|---|---|
+| Their client's case is 2 away | "Ramesh Patel's case is close: Court 4 is at Item 13, theirs is Item 15 (2 away)." |
+| It is being heard (or recalled) | "Ramesh Patel's case (Item 15) is being heard now in Court 4." |
+| The hearing is over: court moved past it, adjourned, risen or not sitting | "The hearing of Ramesh Patel's case (Item 15) in Court 4 is over… Record what happened and the next date." |
+
+- Each is sent **once** per case per day. A passed-over case isn't reported as over when the court moves past it (it may be recalled).
+- Delivered as a **pop-up inside CourtCall** on any page (Nexconn message `CC:StaffAlert` from the CourtCall bot) and as a **phone notification** for people who tapped **Settings → Phone alerts → Turn on**. Tapping the "over" alert opens the case with the **Update hearing** form already open (for the main lawyer and firm admins).
+- To see it: sign in as **Office staff (Neha)** or **Firm admin (Mehta)** in one window (Settings → Phone alerts → Turn on), and as **Junior lawyer (Priya)** in another. Report **Now hearing** in Court 4 for Item 13, 15, then 16.
+
 ### Client links (how the firm shares a case)
 
 - On **Cases**, tap the link icon on a case. **Create client link** makes a private link with live progress and chat.
@@ -337,7 +351,8 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
    - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
 7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Tap **Turn on** under "Get alerts on this phone". Report from Priya's window (Court 4, Now hearing 5, then 10, 13, 15) and watch the alert banner, the phone notification and his page update. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
 8. **Case teams and updates:** sign in as **Senior lawyer (Anil)**: he leads Ramesh's cases, so he sees only Ramesh. **Junior (Priya)** sees only the two cases she helps on and can't change them. **Office staff (Neha)** helps on Ramesh's and Sunita's cases (read-only). As **Firm admin (Mehta)**, open a case → **Case team → Edit team** and make Anil the main lawyer: Anil gets a number on **Cases** and an item under **Updates** on Today.
-9. **Languages and voice:** on the client page tap **हिं** or **ગુ**; the page, tour and his future alerts switch language. In any chat, tap the **mic** and speak.
+9. **Firm alerts:** keep **Firm admin (Mehta)** open in one window (Settings → **Phone alerts → Turn on**). As **Priya**, report Court 4 **Now hearing** 13, then 15, then 16. Mehta gets "Ramesh Patel's case is close", "being heard now", then "the hearing is over" with **Update**, which opens the outcome form.
+10. **Languages and voice:** on the client page tap **हिं** or **ગુ**; the page, tour and his future alerts switch language. In any chat, tap the **mic** and speak.
 
 ---
 
