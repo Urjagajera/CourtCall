@@ -154,6 +154,14 @@ async function deliverToFirm(fresh: StaffPick[], reporterId: string) {
   const everyone = [...new Set(plan.flatMap((p) => p.to))]
   if (!everyone.length) return
   const people = await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, everyone))
+  // One usage row per firm alert sent (Team page "This week in CourtCall"); never blocks delivery.
+  const sent = plan.filter((p) => p.to.length)
+  if (sent.length) {
+    await db
+      .insert(schema.usageEvents)
+      .values(sent.map((p) => ({ officeId: p.r.officeId, kind: 'firm_alert' as const })))
+      .catch((e) => console.warn('[usage]', e instanceof Error ? e.message : e))
+  }
 
   await Promise.all(
     plan.map(async ({ r, pick, to }) => {

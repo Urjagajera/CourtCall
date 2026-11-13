@@ -250,6 +250,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - Runs the firm on the **Team** page:
   - **Invite code** `MEHTA4` with copy and **Make a new code**.
   - **Firm settings:** minutes without an update before a courtroom shows as stale for this firm (default 20), and the WhatsApp country code added to 10-digit client numbers (default 91).
+  - **This week in CourtCall:** courtroom updates, client alerts, firm alerts, briefings, calls (with minutes), voice notes, hearings recorded and clients with their link open, for the last 7 days and in total. Calls and voice notes run on Nexconn, so the app reports each one.
   - **Waiting for your approval:** approve or decline people who joined with the code.
   - **People:** change anyone's role, **Make admin / Remove admin** (senior lawyers only), **Deactivate** and reactivate.
   - The founder can't be deactivated or demoted, and nobody can edit their own account.
@@ -263,7 +264,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
   - **Now hearing: Item N** (pre-filled with the next item; **−1 / +1** or type a number).
   - **Passed over**, **Adjourned**, **Recalled** (pick from passed-over items), **Break / Resume**, **Not sitting**, **Court risen**.
   - **Undo** stays for 10 seconds. Jumping more than 5 items ahead, or moving backward, asks for confirmation.
-- **Room chat** with every lawyer and junior in the courtroom, from any firm. Every accepted update also appears there as a progress card, sent through Nexconn.
+- **Room chat** with every lawyer and junior in the courtroom, from any firm. Every accepted update also appears there as a progress card, sent through Nexconn. **Voice notes** (tap the sound-wave button when the box is empty) for when typing in court isn't possible.
 
 **Office staff: Neha Parikh (Mehta & Associates)**
 - Staff helper on Ramesh's and Sunita's cases: sees those cases and clients **read-only**, chats with those clients, and watches today's courtrooms **read-only** (never reports). Can't add or edit cases or clients.
@@ -273,7 +274,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - **Cases** and **case page** (`/cases/:id`): details, case team, **Hearing-day briefing** card, hearings history with outcomes, client link, **Call client**.
 - **Clients** and **client page**: their cases, hearings, chat.
 - **Calendar:** your hearings by day, past and upcoming.
-- **Chat:** the firm team room and one-to-one chats, with filters **Lawyers** (seniors first), **Staff**, **Clients**; **Call** button in every one-to-one chat; **mic** for voice typing.
+- **Chat:** the firm team room and one-to-one chats, with filters **Lawyers** (seniors first), **Staff**, **Clients**; **Call** button in every one-to-one chat; **mic** for voice typing; with an empty message box the send button records a **voice note** (up to 1 minute).
 - **Badges:** a number on **Cases** for new updates and on **Chat** for unread messages.
 - **Settings:** theme, **Phone alerts**, take the tour again.
 
@@ -288,7 +289,7 @@ Re-running `seed:demo` moves these cases to today's date and keeps the same pass
 - Tabs (sidebar on a laptop, bottom bar on a phone): **My case**, **Cases**, **History**, **Chat**, **Settings**.
 - **My case:** **Now** vs **Your item**, how many cases are before his, court status and how fresh the report is, the next date, today's briefing, latest updates. It never shows who reported or other firms' cases, and never predicts times.
 - **History:** past alerts and hearing summaries the firm chose to share (never prep notes); "case ended" for finished cases.
-- **Chat** with the people on his case (Nexconn direct chat), **Call my lawyer**, and voice typing.
+- **Chat** with the people on his case (Nexconn direct chat), **Call my lawyer**, voice typing and voice notes.
 - **Settings:** language **English / हिंदी / ગુજરાતી** (page, tour and alerts), phone alerts, theme, tour, sign out.
 
 ### Client alerts (automatic)
@@ -364,11 +365,11 @@ Before recording: run `seed:demo` the same day, and open three windows side by s
    - **Conflict protection:** report from both windows at once; the late one gets "Someone else just reported a newer update".
 4. **The client (2:30–3:45), Window 3 (phone size), Client:** tap **Client**. Ramesh sees **Now** vs **Item 15** and "N away". Tap **Turn on** alerts.
    - From Priya, report **Now hearing** 13: Ramesh gets "Your case is close… (2 away)". Then 15: "being heard now". Show the banner and the phone notification.
-   - Switch the language to **ગુજરાતી**; the page and alerts follow. Open **History** (last week's hearing summary, the finished case) and **Chat**: send a message with the **mic** (voice typing).
+   - Switch the language to **ગુજરાતી**; the page and alerts follow. Open **History** (last week's hearing summary, the finished case) and **Chat**: send a message with the **mic** (voice typing), then record a **voice note** with the sound-wave button.
 5. **The firm gets alerted too (3:45–4:30), Window 1, Firm admin Mehta** (Settings → **Phone alerts → Turn on**): from Arjun's window report Court 4 **16**. Mehta's pop-up says the hearing of Ramesh's case is over; **Update** opens the outcome form. Record **Next date**, a summary shared with the client and firm-only prep notes. Show it on Ramesh's **History**, and the **Calendar**.
 6. **Hearing-day briefing (4:30–5:30), Mehta → Patel vs State of Gujarat:** in **Hearing-day briefing**, pick **Anil** as appearing lawyer, type a **Remember** note in English, tap **Send briefing now**. On Ramesh's phone **"CourtCall is calling"** rings; tap **Answer**: it reads the briefing aloud in Gujarati (`CC:Briefing`).
 7. **Calls (5:30–6:00):** tap **Call my lawyer** on Ramesh's phone, or **Call client** on the case page; the other side rings and answers (Nexconn Call SDK). Needs VoIP switched on in the Nexconn console.
-8. **Case teams (6:00–6:40):** as Mehta open a case → **Case team → Edit team**. Then show **Anil** (sees only Ramesh's cases, a number on **Cases** and an item under **Updates** on Today), **Priya** (only her two cases, read-only) and **Neha** (read-only courtrooms, Chat count). Mention **Team → invite code MEHTA4 → Approve**.
+8. **Case teams and usage (6:00–6:40):** as Mehta open a case → **Case team → Edit team**. Then show **Anil** (sees only Ramesh's cases, a number on **Cases** and an item under **Updates** on Today), **Priya** (only her two cases, read-only) and **Neha** (read-only courtrooms, Chat count). Mention **Team → invite code MEHTA4 → Approve**, and show **This week in CourtCall** on Mehta's Team page (the numbers from this recording).
 9. **Close (6:40–7:00):** Nexconn powers every live part: courtroom rooms, firm chat, client chat, alerts, briefings and calls. Works on a cheap phone through a WhatsApp link, with no app and no password.
 
 ---

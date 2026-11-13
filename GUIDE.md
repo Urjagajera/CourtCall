@@ -67,7 +67,7 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 | Role | Can do |
 |---|---|
-| **Firm admin** (senior lawyers only) | Everything a senior lawyer can do, plus manage the firm on **Team**: approve or decline people, change roles, make other senior lawyers firm admins (never juniors or office staff), deactivate people who leave, make a new invite code, and change **Firm settings** (stale time for courtrooms, WhatsApp country code) |
+| **Firm admin** (senior lawyers only) | Everything a senior lawyer can do, plus manage the firm on **Team**: approve or decline people, change roles, make other senior lawyers firm admins (never juniors or office staff), deactivate people who leave, make a new invite code, change **Firm settings** (stale time for courtrooms, WhatsApp country code), and see **This week in CourtCall** (what the firm did in the last 7 days) |
 | **Senior lawyer** | Clients, cases, courtrooms (join and report), team chat, private chat with clients |
 | **Junior lawyer** | Join courtrooms, report progress, courtroom chat, team chat |
 | **Office staff** | Clients, cases, team chat, client chat; see today's courtrooms (read-only) |
@@ -163,6 +163,7 @@ Open **Chat**:
 - **Staff** tab: office staff.
 - **Clients** tab (senior lawyers and staff): a private chat with each client you look after (firm admins: every client).
 - **Voice typing:** tap the **mic** next to the message box and speak. The words appear in the box so you can check them before tapping Send. The **EN / हिं / ગુ** button next to the mic picks the language you speak.
+- **Voice notes:** when the message box is empty, the send button becomes a **sound-wave** button. Tap it, speak (up to 1 minute), then tap **Send**, or **X** to throw it away. Works in courtroom room chat, team chat and client chat.
 - Use the search box to find someone. A dot on a tab means unread messages there.
 
 ### Lawyers: watch from anywhere
@@ -178,7 +179,7 @@ Open **Chat**:
    - **My case**: **Now** (the item the court is hearing), **Your item** (your number on today's list), how many cases are before yours, when it was last reported, the next hearing date and the latest updates.
    - **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
    - **History**: earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it).
-   - **Chat**: message the people at the firm who look after you. Type, or tap the **mic** and speak (in your page language). Tap **Call my lawyer** for a voice call inside CourtCall.
+   - **Chat**: message the people at the firm who look after you. Type, tap the **mic** and speak (in your page language), or send a **voice note** with the sound-wave button. Tap **Call my lawyer** for a voice call inside CourtCall.
    - **Hearing-day briefing**: on the morning of your hearing, CourtCall "calls" you: tap **Answer** to hear your court, item number and your lawyer's message in your language. It stays on **My case** under **Today's briefing** (tap **Listen** to hear it again).
    - **Settings**: language (English, हिन्दी, ગુજરાતી; your alerts switch too), **Get alerts on this phone**, light or dark, **Take the tour again**, and **Sign out**.
 3. In **Settings**, tap **Turn on** under **Get alerts on this phone** to get notifications.

@@ -62,7 +62,7 @@ const shared = {
     target: 'nav-chat',
     route: '/chats',
     title: 'Chat',
-    body: 'Private conversations powered by Nexconn: your office team room, and for senior lawyers, a private chat with every client.',
+    body: 'Private conversations powered by Nexconn: your firm team room, one-to-one chats and your clients. With an empty message box, the send button records a voice note (up to 1 minute), handy in court.',
   },
   live: {
     id: 'live-dot',
@@ -198,6 +198,13 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
           title: 'Manage everyone',
           body: 'Change anyone’s role, make another senior lawyer a firm admin, or deactivate someone who has left the firm.',
         },
+        {
+          id: 'firm-usage',
+          target: 'firm-usage',
+          route: '/team',
+          title: 'This week in CourtCall',
+          body: 'What your firm did in the last 7 days: courtroom updates, client and firm alerts, briefings, calls, voice notes and hearings recorded.',
+        },
       ]
     : [
         {
@@ -324,7 +331,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     briefing: ["Today's briefing", "On your hearing day, CourtCall calls you in the morning with your court, item number and your lawyer's message, read aloud in your language. Tap Listen to hear it again, or Call my lawyer to talk to them in CourtCall."],
     updates: ['Latest updates', 'Everything reported in your courtroom today, and every alert you were sent.'],
     alerts: ['Alerts on this phone', 'Tap Turn on to get a notification when the court is 10, 5 and 2 cases away, and when your case is heard, passed over or adjourned.'],
-    chat: ['Chat with your lawyer', 'Message your firm privately. Type, or tap the microphone and speak. Your lawyer sees it in CourtCall straight away.'],
+    chat: ['Chat with your lawyer', 'Message your firm privately. Type, tap the microphone and speak, or tap the sound-wave button to send a voice note. Your lawyer gets it in CourtCall straight away.'],
     cases: ['All your cases', 'Your other cases with this firm, upcoming and past. Tap one to see its progress and history.'],
     history: ['History', 'What happened on earlier court days for this case: when it was heard, adjourned or passed over.'],
     menu: ['Settings', 'Switch between English, Hindi and Gujarati (your alerts change too), choose light or dark, replay this tour, or sign out of this phone. On a phone, Settings is the gear at the top.'],
@@ -336,7 +343,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     briefing: ['आज की जानकारी', 'सुनवाई के दिन सुबह CourtCall आपको कॉल करके कोर्ट, आइटम नंबर और आपके वकील का संदेश आपकी भाषा में सुनाता है। फिर से सुनने के लिए "सुनें" दबाएँ, या CourtCall में बात करने के लिए "वकील को कॉल करें"।'],
     updates: ['ताज़ा अपडेट', 'आज आपके कोर्टरूम में जो भी बताया गया, और आपको भेजे गए सभी अलर्ट।'],
     alerts: ['इस फ़ोन पर अलर्ट', '"चालू करें" दबाएँ: जब आपका केस 10, 5 और 2 केस दूर हो, और जब सुनवाई हो, पास ओवर हो या स्थगित हो, तब सूचना मिलेगी।'],
-    chat: ['अपने वकील से चैट', 'अपनी फ़र्म को निजी संदेश भेजें। लिखें, या माइक दबाकर बोलें। वकील इसे तुरंत CourtCall में देखते हैं।'],
+    chat: ['अपने वकील से चैट', 'अपनी फ़र्म को निजी संदेश भेजें। लिखें, माइक दबाकर बोलें, या आवाज़ वाला बटन दबाकर वॉइस नोट भेजें। वकील को यह तुरंत CourtCall में मिलता है।'],
     cases: ['आपके सभी केस', 'इस फ़र्म के साथ आपके दूसरे केस, आगामी और पिछले। प्रगति और इतिहास देखने के लिए किसी पर टैप करें।'],
     history: ['इतिहास', 'इस केस की पिछली तारीखों पर क्या हुआ: कब सुनवाई हुई, स्थगित हुआ या पास ओवर हुआ।'],
     menu: ['सेटिंग', 'English, हिन्दी और ગુજરાતી में बदलें (आपके अलर्ट की भाषा भी बदलेगी), लाइट या डार्क चुनें, टूर दोबारा देखें, या इस फ़ोन से साइन आउट करें। फ़ोन पर सेटिंग ऊपर गियर में है।'],
@@ -348,7 +355,7 @@ const CLIENT_TOUR: Record<ClientLang, TourText> = {
     briefing: ['આજની માહિતી', 'સુનાવણીના દિવસે સવારે CourtCall તમને કૉલ કરીને કોર્ટ, આઇટમ નંબર અને તમારા વકીલનો સંદેશ તમારી ભાષામાં સંભળાવે છે. ફરી સાંભળવા "સાંભળો" દબાવો, અથવા CourtCallમાં વાત કરવા "વકીલને કૉલ કરો".'],
     updates: ['તાજા અપડેટ', 'આજે તમારા કોર્ટરૂમમાં જે જણાવાયું તે બધું, અને તમને મોકલેલા બધા અલર્ટ.'],
     alerts: ['આ ફોન પર અલર્ટ', '"ચાલુ કરો" દબાવો: જ્યારે તમારો કેસ 10, 5 અને 2 કેસ દૂર હોય, અને જ્યારે સુનાવણી થાય, પાસ ઓવર થાય કે મુલતવી રહે ત્યારે સૂચના મળશે.'],
-    chat: ['તમારા વકીલ સાથે ચેટ', 'તમારી ફર્મને ખાનગી સંદેશ મોકલો. લખો, અથવા માઇક દબાવીને બોલો. વકીલ તેને તરત CourtCallમાં જુએ છે.'],
+    chat: ['તમારા વકીલ સાથે ચેટ', 'તમારી ફર્મને ખાનગી સંદેશ મોકલો. લખો, માઇક દબાવીને બોલો, અથવા અવાજવાળું બટન દબાવીને વૉઇસ નોટ મોકલો. વકીલને તે તરત CourtCallમાં મળે છે.'],
     cases: ['તમારા બધા કેસ', 'આ ફર્મ સાથેના તમારા બીજા કેસ, આગામી અને પાછલા. પ્રગતિ અને ઇતિહાસ જોવા કોઈ પર ટેપ કરો.'],
     history: ['ઇતિહાસ', 'આ કેસની પાછલી તારીખોએ શું થયું: ક્યારે સુનાવણી થઈ, મુલતવી રહ્યો કે પાસ ઓવર થયો.'],
     menu: ['સેટિંગ', 'English, हिन्दी અને ગુજરાતીમાં બદલો (તમારા અલર્ટની ભાષા પણ બદલાશે), લાઇટ કે ડાર્ક પસંદ કરો, ટૂર ફરી જુઓ, અથવા આ ફોનમાંથી સાઇન આઉટ કરો. ફોન પર સેટિંગ ઉપર ગિયરમાં છે.'],

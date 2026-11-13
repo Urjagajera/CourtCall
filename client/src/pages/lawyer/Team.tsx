@@ -1,4 +1,4 @@
-import { Briefcase, Check, ClipboardList, Copy, Crown, KeyRound, Settings2, RefreshCw, ShieldCheck, UserMinus, UserPlus, Users, X, type LucideIcon } from 'lucide-react'
+import { Briefcase, Check, ClipboardList, Copy, BarChart3, Crown, KeyRound, Settings2, RefreshCw, ShieldCheck, UserMinus, UserPlus, Users, X, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { PageHeader } from '../../components/AppLayout'
 import { ConfirmSheet } from '../../components/ConfirmSheet'
@@ -119,6 +119,7 @@ export default function Team() {
               </ul>
             </Card>
 
+            {admin && <FirmUsage />}
             <FirmSettings office={data.office} admin={admin} onSaved={() => { reload(); refresh() }} />
           </div>
 
@@ -348,6 +349,58 @@ function FirmSettings({ office, admin, onSaved }: { office: Office; admin: boole
             WhatsApp country code <span className="tabular font-semibold">+{office.phoneCountryCode ?? '91'}</span>
           </li>
         </ul>
+      )}
+    </Card>
+  )
+}
+
+type Count = { week: number; total: number }
+interface Usage {
+  updates: Count
+  clientAlerts: Count
+  firmAlerts: Count
+  briefings: Count
+  outcomes: Count
+  calls: Count & { weekMinutes: number }
+  voiceNotes: Count
+  clientsConnected: number
+}
+
+/** Firm admins: what the firm did in CourtCall in the last 7 days (and in total), from the database and Nexconn usage. */
+function FirmUsage() {
+  const { data, error } = useApi<Usage>('/office/usage')
+  const tiles: { label: string; week: number; sub: string }[] = data
+    ? [
+        { label: 'Courtroom updates', week: data.updates.week, sub: `${data.updates.total} in total` },
+        { label: 'Client alerts', week: data.clientAlerts.week, sub: `${data.clientAlerts.total} in total` },
+        { label: 'Firm alerts', week: data.firmAlerts.week, sub: `${data.firmAlerts.total} in total` },
+        { label: 'Briefings sent', week: data.briefings.week, sub: `${data.briefings.total} in total` },
+        { label: 'Calls', week: data.calls.week, sub: `${data.calls.weekMinutes} min this week` },
+        { label: 'Voice notes', week: data.voiceNotes.week, sub: `${data.voiceNotes.total} in total` },
+        { label: 'Hearings recorded', week: data.outcomes.week, sub: `${data.outcomes.total} in total` },
+        { label: 'Clients on CourtCall', week: data.clientsConnected, sub: 'link open on a phone' },
+      ]
+    : []
+  return (
+    <Card data-tour="firm-usage">
+      <p className="flex items-center gap-2 text-h2">
+        <BarChart3 className="size-5" strokeWidth={1.75} /> This week in CourtCall
+      </p>
+      <p className="mt-1 text-label text-ink-muted">
+        Last 7 days for your firm. Calls and voice notes run on Nexconn.
+      </p>
+      {error && <p className="mt-3 text-label text-stopped-fg">{error}</p>}
+      {!data && !error && <p className="mt-3 text-label text-ink-muted">Loading…</p>}
+      {data && (
+        <dl className="mt-3 grid grid-cols-2 gap-2">
+          {tiles.map((t) => (
+            <div key={t.label} className="rounded-md border border-line bg-surface-raised p-3">
+              <dt className="text-caption text-ink-muted">{t.label}</dt>
+              <dd className="tabular text-h1 leading-tight">{t.week}</dd>
+              <dd className="text-caption text-ink-muted">{t.sub}</dd>
+            </div>
+          ))}
+        </dl>
       )}
     </Card>
   )

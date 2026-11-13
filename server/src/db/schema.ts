@@ -266,6 +266,26 @@ export const alertLogs = pgTable(
   (t) => [unique('alert_once').on(t.caseId, t.sessionId, t.alertKey)],
 )
 
+// Usage the database cannot see otherwise (it runs on Nexconn): voice calls, voice notes, firm alerts sent. Counted on the
+// firm admin's Team page ("This week in CourtCall"). One row per call placed or voice note sent.
+export const usageKind = pgEnum('usage_kind', ['call', 'voice_note', 'firm_alert'])
+export const usageEvents = pgTable(
+  'usage_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    officeId: uuid('office_id')
+      .notNull()
+      .references(() => offices.id, { onDelete: 'cascade' }),
+    kind: usageKind('kind').notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    clientId: uuid('client_id').references(() => clients.id, { onDelete: 'set null' }),
+    // Call: connected seconds (0 = not answered). Voice note: its length.
+    seconds: integer('seconds').notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index('usage_events_office_time').on(t.officeId, t.createdAt)],
+)
+
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),

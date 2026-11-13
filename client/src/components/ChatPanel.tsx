@@ -1,20 +1,24 @@
-import { Loader2, MessageCircle, Mic, Send, Square, WifiOff } from 'lucide-react'
+import { AudioLines, Loader2, MessageCircle, Mic, Send, Square, WifiOff, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EVENT_META, clockTime, type EventType } from '../lib/court'
 import {
   MSG_ALERT,
   MSG_PROGRESS,
   MSG_TEXT,
+  MSG_VOICE,
   isFromChannel,
   loadHistory,
   markRead,
   sendText,
+  sendVoiceNote,
   useChat,
   useIncomingMessages,
   type ChannelKind,
   type Message,
 } from '../lib/nexconn'
 import { useDictation } from '../lib/dictation'
+import { logUsage } from '../lib/usage'
+import { MAX_VOICE_SECONDS, useVoiceRecorder, voiceNotesSupported } from '../lib/voiceNote'
 import { cx } from './ui'
 
 const VOICE_LANGS = [
@@ -98,6 +102,23 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages.length])
 
+  // Voice notes (Nexconn HD voice messages): for juniors in court who can't type.
+  const recorder = useVoiceRecorder(async (file, seconds) => {
+    if (!channelId) return
+    setSending(true)
+    setError(null)
+    try {
+      const m = await sendVoiceNote(kind, channelId, file)
+      setMessages((prev) => byTime([...prev, m]))
+      logUsage('voice_note', seconds)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Voice note not sent')
+    } finally {
+      setSending(false)
+    }
+  })
+  const canRecord = voiceNotesSupported()
+
   async function send(e: React.FormEvent) {
     e.preventDefault()
     const t = text.trim()
@@ -134,7 +155,34 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
           messages.map((m) => <Bubble key={m.messageId || m.sentTime} m={m} mine={m.senderUserId === chat.myId} names={names} />)
         )}
       </div>
-      {!readOnly && (
+      {!readOnly && recorder.recording && (
+        <div className="flex items-center gap-2 border-t border-line p-2" role="status">
+          <button
+            type="button"
+            onClick={recorder.cancel}
+            aria-label="Cancel voice note"
+            className="flex size-11 shrink-0 items-center justify-center rounded-md border border-line text-ink hover:border-accent"
+          >
+            <X className="size-5" strokeWidth={1.75} />
+          </button>
+          <span className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-stopped-fg bg-stopped-bg px-3 text-stopped-fg">
+            <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-stopped-fg" aria-hidden />
+            <span className="tabular font-semibold">
+              {Math.floor(recorder.seconds / 60)}:{String(recorder.seconds % 60).padStart(2, '0')}
+            </span>
+            <span className="tabular truncate text-caption">/ {Math.floor(MAX_VOICE_SECONDS / 60)}:00</span>
+          </span>
+          <button
+            type="button"
+            onClick={recorder.send}
+            aria-label="Send voice note"
+            className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink"
+          >
+            <Send className="size-5" strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
+      {!readOnly && !recorder.recording && (
         <form onSubmit={send} className="flex gap-2 border-t border-line p-2">
           <input
             value={text}
@@ -174,18 +222,32 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
               </button>
             </>
           )}
-          <button
-            type="submit"
-            disabled={sending || !text.trim() || chat.status !== 'ready'}
-            aria-label="Send"
-            className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink disabled:opacity-50"
-          >
-            {sending ? <Loader2 className="size-5 animate-spin" strokeWidth={1.75} /> : <Send className="size-5" strokeWidth={1.75} />}
-          </button>
+          {/* Empty box: the button records a voice note (WhatsApp style). With text: it sends. */}
+          {canRecord && !text.trim() && !voice.listening ? (
+            <button
+              type="button"
+              onClick={recorder.start}
+              disabled={sending || offline || chat.status !== 'ready'}
+              aria-label="Record a voice note"
+              title="Voice note (up to 1 minute)"
+              className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink disabled:opacity-50"
+            >
+              {sending ? <Loader2 className="size-5 animate-spin" strokeWidth={1.75} /> : <AudioLines className="size-5" strokeWidth={1.75} />}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={sending || !text.trim() || chat.status !== 'ready'}
+              aria-label="Send"
+              className="flex size-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-ink disabled:opacity-50"
+            >
+              {sending ? <Loader2 className="size-5 animate-spin" strokeWidth={1.75} /> : <Send className="size-5" strokeWidth={1.75} />}
+            </button>
+          )}
         </form>
       )}
       {voice.listening && <p className="px-3 pb-2 text-caption text-ink-muted" aria-live="polite">Listening… speak now, then check the text and tap Send.</p>}
-      {(error || voice.error) && <p className="px-3 pb-2 text-caption text-stopped-fg">{error ?? voice.error}</p>}
+      {(error || voice.error || recorder.error) && <p className="px-3 pb-2 text-caption text-stopped-fg">{error ?? voice.error ?? recorder.error}</p>}
     </div>
   )
 }
@@ -213,6 +275,25 @@ function Bubble({ m, mine, names }: { m: Message; mine: boolean; names: Record<s
         <span className="text-ink-muted">
           {c.reporterName} · {time}
         </span>
+      </div>
+    )
+  }
+
+  if (m.messageType === MSG_VOICE) {
+    const v = m.content as { remoteUrl?: string; duration?: number }
+    return (
+      <div className={cx('cc-pop flex max-w-[85%] flex-col', mine ? 'items-end self-end' : 'items-start self-start')}>
+        {!mine && <span className="mb-0.5 px-1 text-caption font-semibold text-ink-muted">{names[m.senderUserId] ?? 'Member'}</span>}
+        <div className={cx('flex items-center gap-2 rounded-lg px-2 py-1.5', mine ? 'rounded-br-sm bg-accent text-accent-ink' : 'rounded-bl-sm border border-line bg-surface-raised text-ink')}>
+          <AudioLines className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+          {v.remoteUrl ? (
+            <audio controls preload="none" src={v.remoteUrl} className="h-10 w-56 max-w-full" aria-label="Voice note" />
+          ) : (
+            <span className="text-label">Voice note</span>
+          )}
+          {v.duration ? <span className="tabular shrink-0 text-caption opacity-80">{v.duration}s</span> : null}
+        </div>
+        <span className="mt-0.5 px-1 text-caption text-ink-muted">{time}</span>
       </div>
     )
   }

@@ -20,6 +20,14 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 14 Nov 2026 (Urja): usage summary and voice notes (migration 0015)
+
+**Do this after pulling:** `npm --prefix server run db:migrate` (Urja already ran it on the live database).
+
+- Team page → **This week in CourtCall** (firm admins): courtroom updates, alerts, briefings, calls, voice notes, hearings recorded.
+- **Voice notes** in every chat: with an empty message box, the send button records (up to 1 minute). Sent as a Nexconn HD voice message.
+- After `npm --prefix server run smoke`, always run `smoke:cleanup`: it now also removes the smoke run's usage rows.
+
 ### 13 Nov 2026 (Urja): firm settings and court suggestions (migration 0014)
 
 **Do this after pulling:** `npm --prefix server run db:migrate` (on your own Supabase; Urja already ran it on the live database).

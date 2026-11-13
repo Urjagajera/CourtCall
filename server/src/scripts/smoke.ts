@@ -101,6 +101,15 @@ check('firm admin changes firm settings', setRes.body.settings?.staleMinutes ===
 check('settings show in /auth/me', (await lawyer.get('/auth/me')).body.office?.staleMinutes === 30)
 await lawyer.patch('/office/settings', settingsBefore)
 
+// Usage (Team page "This week in CourtCall"): firm admins only; calls and voice notes are reported by the app.
+const usage0 = (await lawyer.get('/office/usage')).body
+check('firm admin sees the weekly usage', typeof usage0.updates?.week === 'number' && typeof usage0.calls?.weekMinutes === 'number', usage0)
+check('non-admin cannot see the usage', (await lawyer3.get('/office/usage')).status === 403)
+check('bad usage kind is refused', (await lawyer3.post('/usage', { kind: 'firm_alert' })).status === 400)
+check('a voice note is counted', (await lawyer3.post('/usage', { kind: 'voice_note', seconds: 4321 })).status === 201) // 4321 s = smoke marker, removed by smoke:cleanup
+const usage1 = (await lawyer.get('/office/usage')).body
+check('usage goes up by one voice note', usage1.voiceNotes?.week === usage0.voiceNotes?.week + 1, usage1.voiceNotes)
+
 const stamp = Date.now()
 const newbie = new Session('newbie')
 const reg = await newbie.post('/auth/register/member', { name: 'Smoke Clerk', email: `clerk${stamp}@smoke.test`, phone: '9800000001', password: 'password123', role: 'staff', inviteCode: 'mehta4' })

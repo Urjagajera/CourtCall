@@ -19,6 +19,19 @@ await db
   .delete(schema.offices)
   .where(dsql`${schema.offices.ownerId} in (select id from users where email like '%@smoke.test')`)
 // People who signed up during the smoke test (never own data, so a plain delete is safe).
+// Usage rows from the smoke run: the marker voice note, and firm alerts sent since the smoke accounts were made.
+const [first] = await db
+  .select({ at: dsql<string | null>`min(${schema.users.createdAt})` })
+  .from(schema.users)
+  .where(dsql`${schema.users.email} like '%@smoke.test'`)
+const usage = await db
+  .delete(schema.usageEvents)
+  .where(
+    first?.at
+      ? dsql`${schema.usageEvents.seconds} = 4321 or (${schema.usageEvents.kind} = 'firm_alert' and ${schema.usageEvents.createdAt} >= ${first.at})`
+      : dsql`${schema.usageEvents.seconds} = 4321`,
+  )
+  .returning({ id: schema.usageEvents.id })
 const people = await db.delete(schema.users).where(dsql`${schema.users.email} like '%@smoke.test'`).returning({ id: schema.users.id })
-console.log(`Removed ${ids.length} smoke-test courtroom(s) and ${people.length} smoke-test account(s).`)
+console.log(`Removed ${ids.length} smoke-test courtroom(s), ${people.length} smoke-test account(s) and ${usage.length} usage row(s).`)
 await sql.end()

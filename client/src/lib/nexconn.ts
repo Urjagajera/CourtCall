@@ -10,11 +10,13 @@ import {
   MessageHandler,
   NCEngine,
   SendTextMessageParams,
+  Helper,
   type Message,
 } from '@nexconn/chat'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { api } from './api'
 import { installCallEngine, startCallEngine } from './calls'
+import { setUsageAudience } from './usage'
 
 export const MSG_PROGRESS = 'CC:Progress'
 export const MSG_ALERT = 'CC:Alert'
@@ -27,6 +29,8 @@ export const MSG_BRIEFING = 'CC:Briefing'
 /** The CourtCall bot's own direct channel never counts towards chat unread totals. */
 export const BOT_ID = 'courtcallbot'
 export const MSG_TEXT = 'RC:TxtMsg'
+/** Nexconn HD voice message (a voice note recorded in the chat). */
+export const MSG_VOICE = 'RC:HQVCMsg'
 
 export interface TeamInfo {
   groupId: string
@@ -69,6 +73,7 @@ let starting: Promise<void> | null = null
 /** Connects the current browser to Nexconn. `tokenPath` differs for staff vs client links. */
 export function startChat(tokenPath = '/chat/token') {
   if (state.status === 'ready' || starting) return starting
+  setUsageAudience(tokenPath.startsWith('/c/'))
   starting = (async () => {
     setState({ status: 'connecting', error: undefined })
     try {
@@ -173,6 +178,15 @@ export async function loadHistory(kind: ChannelKind, id: string, pageSize = 40) 
 export async function sendText(kind: ChannelKind, id: string, text: string) {
   const r = await channelFor(kind, id).sendMessage(new SendTextMessageParams({ text }))
   if (!r.isOk) throw new Error(`Message not sent (code ${r.code})`)
+  return r.data!
+}
+
+/** Uploads a recorded voice note to Nexconn and sends it as an HD voice message. */
+export async function sendVoiceNote(kind: ChannelKind, id: string, file: File) {
+  const params = await Helper.createSendHDVoiceMessageParams(file)
+  if (!params.isOk || !params.data) throw new Error('Could not read the recording. Try again.')
+  const r = await channelFor(kind, id).sendMediaMessage(params.data)
+  if (!r.isOk) throw new Error(`Voice note not sent (code ${r.code})`)
   return r.data!
 }
 

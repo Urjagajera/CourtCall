@@ -3,6 +3,7 @@
 // started once chat is connected; calls use the same Nexconn user IDs as chat (u…, c…).
 import { NCCallEngine, NCCallLogLevel, NCCallMediaType, NCCallType, type NCCallSession } from '@nexconn/call'
 import { useSyncExternalStore } from 'react'
+import { logUsage } from './usage'
 
 export type CallPhase = 'idle' | 'outgoing' | 'incoming' | 'connecting' | 'connected' | 'ended'
 export interface CallState {
@@ -102,6 +103,7 @@ function finish(session?: NCCallSession) {
   const secs = connectedAt ? Math.round((Date.now() - connectedAt) / 1000) : 0
   const note: CallState['endNote'] = connectedAt ? 'ended' : 'no_answer'
   if (outgoing && peerId && onLog) onLog(peerId, connectedAt ? `📞 Voice call · ${fmt(secs)}` : '📞 Missed voice call')
+  if (outgoing && peerId) logUsage('call', secs)
   set({ ...initial, phase: 'ended', endNote: note, peerName: state.peerName })
   setTimeout(() => state.phase === 'ended' && set(initial), 2500)
 }
