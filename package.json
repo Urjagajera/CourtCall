@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
     "build": "npm --prefix server run build && npm --prefix client run build",
-    "setup": "npm install && npm --prefix server install && npm --prefix client install",
+    "setup": "npm install && cd server && npm install && cd .. && cd client && npm install",
     "test": "npm --prefix server test"
   },
   "devDependencies": {
