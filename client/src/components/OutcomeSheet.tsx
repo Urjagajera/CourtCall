@@ -6,6 +6,7 @@ import { Sheet } from './Sheet'
 import { useApi } from '../lib/useApi'
 import type { Person } from './CaseTeam'
 import { Banner, Button, Input, Select, Textarea, cx } from './ui'
+import { CourtFields } from './CourtFields'
 
 export interface OutcomeCase {
   id: string
@@ -137,10 +138,10 @@ export function OutcomeSheet({ c, onClose, onSaved }: { c: OutcomeCase; onClose:
               onChange={(e) => setRemember(e.target.value)}
             />
             {changeCourt && (
-              <div className="grid grid-cols-[1fr_7rem] gap-3">
-                <Input label="Court complex" value={courtComplex} onChange={(e) => setCourtComplex(e.target.value)} />
-                <Input label="Court no." value={roomNo} onChange={(e) => setRoomNo(e.target.value)} />
-              </div>
+              <CourtFields
+                complex={{ value: courtComplex, onChange: (e) => setCourtComplex(e.target.value) }}
+                room={{ value: roomNo, onChange: (e) => setRoomNo(e.target.value) }}
+              />
             )}
           </>
         ) : (

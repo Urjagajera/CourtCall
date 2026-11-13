@@ -5,7 +5,8 @@ import { PageHeader } from '../../components/AppLayout'
 import { HearingsToUpdate } from '../../components/HearingsToUpdate'
 import { UpdatesCard } from '../../components/UpdatesCard'
 import { Sheet } from '../../components/Sheet'
-import { Badge, Banner, Button, Card, EmptyState, Input, PageSpinner } from '../../components/ui'
+import { Badge, Banner, Button, Card, EmptyState, PageSpinner } from '../../components/ui'
+import { CourtFields } from '../../components/CourtFields'
 import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { statusMeta, timeAgo, useNow, usePolling, type Courtroom, type MyCase, type SessionState } from '../../lib/court'
@@ -156,7 +157,6 @@ function JoinSheet({ onClose }: { onClose: () => void }) {
       .then((r) => setKnown(r.courtrooms))
       .catch(() => {})
   }, [])
-  const complexes = [...new Set(known.map((k) => k.courtComplex))]
 
   const join = (courtComplex: string, roomNo: string) =>
     submit(async () => {
@@ -191,15 +191,7 @@ function JoinSheet({ onClose }: { onClose: () => void }) {
         }}
       >
         {formError && <Banner tone="stopped">{formError}</Banner>}
-        <div className="grid grid-cols-[1fr_7rem] gap-3">
-          <Input label="Court complex" required list="court-complexes" {...field('courtComplex')} />
-          <Input label="Court no." required {...field('roomNo')} />
-        </div>
-        <datalist id="court-complexes">
-          {complexes.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
+        <CourtFields required complex={field('courtComplex')} room={field('roomNo')} />
         <Button type="submit" loading={submitting}>
           Join room
         </Button>

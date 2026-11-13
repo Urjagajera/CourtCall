@@ -8,6 +8,7 @@ import { HearingsToUpdate } from '../../components/HearingsToUpdate'
 import { LinkSheet } from '../../components/LinkSheet'
 import { Sheet } from '../../components/Sheet'
 import { Banner, Button, Card, EmptyState, Input, PageSpinner, Select } from '../../components/ui'
+import { CourtFields } from '../../components/CourtFields'
 import { api, type Case, type Client } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatDate, todayISO } from '../../lib/dates'
@@ -232,10 +233,7 @@ function CaseForm({ existing, clientId, onClose, onSaved }: { existing: Case | n
         </Select>
         <Input label="Case title" required placeholder="e.g. Shah vs State of Gujarat" {...field('title')} />
         <Input label="Case number" required placeholder="e.g. CR.MA/1234/2026" hint="Needed before the client link can be shared" {...field('caseNo')} />
-        <div className="grid grid-cols-[1fr_7rem] gap-3">
-          <Input label="Court complex" required placeholder="e.g. Gujarat High Court" {...field('courtComplex')} />
-          <Input label="Court no." required placeholder="4" {...field('roomNo')} />
-        </div>
+        <CourtFields required complex={field('courtComplex')} room={field('roomNo')} />
         <div className="grid grid-cols-[1fr_7rem] gap-3">
           <Input label="Next hearing date" type="date" required {...field('hearingDate')} />
           <Input label="Item no." type="number" inputMode="numeric" min={1} placeholder="Later" className="tabular" {...field('itemNo')} />
