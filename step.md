@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 13 Nov 2026 (Urja): demo guide rewritten for the video
+
+README **Part 3: Demo guide** now matches every feature (case teams, updates, hearing outcomes, calendar, firm alerts, briefing, calls, client tabs, languages). **"Suggested walkthrough"** is the timed video script (about 7 minutes). Nothing to run. If you change a feature, update the matching lines there.
+
 ### 13 Nov 2026 (Urja): hearing-day briefing, in-app calls, API freeze fix
 
 **Do this after pulling** (in the `CourtCall` folder):

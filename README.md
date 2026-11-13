@@ -214,74 +214,81 @@ All demo accounts are already verified, so they can use every feature straight a
 | Role | Who | Can do | Approved by |
 |---|---|---|---|
 | **Firm admin** | A senior lawyer with admin rights (juniors and office staff can never be firm admins). The founder is always one. | Everything their role can do, plus the **Team** page: approve or decline new people, change roles (senior lawyer / junior / staff), make or remove other firm admins, deactivate and reactivate people, and make a new invite code | Founder: nobody (starts right away). Others: another firm admin |
-| **Senior lawyer** | Advocates of the firm | Clients, cases, courtrooms (join and report), team room, private client chat | Founder: nobody. Joining lawyers: a firm admin |
-| **Junior lawyer** | Juniors who go to court | Join courtrooms, report progress, room chat, team room | A firm admin |
-| **Office staff** | Clerks and office employees | Clients, cases, team room, private client chat; watch today's courtrooms **read-only** (they never report) | A firm admin |
+| **Senior lawyer** | Advocates of the firm | Adds clients and cases (and becomes the case's main lawyer); on cases they lead: edits details, records hearing outcomes, sets the briefing, picks the helping junior and staff helper; courtrooms (join and report), chats, calls | Founder: nobody. Joining lawyers: a firm admin |
+| **Junior lawyer** | Juniors who go to court | Sees only the cases they are on; as main lawyer records outcomes and edits the case; join courtrooms, report progress, room chat, chats, calls; never assigns anyone | A firm admin |
+| **Office staff** | Clerks and office employees | Staff helper on cases: sees those cases, clients and chats **read-only**; watches today's courtrooms **read-only** (never reports); can't add or edit cases or clients | A firm admin |
 
-**How people join a firm:** they choose **Create an account → Join a firm**, pick their role, and enter the firm's invite code. They wait on an "awaiting approval" screen until a firm admin approves them on the **Team** page. All data (clients, cases, chats) is shared across the whole firm and never with other firms.
+**How people join a firm:** they choose **Create an account → Join a firm**, pick their role, and enter the firm's invite code. They wait on an "awaiting approval" screen until a firm admin approves them on the **Team** page.
+
+**Case teams decide who sees what.** Every case has a **main lawyer** (senior or junior), an optional **helping junior** (only when a senior leads) and at most one **staff helper**. You see a case, its client, the client's link and chat only if you are on that case; firm admins see everything. Firm data is never shared with other firms: courtroom progress is the only thing shared.
 
 ### Demo data (created by `seed:demo`)
 
 Everything is in **Gujarat High Court**, dated **today** (India time):
 
-| Office | Client | Case | Court | Item | Assigned junior |
-|---|---|---|---|---|---|
-| Mehta & Associates | Ramesh Patel | Patel vs State of Gujarat (`CR.MA/1452/2026`) | 4 | 15 | Priya Shah |
-| Mehta & Associates | Sunita Joshi | Joshi vs Joshi (`FA/388/2025`) | 4 | 22 | Priya Shah |
-| Mehta & Associates | Ramesh Patel | Patel Textiles vs GSFC (`SCA/9021/2026`) | 7 | 9 | none |
-| Desai Law Chambers | Kiran Desai | Desai vs Municipal Corporation (`SCA/7710/2026`) | 4 | 18 | none |
+| Office | Client | Case | Court | Item | Main lawyer | Helping junior | Staff helper |
+|---|---|---|---|---|---|---|---|
+| Mehta & Associates | Ramesh Patel | Patel vs State of Gujarat (`CR.MA/1452/2026`) | 4 | 15 | Anil | Priya | Neha |
+| Mehta & Associates | Sunita Joshi | Joshi vs Joshi (`FA/388/2025`) | 4 | 22 | Mehta | Priya | Neha |
+| Mehta & Associates | Ramesh Patel | Patel Textiles vs GSFC (`SCA/9021/2026`) | 7 | 9 | Anil | none | Neha |
+| Desai Law Chambers | Kiran Desai | Desai vs Municipal Corporation (`SCA/7710/2026`) | 4 | 18 | Desai | Arjun | none |
 
 **Court 4 is shared by both offices.** Both offices see the same live progress there, but each office sees only its own clients and cases.
+
+Past history, so the case, client and Calendar pages aren't empty:
+- **Patel vs State of Gujarat** was last heard a week ago (Court 4, Item 11): adjourned to today, with a summary shared with the client and firm-only prep notes. Ramesh's **History** shows that day's alerts.
+- **Patel vs Shah (property)** (City Civil Court 12, three weeks ago): **case ended**, decree in Ramesh's favour.
+- **Joshi vs Joshi (maintenance)** (Court 7, two days ago) has **no outcome yet**, so Mehta and Neha see it under **Hearings to update**.
+- Today's **briefing** for Ramesh's main case is **not sent**, so you can send it live with **Send briefing now**.
 
 Re-running `seed:demo` moves these cases to today's date and keeps the same password (it only creates `server/.demo-credentials.txt` if the file is missing). Courtroom progress already reported today is kept. A new day starts with fresh courtroom rooms.
 
 ### What each demo user can do
 
 **Firm admin: Adv. Rakesh Mehta (Mehta & Associates)**
-- Everything a senior lawyer can do (below), plus he runs the firm on the **Team** page:
+- Sees **every** case and client of the firm, and can do everything on them: add and edit cases and clients, set any case team (**Case team → Edit team**: main lawyer, helping junior, staff helper), record hearing outcomes, set and send briefings.
+- Runs the firm on the **Team** page:
   - **Invite code** `MEHTA4` with copy and **Make a new code**.
-  - **Your firm** at a glance: how many senior lawyers, juniors and staff.
   - **Waiting for your approval:** approve or decline people who joined with the code.
-  - **People:** change anyone's role, **Make admin / Remove admin**, **Deactivate** (with confirmation). Deactivated people can be reactivated.
+  - **People:** change anyone's role, **Make admin / Remove admin** (senior lawyers only), **Deactivate** and reactivate.
   - The founder can't be deactivated or demoted, and nobody can edit their own account.
 
 **Senior lawyer: Adv. Anil Shah (Mehta & Associates)**
-- A second senior lawyer at the same firm, without admin rights. He sees the same firm clients, cases and courtrooms as Mehta. His **Team** page is read-only and lists the firm admins to contact.
-
-**Office staff: Neha Parikh (Mehta & Associates)**
-- **Today:** the firm's courtrooms with live progress, **read-only** (no Join courtroom, no reporting).
-- **Cases** and **Clients:** add, edit and delete, like a senior lawyer.
-- **Chat:** the office team room and private chats with clients.
-- **Team:** read-only.
-
-**What every senior lawyer can do (Mehta and Anil)**
-- **Today:** live cards for Court 4 and Court 7 showing the latest reported item, status (hearing, break, stale) and how far each of the office's cases is ("3 away").
-- **Cases:** add, edit or delete cases (client, court, date, item number, assigned junior).
-- **Clients:** add, edit or delete clients (name, WhatsApp number, alert language).
-- **Chat:** the private office team room, plus a private chat with each client.
-- **Courtroom rooms:** open any room to see progress, history and room chat. Lawyers can report too.
+- Main lawyer on both of Ramesh Patel's cases, so he sees **only Ramesh** (not Sunita). On his cases he edits details, picks the helping junior and staff helper (not the main lawyer), records outcomes and sends the briefing. He can add new clients and cases (he becomes their main lawyer). His **Team** page is read-only.
 
 **Junior lawyer: Priya Shah (Mehta & Associates)**
-- **Today:** the courtrooms where the office has cases (Court 4 and Court 7).
-- **Report progress** in a room:
-  - Tap **Now hearing: Item N**. It is pre-filled with the next item; use **−1 / +1** or type a number.
-  - Tap **Passed over**, **Adjourned** (applies to the item being heard), **Recalled** (pick from passed-over items), **Break / Resume**, **Not sitting** or **Court risen**.
-  - **Undo** stays on screen for 10 seconds after every report.
-  - Jumping more than 5 items ahead, or moving backward, asks for confirmation.
-- **Room chat:** message every verified lawyer and junior in the courtroom, from any office. Every accepted update also appears there as a progress card, sent through Nexconn.
-- **Chat:** the office team room.
+- Helping junior on Ramesh's and Sunita's Court 4 cases: sees only those two, read-only, and never assigns anyone.
+- **Report progress** in a courtroom room:
+  - **Now hearing: Item N** (pre-filled with the next item; **−1 / +1** or type a number).
+  - **Passed over**, **Adjourned**, **Recalled** (pick from passed-over items), **Break / Resume**, **Not sitting**, **Court risen**.
+  - **Undo** stays for 10 seconds. Jumping more than 5 items ahead, or moving backward, asks for confirmation.
+- **Room chat** with every lawyer and junior in the courtroom, from any firm. Every accepted update also appears there as a progress card, sent through Nexconn.
+
+**Office staff: Neha Parikh (Mehta & Associates)**
+- Staff helper on Ramesh's and Sunita's cases: sees those cases and clients **read-only**, chats with those clients, and watches today's courtrooms **read-only** (never reports). Can't add or edit cases or clients.
+
+**Every staff screen**
+- **Today:** live cards per courtroom (latest item, status: hearing, break, stale) and how far each of your cases is ("3 away"); **Updates** (what changed on your cases) and **Hearings to update**.
+- **Cases** and **case page** (`/cases/:id`): details, case team, **Hearing-day briefing** card, hearings history with outcomes, client link, **Call client**.
+- **Clients** and **client page**: their cases, hearings, chat.
+- **Calendar:** your hearings by day, past and upcoming.
+- **Chat:** the firm team room and one-to-one chats, with filters **Lawyers** (seniors first), **Staff**, **Clients**; **Call** button in every one-to-one chat; **mic** for voice typing.
+- **Badges:** a number on **Cases** for new updates and on **Chat** for unread messages.
+- **Settings:** theme, **Phone alerts**, take the tour again.
 
 **Senior lawyer (2nd office): Adv. Nisha Desai (Desai Law Chambers)**
-- The same screens as Mehta, for her own office.
-- In **Court 4** she sees the same live progress as Mehta & Associates, but only her own case (Kiran Desai, Item 18). Mehta's clients are never visible to her.
+- The same screens as Mehta, for her own firm. In **Court 4** she sees the same live progress as Mehta & Associates, but only her own case (Kiran Desai, Item 18).
 
 **Junior lawyer (2nd office): Arjun Trivedi (Desai Law Chambers)**
-- Reports in the same **Court 4** room as Priya. Updates from either junior are shared with both offices.
+- Reports in the same **Court 4** room as Priya. Updates from either junior are shared with both firms.
 
 **Client: Ramesh Patel (no account)**
 - Clients never sign in. The firm shares a private link on WhatsApp; the **Client** demo button opens Ramesh's seeded link directly.
-- His page shows only his own case: **Now** vs **Your item**, how many cases are before his, court status and how fresh the report is, and the latest updates. It refreshes by itself every 10 seconds. It never shows who reported or other firms' cases, and never predicts times.
-- **Chat with Mehta & Associates** (Nexconn direct chat). The person who shared the link is the default contact; he can switch to the firm's other lawyers and staff. Messages appear on the firm's **Chat** page.
+- Tabs (sidebar on a laptop, bottom bar on a phone): **My case**, **Cases**, **History**, **Chat**, **Settings**.
+- **My case:** **Now** vs **Your item**, how many cases are before his, court status and how fresh the report is, the next date, today's briefing, latest updates. It never shows who reported or other firms' cases, and never predicts times.
+- **History:** past alerts and hearing summaries the firm chose to share (never prep notes); "case ended" for finished cases.
+- **Chat** with the people on his case (Nexconn direct chat), **Call my lawyer**, and voice typing.
+- **Settings:** language **English / हिंदी / ગુજરાતી** (page, tour and alerts), phone alerts, theme, tour, sign out.
 
 ### Client alerts (automatic)
 
@@ -314,6 +321,15 @@ The same courtroom updates also alert **the firm**: the people on the case (main
 - Delivered as a **pop-up inside CourtCall** on any page (Nexconn message `CC:StaffAlert` from the CourtCall bot) and as a **phone notification** for people who tapped **Settings → Phone alerts → Turn on**. Tapping the "over" alert opens the case with the **Update hearing** form already open (for the main lawyer and firm admins).
 - To see it: sign in as **Office staff (Neha)** or **Firm admin (Mehta)** in one window (Settings → Phone alerts → Turn on), and as **Junior lawyer (Priya)** in another. Report **Now hearing** in Court 4 for Item 13, 15, then 16.
 
+### Hearing-day briefing and calls (Nexconn Call SDK)
+
+- **Briefing:** on a hearing day, each client gets a short spoken briefing: the court, the item number (or "not out yet"), which lawyer will appear, and a note from the firm ("Remember to bring…"). It never gives a time.
+  - Set it on the case page, in the **Hearing-day briefing** card (or in the outcome form for the next hearing): **Appearing lawyer** (a senior lawyer of the firm) and **Remember** note. A note typed in English is translated to Hindi or Gujarati for the client (free MyMemory service); if translation fails, the note is sent as typed.
+  - Sent automatically every morning (Vercel Cron, 9–10 am India time), or right away with **Send briefing now** (main lawyer or firm admin, hearing day only, once per day).
+  - The client sees a full-screen **"CourtCall is calling"** screen. **Answer** reads the briefing aloud in their language with the phone's own voice; **Listen again**, **Call my lawyer**. It also stays on **My case** as "Today's briefing" and in **History**.
+- **Calls:** voice calls inside CourtCall over the **Nexconn Call SDK**: **Call** in every one-to-one chat, **Call client** on the case page, **Call my lawyer** for clients (the appearing lawyer first, else the main lawyer). The other person's phone rings in CourtCall on any page; a call-log line is added to the chat.
+  - Calls need the **voice/video call (VoIP) service switched on** for the Nexconn app (console.nexconn.ai). Until then a call shows "The call could not connect".
+
 ### Client links (how the firm shares a case)
 
 - On **Cases**, tap the link icon on a case. **Create client link** makes a private link with live progress and chat.
@@ -333,26 +349,26 @@ The first time someone signs in, CourtCall starts a guided tour. It dims the pag
 - To see it again: **Settings → Take the tour again**.
 - To replay it on a demo account from scratch, clear the site's local storage, or open a private window.
 
-### Suggested walkthrough (about 5 minutes, good for the demo video)
+### Suggested walkthrough (video script, about 7 minutes)
 
-1. **Landing page:** open http://localhost:5173. In the hero, tap **Now hearing**, **Passed over** and **Break** to drive the dashboard and the client's phone (auto-play resumes after 12 seconds). Tap people in **Your whole firm, connected** to see their links. Try the live demo, including **Simulate a delayed old update**.
-2. **Window 1, Junior Priya:** tap **Junior lawyer** → **Today** → **Court 4** → **Open room**.
-   - Set the item to **12** and tap **Now hearing: Item 12**. Then tap **Now hearing: Item 13**.
-   - Tap **Passed over** (marks Item 13), then **Now hearing: Item 14**, then **Recalled** and choose **13**.
-   - Type **25** and tap **Now hearing** to see the **jump confirmation**. Cancel it.
-   - Tap **Break**, then **Resume**. Use **Undo** on any toast.
-   - Send a message in **Room chat**.
-3. **Window 2 (private window), Junior Arjun:** tap **Junior lawyer (2nd office)** → **Court 4**. The same progress and the same room chat appear, but **Your cases here** shows only Item 18 (Kiran Desai).
-   - Report **Now hearing** from Arjun's window. Priya's window updates within seconds.
-   - **Conflict protection:** report from one window, then immediately report from the other without waiting. The older update is rejected with "Someone else just reported a newer update".
-4. **Senior lawyer Mehta** (sign out first, or use a third window): **Today** now shows Court 4's live item and "N away" for Ramesh (15) and Sunita (22). Open **Chat** for the office team room and the client list.
-5. **Senior lawyer Desai:** **Today** shows Court 4 with only Kiran Desai's case. This demonstrates private office data inside a shared courtroom.
-6. **Joining a firm:** sign out, choose **Create an account → Join a firm**, pick **Office staff** (or junior / senior lawyer) and use invite code **MEHTA4**. The new person waits for approval. Sign in as **Firm admin (Mehta)** → **Team** → **Approve**, then try changing their role or making them a firm admin.
-   - Sign in as **Office staff (Neha)** to see the read-only courtrooms and the cases and clients she manages.
-7. **Client:** tap the **Client** demo button. Ramesh's page shows Court 4's progress against his Item 15. Tap **Turn on** under "Get alerts on this phone". Report from Priya's window (Court 4, Now hearing 5, then 10, 13, 15) and watch the alert banner, the phone notification and his page update. Send Mehta a message from the client chat, then open **Chat → Ramesh Patel** as Mehta to reply.
-8. **Case teams and updates:** sign in as **Senior lawyer (Anil)**: he leads Ramesh's cases, so he sees only Ramesh. **Junior (Priya)** sees only the two cases she helps on and can't change them. **Office staff (Neha)** helps on Ramesh's and Sunita's cases (read-only). As **Firm admin (Mehta)**, open a case → **Case team → Edit team** and make Anil the main lawyer: Anil gets a number on **Cases** and an item under **Updates** on Today.
-9. **Firm alerts:** keep **Firm admin (Mehta)** open in one window (Settings → **Phone alerts → Turn on**). As **Priya**, report Court 4 **Now hearing** 13, then 15, then 16. Mehta gets "Ramesh Patel's case is close", "being heard now", then "the hearing is over" with **Update**, which opens the outcome form.
-10. **Languages and voice:** on the client page tap **हिं** or **ગુ**; the page, tour and his future alerts switch language. In any chat, tap the **mic** and speak.
+Before recording: run `seed:demo` the same day, and open three windows side by side: a normal one, a private one and a phone-size one (DevTools device mode at 375 px, or a real phone on the deployed site). Each window is one demo user. Every live update below travels as a **Nexconn** message; say so on screen.
+
+1. **The problem (0:00–0:30), landing page:** "eCourts tells you which day. CourtCall tells you the latest reported courtroom progress." In the hero, tap **Now hearing**, **Passed over** and **Break** to drive the dashboard and the client's phone. Show **Your whole firm, connected**.
+2. **The junior in court (0:30–1:45), Window 1, Junior Priya:** **Today → Court 4 → Open room**.
+   - Report **Now hearing** 5, then 6. Tap **Passed over**, **Now hearing 7**, then **Recalled → 6**. (Keep below Item 13 so Ramesh's alerts are saved for step 4.)
+   - Type **20** to show the **jump confirmation**; cancel. **Break**, **Resume**, **Undo** on a toast.
+   - Send a message in **Room chat**; point at the progress cards (Nexconn group channel, `CC:Progress`).
+3. **Shared courtroom, private firms (1:45–2:30), Window 2, Junior Arjun (2nd office):** Court 4 shows the same progress and room chat, but only Kiran Desai's Item 18.
+   - Report **Now hearing 8** from Arjun; Priya's window updates within a second.
+   - **Conflict protection:** report from both windows at once; the late one gets "Someone else just reported a newer update".
+4. **The client (2:30–3:45), Window 3 (phone size), Client:** tap **Client**. Ramesh sees **Now** vs **Item 15** and "N away". Tap **Turn on** alerts.
+   - From Priya, report **Now hearing** 13: Ramesh gets "Your case is close… (2 away)". Then 15: "being heard now". Show the banner and the phone notification.
+   - Switch the language to **ગુજરાતી**; the page and alerts follow. Open **History** (last week's hearing summary, the finished case) and **Chat**: send a message with the **mic** (voice typing).
+5. **The firm gets alerted too (3:45–4:30), Window 1, Firm admin Mehta** (Settings → **Phone alerts → Turn on**): from Arjun's window report Court 4 **16**. Mehta's pop-up says the hearing of Ramesh's case is over; **Update** opens the outcome form. Record **Next date**, a summary shared with the client and firm-only prep notes. Show it on Ramesh's **History**, and the **Calendar**.
+6. **Hearing-day briefing (4:30–5:30), Mehta → Patel vs State of Gujarat:** in **Hearing-day briefing**, pick **Anil** as appearing lawyer, type a **Remember** note in English, tap **Send briefing now**. On Ramesh's phone **"CourtCall is calling"** rings; tap **Answer**: it reads the briefing aloud in Gujarati (`CC:Briefing`).
+7. **Calls (5:30–6:00):** tap **Call my lawyer** on Ramesh's phone, or **Call client** on the case page; the other side rings and answers (Nexconn Call SDK). Needs VoIP switched on in the Nexconn console.
+8. **Case teams (6:00–6:40):** as Mehta open a case → **Case team → Edit team**. Then show **Anil** (sees only Ramesh's cases, a number on **Cases** and an item under **Updates** on Today), **Priya** (only her two cases, read-only) and **Neha** (read-only courtrooms, Chat count). Mention **Team → invite code MEHTA4 → Approve**.
+9. **Close (6:40–7:00):** Nexconn powers every live part: courtroom rooms, firm chat, client chat, alerts, briefings and calls. Works on a cheap phone through a WhatsApp link, with no app and no password.
 
 ---
 
