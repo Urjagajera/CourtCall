@@ -143,7 +143,7 @@ export function tourStepsFor(role: Role, firstName: string, isFirmAdmin = false)
         route: firstRoom,
         optional: true,
         title: 'Inside a courtroom',
-        body: 'This is the shared progress for the whole courtroom. "Updated 2 min ago" tells everyone how fresh it is; after 20 minutes without updates it is marked stale (a firm admin can change the time on the Team page).',
+        body: 'This is the shared progress for the whole courtroom. "Updated 2 min ago" tells everyone how fresh it is; after 20 minutes without updates it is marked stale (a firm admin can change the time on the Team page). After each update, the lightning badge shows how fast it reached this screen through Nexconn.',
       },
       {
         id: 'room-stepper',

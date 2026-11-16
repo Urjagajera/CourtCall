@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 17 Nov 2026 (Urja): live delivery timing (no migration)
+
+Nothing to run. In a courtroom room, after each update a lightning badge shows **Tap to screen X s · Nexconn Y s**. Locally the tap-to-screen time looks slow (about 2.5 s) because every database query goes to Tokyo; the live site is much faster.
+
 ### 14 Nov 2026 (Urja): usage summary and voice notes (migration 0015)
 
 **Do this after pulling:** `npm --prefix server run db:migrate` (Urja already ran it on the live database).

@@ -159,7 +159,10 @@ check('non-member cannot read room', (await lawyer2.get(`/sessions/${sid}`)).sta
 let s = (await junior.get(`/sessions/${sid}`)).body
 check('room detail has members + chat group', Array.isArray(s.members) && s.members.length >= 2, s)
 const v0 = s.session.version
-const e1 = await junior.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: (s.session.currentItem ?? 0) + 1, baseVersion: v0 })
+const clock = await fetch(BASE + '/auth/me')
+check('every reply carries the server clock', Math.abs(Number(clock.headers.get('x-server-time')) - Date.now()) < 60_000)
+// tappedAt (server clock) rides along for the "Tap to screen" timing; it must not get in the way of the report.
+const e1 = await junior.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: (s.session.currentItem ?? 0) + 1, baseVersion: v0, tappedAt: Date.now() })
 check('report now hearing', e1.status === 201, e1.body)
 const e2 = await junior2.post(`/sessions/${sid}/events`, { type: 'now_hearing', item: 50, baseVersion: v0 })
 check('stale baseVersion -> 409 conflict', e2.status === 409 && e2.body.session?.version === v0 + 1, e2.body)

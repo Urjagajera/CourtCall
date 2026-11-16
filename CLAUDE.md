@@ -38,7 +38,7 @@ npm run dev                            # web http://localhost:5173, API http://l
 
 If two people share the **same** Supabase database, they share demo data and migrations: coordinate before running `db:generate` (see section 8).
 
-Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 201 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
+Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 202 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
 
 ---
 
@@ -130,6 +130,7 @@ PLAN.md              original product plan and schedule
 - Calls and voice notes are invisible to our database, so the app reports each one to `usage_events` (Team page usage card).
 - Nexconn failures are logged and never break the core courtroom flow (`safely()`).
 - Rooms reload instantly on a `CC:Progress` message; polling stays as a slow fallback.
+- **Delivery timing** (measurable SDK usage): every API reply carries `X-Server-Time`; `client/src/lib/clock.ts` keeps the device clock in step (lowest-round-trip sample). The reporter sends `tappedAt` (server clock) with the event; `announceEvent` adds it and `sentAt` (just before the Nexconn call) to `CC:Progress`. The room shows **Tap to screen X s · Nexconn Y s** (lightning badge, `data-tour="room-delivery"`), only for live messages (under 60 s old).
 
 **Design** (`design.md`, tokens in `client/src/index.css`)
 - Theme "Warm legal": 50% warm ivory `#F4EEEA`, 35% near-white cards `#FBF8F6`, 15% maroon `#7B3B36` accent; espresso text `#463B36`; taupe `#B4907C` details. **Light is the default**; dark mode is optional in Settings.
@@ -193,6 +194,8 @@ Done (in order):
 13h. Done (14 Nov 2026, Urja): **firm usage summary + voice notes**.
   - **Usage** (migration 0015, additive): table `usage_events` (office, kind `call` | `voice_note` | `firm_alert`, user or client, seconds). Calls (caller only, on hang-up, `lib/calls.ts`) and voice notes are reported by the app through `client/src/lib/usage.ts` (`POST /api/usage` staff, `POST /api/c/usage` clients; audience set in `startChat`); firm alerts are recorded in `deliverToFirm` (alerts.ts) because their `alert_logs` rows can't be told apart from silent bookkeeping rows. `GET /api/office/usage` (firm admin, `routes/usage.ts`) counts last 7 days + total: courtroom updates (court_events of the firm, no corrections), client alerts (alert_logs with a message, not staff_/briefing), firm alerts, briefings, hearings recorded, calls (+ minutes), voice notes, clients with an active link. Team page card **This week in CourtCall** (`FirmUsage` in Team.tsx) + tour step. `smoke:cleanup` removes the smoke run's usage rows (marker `seconds = 4321` and firm alerts since the smoke accounts were made).
   - **Voice notes** in every chat (`ChatPanel`, `lib/voiceNote.ts`): empty box → the send button records (MediaRecorder: webm/opus on Android, mp4 on iPhone), max 60 s (Nexconn HD voice limit), Send or Cancel. Sent with `Helper.createSendHDVoiceMessageParams(file)` + `channel.sendMediaMessage` (`sendVoiceNote` in `lib/nexconn.ts`, type `RC:HQVCMsg`); played with an `<audio>` from the Nexconn `remoteUrl`. Tested in Chrome with a generated stream (the browser pane has no mic); **still to test on a real Android phone and an iPhone** (an iPhone may not play webm notes recorded on Android).
+
+13i. Done (17 Nov 2026, Urja): **live delivery timing** in the courtroom room (see Nexconn decisions above). No migration. Measured locally: Nexconn leg under 0.1 s; tap to screen ~2.6 s, almost all of it our API's database round trips from India to Tokyo (about 9 per report). On Vercel (Tokyo, next to the database) it should be far lower.
 
 ### Not done yet
 

@@ -1,3 +1,5 @@
+import { noteServerTime } from './clock'
+
 export class ApiError extends Error {
   status: number
   details?: Record<string, string[] | undefined>
@@ -13,12 +15,14 @@ export class ApiError extends Error {
 }
 
 export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
+  const sentAt = Date.now()
   const res = await fetch(`/api${path}`, {
     method: options.method ?? (options.body ? 'POST' : 'GET'),
     headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
     body: options.body ? JSON.stringify(options.body) : undefined,
     credentials: 'include',
   })
+  noteServerTime(res.headers.get('X-Server-Time'), sentAt, Date.now())
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new ApiError(res.status, data.error ?? 'Something went wrong', data.details, data)
   return data as T

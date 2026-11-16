@@ -153,7 +153,7 @@ When a hearing is over (the date has passed, or the court has risen or moved pas
 6. Jumping more than 5 items, or going backwards, asks you to confirm.
 7. If someone else reported a moment before you, CourtCall says so and shows the latest progress. Nothing is overwritten.
 
-Juniors from **different firms** in the same courtroom see and update the **same progress**. Use **Room chat** to coordinate.
+Juniors from **different firms** in the same courtroom see and update the **same progress**. Use **Room chat** to coordinate. After each update, the **lightning badge** under the progress shows how fast it reached your screen (from the reporter's tap, and the Nexconn delivery alone).
 
 ### Everyone: chat inside the firm
 

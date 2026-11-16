@@ -361,7 +361,7 @@ Before recording: run `seed:demo` the same day, and open three windows side by s
    - Type **20** to show the **jump confirmation**; cancel. **Break**, **Resume**, **Undo** on a toast.
    - Send a message in **Room chat**; point at the progress cards (Nexconn group channel, `CC:Progress`).
 3. **Shared courtroom, private firms (1:45–2:30), Window 2, Junior Arjun (2nd office):** Court 4 shows the same progress and room chat, but only Kiran Desai's Item 18.
-   - Report **Now hearing 8** from Arjun; Priya's window updates within a second.
+   - Report **Now hearing 8** from Arjun; Priya's window updates within a second. Point at the lightning badge under the progress: **Tap to screen 0.x s · Nexconn 0.x s**, measured live on every update.
    - **Conflict protection:** report from both windows at once; the late one gets "Someone else just reported a newer update".
 4. **The client (2:30–3:45), Window 3 (phone size), Client:** tap **Client**. Ramesh sees **Now** vs **Item 15** and "N away". Tap **Turn on** alerts.
    - From Priya, report **Now hearing** 13: Ramesh gets "Your case is close… (2 away)". Then 15: "being heard now". Show the banner and the phone notification.

@@ -48,7 +48,9 @@ export async function syncChatMembership(sessionId: string, userIds: string[]) {
 }
 
 /** Posts a structured progress message into the shared courtroom room. */
-export async function announceEvent(session: CourtSession, event: CourtEvent, reporter: User) {
+/** `tappedAt`: when the reporter tapped (server clock, ms); kept only if it is plausible (last minute). */
+export async function announceEvent(session: CourtSession, event: CourtEvent, reporter: User, tappedAt?: number) {
+  const tap = tappedAt && tappedAt > Date.now() - 60_000 && tappedAt < Date.now() + 5_000 ? tappedAt : null
   let groupId = session.nexconnGroupId
   if (!groupId) {
     await syncChatMembership(session.id, [reporter.id])
@@ -76,6 +78,9 @@ export async function announceEvent(session: CourtSession, event: CourtEvent, re
         reporterName: reporter.name,
         singleReporter: event.singleReporter,
         at: event.createdAt,
+        // Delivery timing shown in the room: tap -> screen, and server -> Nexconn -> screen.
+        tappedAt: tap,
+        sentAt: Date.now(),
       },
       progressText(event.type, event.item, session.currentItem),
     ),

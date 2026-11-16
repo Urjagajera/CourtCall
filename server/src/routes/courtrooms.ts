@@ -107,6 +107,8 @@ const eventInput = z.object({
   type: z.enum(EVENT_TYPES),
   item: z.coerce.number().int().min(1).max(5000).nullable().optional(),
   baseVersion: z.number().int().min(0),
+  // When the reporter tapped (server clock, ms), for the "reached you in …" timing on other screens.
+  tappedAt: z.number().int().positive().optional(),
   confirm: z.boolean().optional(),
   correctsEventId: z.uuid().optional(),
 })
@@ -121,7 +123,7 @@ courtroomsRouter.post('/sessions/:id/events', ...staff, async (req, res) => {
   switch (result.kind) {
     case 'applied':
       // Awaited (not fire-and-forget) so it also completes on serverless hosts. Failures are logged, never thrown.
-      await announceEvent(result.session, result.event, user)
+      await announceEvent(result.session, result.event, user, body.tappedAt)
       res.status(201).json({ session: sessionView(result.session), event: result.event })
       // Client and firm alerts run after the reply so the junior's tap stays fast. On Vercel, waitUntil keeps
       // the function alive until they finish.

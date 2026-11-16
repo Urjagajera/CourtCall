@@ -13,6 +13,7 @@ import {
   Undo2,
   UserRound,
   Users,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -23,6 +24,7 @@ import { MSG_PROGRESS, isFromChannel, useChat, useIncomingMessages, type Message
 import { Toast, type ToastData } from '../../components/Toast'
 import { Badge, Banner, Button, Card, PageSpinner, cx, type Tone } from '../../components/ui'
 import { api, ApiError } from '../../lib/api'
+import { formatDelay, serverNow } from '../../lib/clock'
 import {
   EVENT_META,
   clockTime,
@@ -98,9 +100,24 @@ export default function Room() {
   // Polling stays as a slow safety net (fast only while chat is not connected).
   const chat = useChat()
   const groupId = data?.chatGroupId ?? null
+  // How fast the last update reached this screen: from the reporter's tap, and the Nexconn leg alone
+  // (server hands it to Nexconn -> this screen). Both on the server's clock (lib/clock).
+  const [delivery, setDelivery] = useState<{ version: number; totalMs: number | null; nexconnMs: number; who: string } | null>(null)
   const onIncoming = useCallback(
     (m: Message) => {
-      if (m.messageType === MSG_PROGRESS && groupId && isFromChannel(m, 'group', groupId)) load()
+      if (m.messageType !== MSG_PROGRESS || !groupId || !isFromChannel(m, 'group', groupId)) return
+      const c = m.content as { version?: number; tappedAt?: number | null; sentAt?: number; reporterName?: string }
+      const arrived = serverNow()
+      // Only live messages (not old ones re-delivered after a reconnect).
+      if (c.sentAt && arrived - c.sentAt < 60_000) {
+        setDelivery({
+          version: c.version ?? 0,
+          totalMs: c.tappedAt ? Math.max(0, arrived - c.tappedAt) : null,
+          nexconnMs: Math.max(0, arrived - c.sentAt),
+          who: c.reporterName ?? 'A reporter',
+        })
+      }
+      load()
     },
     [groupId, load],
   )
@@ -127,7 +144,7 @@ export default function Room() {
     setBusy(true)
     try {
       const res = await api<ReportResponse>(`/sessions/${id}/events`, {
-        body: { ...input, baseVersion: latest.session.version, confirm: confirmed || undefined },
+        body: { ...input, baseVersion: latest.session.version, confirm: confirmed || undefined, tappedAt: Math.round(serverNow()) },
       })
       if ('needsConfirmation' in res) {
         setConfirm({ input, message: res.needsConfirmation.message })
@@ -246,6 +263,28 @@ export default function Room() {
           <Users className="size-3.5" strokeWidth={1.75} />
           {activeReporters === 0 ? 'No active reporters' : `${activeReporters} reporting in the last 20 min`}
         </p>
+        {delivery && delivery.version === session.version && (
+          <p
+            key={delivery.version}
+            data-tour="room-delivery"
+            className="cc-pop mx-auto mt-2 flex w-fit max-w-full items-center gap-1.5 rounded-full bg-info-bg px-3 py-1 text-caption text-info-fg"
+            title={`${delivery.who}'s update. Nexconn delivered it ${formatDelay(delivery.nexconnMs)} after the server sent it.`}
+          >
+            <Zap className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+            <span className="truncate">
+              {delivery.totalMs != null ? (
+                <>
+                  Tap to screen <b className="tabular">{formatDelay(delivery.totalMs)}</b> · Nexconn{' '}
+                  <span className="tabular">{formatDelay(delivery.nexconnMs)}</span>
+                </>
+              ) : (
+                <>
+                  Delivered by Nexconn in <b className="tabular">{formatDelay(delivery.nexconnMs)}</b>
+                </>
+              )}
+            </span>
+          </p>
+        )}
       </Card>
 
       {/* Main action: stepper + Now hearing */}

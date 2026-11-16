@@ -25,6 +25,12 @@ app.set('trust proxy', 1)
 app.use(cors({ origin: config.clientOrigin, credentials: true }))
 app.use(express.json({ limit: '100kb' }))
 app.use(cookieParser())
+// Server clock on every reply: the app keeps its clock in step with it, so "reached you in 0.4 s" is honest
+// even when a phone's clock is off.
+app.use((_req, res, next) => {
+  res.setHeader('X-Server-Time', String(Date.now()))
+  next()
+})
 
 app.get('/api/health', async (_req, res) => {
   let db = 'connected'
