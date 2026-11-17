@@ -57,6 +57,8 @@ export type ChatState = {
   team: TeamInfo | null
   contacts: ChatContact[]
   error?: string
+  /** Nexconn speech-to-text is switched on for this app (voice notes get "Show text"). */
+  sttEnabled?: boolean
 }
 
 let state: ChatState = { status: 'idle', myId: null, team: null, contacts: [] }
@@ -95,6 +97,11 @@ export function startChat(tokenPath = '/chat/token') {
             onMessageReceived({ messages }) {
               for (const m of messages) messageSubs.forEach((f) => f(m))
             },
+            // Nexconn speech-to-text finished for a voice note (requested with requestTranscript).
+            onSpeechToTextCompleted({ messageId, code, info }) {
+              const ok = code === 0 && info && Number(info.status) === 2
+              setTranscript(messageId, ok ? { status: 'done', text: info!.text } : { status: 'failed' })
+            },
           }),
         )
         NCEngine.addConnectionStatusHandler(
@@ -111,7 +118,14 @@ export function startChat(tokenPath = '/chat/token') {
       }
       const r = await NCEngine.connect({ token: t.token })
       if (!r.isOk) throw new Error(`Chat connection failed (code ${r.code})`)
-      setState({ status: 'ready', myId: r.data?.userId ?? t.userId, team: t.team ?? null, contacts: t.contacts ?? [] })
+      const settings = NCEngine.getAppSettings()
+      setState({
+        status: 'ready',
+        myId: r.data?.userId ?? t.userId,
+        team: t.team ?? null,
+        contacts: t.contacts ?? [],
+        sttEnabled: settings.isOk && !!settings.data?.isSpeechToTextEnabled,
+      })
       // In-app voice calls (Nexconn Call SDK) ride on the same connection.
       startCallEngine()
     } catch (e) {
@@ -188,6 +202,46 @@ export async function sendVoiceNote(kind: ChannelKind, id: string, file: File) {
   const r = await channelFor(kind, id).sendMediaMessage(params.data)
   if (!r.isOk) throw new Error(`Voice note not sent (code ${r.code})`)
   return r.data!
+}
+
+// ---- voice note transcripts (Nexconn speech-to-text) ----
+
+export type Transcript = { status: 'loading' } | { status: 'done'; text: string } | { status: 'failed' }
+const transcripts = new Map<string, Transcript>()
+const transcriptSubs = new Set<() => void>()
+function setTranscript(messageId: string, t: Transcript) {
+  transcripts.set(messageId, t)
+  transcriptSubs.forEach((f) => f())
+}
+
+/** Asks Nexconn to turn a voice note into text; the result arrives through onSpeechToTextCompleted. */
+export async function requestTranscript(m: Message) {
+  const id = m.messageId
+  if (!id) return
+  setTranscript(id, { status: 'loading' })
+  try {
+    const r = await m.requestSpeechToText()
+    if (!r.isOk) return setTranscript(id, { status: 'failed' })
+  } catch {
+    return setTranscript(id, { status: 'failed' })
+  }
+  // No answer within 30 s: give up so the button can be tried again.
+  setTimeout(() => transcripts.get(id)?.status === 'loading' && setTranscript(id, { status: 'failed' }), 30_000)
+}
+
+/** The transcript of one voice note: one Nexconn already stored with the message, or one requested here. */
+export function useTranscript(m: Message): Transcript | null {
+  const id = m.messageId
+  const live = useSyncExternalStore(
+    (f) => {
+      transcriptSubs.add(f)
+      return () => transcriptSubs.delete(f)
+    },
+    () => (id ? transcripts.get(id) : undefined) ?? null,
+  )
+  if (live) return live
+  const stored = (m.content as { sttInfo?: { status?: number; text?: string } }).sttInfo
+  return stored && Number(stored.status) === 2 && stored.text ? { status: 'done', text: stored.text } : null
 }
 
 export function markRead(kind: ChannelKind, id: string) {

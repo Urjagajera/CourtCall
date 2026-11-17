@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 17 Nov 2026 (Urja): voice note transcripts (no migration)
+
+Nothing to run. Voice notes get a **Show text** link (Nexconn speech-to-text) once speech-to-text is switched on for the Nexconn app; until then nothing new shows. On your own Nexconn app it stays hidden unless you switch it on there too.
+
 ### 17 Nov 2026 (Urja): live delivery timing (no migration)
 
 Nothing to run. In a courtroom room, after each update a lightning badge shows **Tap to screen X s · Nexconn Y s**. Locally the tap-to-screen time looks slow (about 2.5 s) because every database query goes to Tokyo; the live site is much faster.

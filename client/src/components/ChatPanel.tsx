@@ -1,4 +1,4 @@
-import { AudioLines, Loader2, MessageCircle, Mic, Send, Square, WifiOff, X } from 'lucide-react'
+import { AudioLines, Loader2, MessageCircle, Mic, Send, Square, Type, WifiOff, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EVENT_META, clockTime, type EventType } from '../lib/court'
 import {
@@ -9,10 +9,12 @@ import {
   isFromChannel,
   loadHistory,
   markRead,
+  requestTranscript,
   sendText,
   sendVoiceNote,
   useChat,
   useIncomingMessages,
+  useTranscript,
   type ChannelKind,
   type Message,
 } from '../lib/nexconn'
@@ -279,24 +281,7 @@ function Bubble({ m, mine, names }: { m: Message; mine: boolean; names: Record<s
     )
   }
 
-  if (m.messageType === MSG_VOICE) {
-    const v = m.content as { remoteUrl?: string; duration?: number }
-    return (
-      <div className={cx('cc-pop flex max-w-[85%] flex-col', mine ? 'items-end self-end' : 'items-start self-start')}>
-        {!mine && <span className="mb-0.5 px-1 text-caption font-semibold text-ink-muted">{names[m.senderUserId] ?? 'Member'}</span>}
-        <div className={cx('flex items-center gap-2 rounded-lg px-2 py-1.5', mine ? 'rounded-br-sm bg-accent text-accent-ink' : 'rounded-bl-sm border border-line bg-surface-raised text-ink')}>
-          <AudioLines className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-          {v.remoteUrl ? (
-            <audio controls preload="none" src={v.remoteUrl} className="h-10 w-56 max-w-full" aria-label="Voice note" />
-          ) : (
-            <span className="text-label">Voice note</span>
-          )}
-          {v.duration ? <span className="tabular shrink-0 text-caption opacity-80">{v.duration}s</span> : null}
-        </div>
-        <span className="mt-0.5 px-1 text-caption text-ink-muted">{time}</span>
-      </div>
-    )
-  }
+  if (m.messageType === MSG_VOICE) return <VoiceBubble m={m} mine={mine} names={names} time={time} />
 
   const text =
     m.messageType === MSG_TEXT
@@ -316,6 +301,53 @@ function Bubble({ m, mine, names }: { m: Message; mine: boolean; names: Record<s
         )}
       >
         {text}
+      </div>
+      <span className="mt-0.5 px-1 text-caption text-ink-muted">{time}</span>
+    </div>
+  )
+}
+
+/**
+ * A voice note (Nexconn HD voice message). When Nexconn speech-to-text is switched on for the app,
+ * "Show text" asks Nexconn for a transcript, so a note from the courtroom can be read without playing it.
+ */
+function VoiceBubble({ m, mine, names, time }: { m: Message; mine: boolean; names: Record<string, string>; time: string }) {
+  const chat = useChat()
+  const transcript = useTranscript(m)
+  const v = m.content as { remoteUrl?: string; duration?: number }
+  return (
+    <div className={cx('cc-pop flex max-w-[85%] flex-col', mine ? 'items-end self-end' : 'items-start self-start')}>
+      {!mine && <span className="mb-0.5 px-1 text-caption font-semibold text-ink-muted">{names[m.senderUserId] ?? 'Member'}</span>}
+      <div className={cx('flex flex-col gap-1 rounded-lg px-2 py-1.5', mine ? 'rounded-br-sm bg-accent text-accent-ink' : 'rounded-bl-sm border border-line bg-surface-raised text-ink')}>
+        <div className="flex items-center gap-2">
+          <AudioLines className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+          {v.remoteUrl ? (
+            <audio controls preload="none" src={v.remoteUrl} className="h-10 w-56 max-w-full" aria-label="Voice note" />
+          ) : (
+            <span className="text-label">Voice note</span>
+          )}
+          {v.duration ? <span className="tabular shrink-0 text-caption opacity-80">{v.duration}s</span> : null}
+        </div>
+        {transcript?.status === 'done' ? (
+          <p className="whitespace-pre-wrap break-words px-1 pb-0.5 text-body">{transcript.text || '(no words heard)'}</p>
+        ) : chat.sttEnabled && m.messageId ? (
+          <button
+            type="button"
+            onClick={() => requestTranscript(m)}
+            disabled={transcript?.status === 'loading'}
+            className="flex w-fit items-center gap-1 rounded px-1 text-caption font-semibold underline-offset-2 hover:underline disabled:opacity-70"
+          >
+            {transcript?.status === 'loading' ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" strokeWidth={2} /> Converting…
+              </>
+            ) : (
+              <>
+                <Type className="size-3.5" strokeWidth={2} /> {transcript?.status === 'failed' ? 'Could not convert. Try again' : 'Show text'}
+              </>
+            )}
+          </button>
+        ) : null}
       </div>
       <span className="mt-0.5 px-1 text-caption text-ink-muted">{time}</span>
     </div>

@@ -163,7 +163,7 @@ Open **Chat**:
 - **Staff** tab: office staff.
 - **Clients** tab (senior lawyers and staff): a private chat with each client you look after (firm admins: every client).
 - **Voice typing:** tap the **mic** next to the message box and speak. The words appear in the box so you can check them before tapping Send. The **EN / हिं / ગુ** button next to the mic picks the language you speak.
-- **Voice notes:** when the message box is empty, the send button becomes a **sound-wave** button. Tap it, speak (up to 1 minute), then tap **Send**, or **X** to throw it away. Works in courtroom room chat, team chat and client chat.
+- **Voice notes:** when the message box is empty, the send button becomes a **sound-wave** button. Tap it, speak (up to 1 minute), then tap **Send**, or **X** to throw it away. Works in courtroom room chat, team chat and client chat. If the voice note has a **Show text** link under it, tap it to read what was said (Nexconn speech-to-text).
 - Use the search box to find someone. A dot on a tab means unread messages there.
 
 ### Lawyers: watch from anywhere
