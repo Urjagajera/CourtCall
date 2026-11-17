@@ -31,6 +31,11 @@ app.use((_req, res, next) => {
   res.setHeader('X-Server-Time', String(Date.now()))
   next()
 })
+// Instant reply (no database) so the app can measure its clock offset accurately (lib/clock.ts).
+app.get('/api/time', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store')
+  res.json({ now: Date.now() })
+})
 
 app.get('/api/health', async (_req, res) => {
   let db = 'connected'

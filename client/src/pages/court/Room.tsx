@@ -24,7 +24,7 @@ import { MSG_PROGRESS, isFromChannel, useChat, useIncomingMessages, type Message
 import { Toast, type ToastData } from '../../components/Toast'
 import { Badge, Banner, Button, Card, PageSpinner, cx, type Tone } from '../../components/ui'
 import { api, ApiError } from '../../lib/api'
-import { formatDelay, serverNow } from '../../lib/clock'
+import { formatDelay, serverNow, syncClock } from '../../lib/clock'
 import {
   EVENT_META,
   clockTime,
@@ -95,6 +95,12 @@ export default function Room() {
   useEffect(() => {
     load()
   }, [load])
+  // Clock in step with the server for the delivery timing (again every minute while the room is open).
+  useEffect(() => {
+    syncClock()
+    const t = window.setInterval(syncClock, 60_000)
+    return () => window.clearInterval(t)
+  }, [])
 
   // Live: Nexconn pushes a CC:Progress message into this room on every accepted update.
   // Polling stays as a slow safety net (fast only while chat is not connected).

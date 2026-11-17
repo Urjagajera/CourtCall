@@ -1,20 +1,43 @@
-// Keeps this device's clock in step with the CourtCall server, from the X-Server-Time header on every API
-// reply. Phones are often a second or more off; without this, delivery times would be wrong.
+// Keeps this device's clock in step with the CourtCall server, so "Tap to screen 0.4 s" is honest even when
+// a phone's clock is off. Uses /api/time (answers instantly, no database), takes the sample with the
+// shortest round trip, and assumes the server read its clock halfway through that trip.
 let offset = 0
-let bestRtt = Infinity
-let samples = 0
+let synced = 0
+let syncing: Promise<void> | null = null
 
-/** Called by api() for every reply: keeps the sample with the shortest round trip (the most accurate). */
-export function noteServerTime(header: string | null, sentAt: number, receivedAt: number) {
-  const server = Number(header)
-  if (!header || !Number.isFinite(server)) return
+async function sample() {
+  const sentAt = performance.now()
+  const res = await fetch('/api/time', { cache: 'no-store', credentials: 'omit' })
+  const receivedAt = performance.now()
+  const { now } = (await res.json()) as { now: number }
   const rtt = receivedAt - sentAt
-  samples++
-  // A fresh low-latency sample always wins; old ones age out slowly so a changed clock is picked up.
-  if (rtt <= bestRtt || samples % 20 === 0) {
-    bestRtt = rtt
-    offset = server - (sentAt + rtt / 2)
-  }
+  // Date.now() at the midpoint of the trip, on this device.
+  const localMid = Date.now() - (receivedAt - (sentAt + rtt / 2))
+  return { rtt, offset: now - localMid }
+}
+
+/** Measures the offset (best of 4 round trips). Re-runs at most once a minute. */
+export function syncClock() {
+  if (syncing) return syncing
+  if (Date.now() - synced < 60_000) return Promise.resolve()
+  syncing = (async () => {
+    try {
+      let best: { rtt: number; offset: number } | null = null
+      for (let i = 0; i < 4; i++) {
+        const s = await sample()
+        if (!best || s.rtt < best.rtt) best = s
+      }
+      if (best) {
+        offset = best.offset
+        synced = Date.now()
+      }
+    } catch {
+      /* keep the last offset */
+    } finally {
+      syncing = null
+    }
+  })()
+  return syncing
 }
 
 /** Now, on the server's clock (ms). */
