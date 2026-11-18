@@ -202,7 +202,9 @@ Done (in order):
 
 ### Not done yet
 
-Open items for Urja (setup, not code): switch on **VoIP** in the Nexconn console (calls), add **`CRON_SECRET`** in Vercel and redeploy (automatic morning briefing; the cron route returns 503 without it), check the **Nexconn plan expiry**, optional `assetlinks.json` for the Android APK, test **voice notes** on a real Android phone and an iPhone.
+**Console facts (checked 19 Nov 2026):** the CourtCall Nexconn app (production key starting `8brlm7u`) is on **Chat Free until 10 Dec 2026** (after judging). **Calls** = Console → Call → Call Subscription → "Call" ($0, 10,000 free minutes/month) → Subscribe, but Nexconn **requires a credit card** (verification charge up to USD 1) even for $0; Urja has no card to use, so calls stay off unless Nexconn support enables it without one. **Speech-to-text** is not offered anywhere on the Chat Free plan (Chat Settings has only Translation), so transcripts stay hidden.
+
+Open items for Urja (setup, not code): get calls enabled (card, or a free support ticket to Nexconn), add **`CRON_SECRET`** in Vercel and redeploy (automatic morning briefing; the cron route returns 503 without it), check the **Nexconn plan expiry**, optional `assetlinks.json` for the Android APK, test **voice notes** on a real Android phone and an iPhone.
 
 - [ ] **Real phone-call fallback for the briefing** (agreed 12 Nov 2026, deferred by Urja 13 Nov: not needed for the demo). For clients who haven't opened the in-app briefing within ~15 min (or never opened their link), a robot-voice call to `clients.phone` via a telephony provider (Exotel for India or Twilio; NOT Nexconn, whose Call SDK can't dial phone numbers). Needs a paid account + keys and Indian caller-ID/DLT registration for production.
 
