@@ -38,7 +38,7 @@ npm run dev                            # web http://localhost:5173, API http://l
 
 If two people share the **same** Supabase database, they share demo data and migrations: coordinate before running `db:generate` (see section 8).
 
-Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 202 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
+Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 206 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
 
 ---
 
@@ -111,7 +111,7 @@ PLAN.md              original product plan and schedule
 ## 5. Key decisions (and why)
 
 **Product**
-- Clients get **link-based access, no password** (WhatsApp-shared link bound to the first device). Clients are often older and on cheap phones; a login would push them back to calling the lawyer.
+- Clients get **link-based access, no password** (WhatsApp-shared link bound to one device; **since 19 Nov 2026 (Urja) it may move to another browser or phone within 15 minutes of the first open**: the newest takes over and the old session stops, via a `dev` claim in the `cc_client` cookie checked in `requireClient`; `LINK_SWITCH_WINDOW_MS` in `lib/clientAccess.ts`. Reason: links first opened in WhatsApp's own browser, or tested on a laptop, were locked out of Chrome. Older sessions without `dev` keep working). Clients are often older and on cheap phones; a login would push them back to calling the lawyer.
 - Courtrooms are shared rooms across firms: one `court_session` per courtroom per day. Courtroom names match **case-insensitively** so different firms land in the same room.
 - Never predict hearing times. Show "latest reported progress", who reported it and when; mark rooms **stale** after a quiet spell (firm setting, default 20 minutes).
 
@@ -197,6 +197,8 @@ Done (in order):
   - **Voice notes** in every chat (`ChatPanel`, `lib/voiceNote.ts`): empty box → the send button records (MediaRecorder: webm/opus on Android, mp4 on iPhone), max 60 s (Nexconn HD voice limit), Send or Cancel. Sent with `Helper.createSendHDVoiceMessageParams(file)` + `channel.sendMediaMessage` (`sendVoiceNote` in `lib/nexconn.ts`, type `RC:HQVCMsg`); played with an `<audio>` from the Nexconn `remoteUrl`. Tested in Chrome with a generated stream (the browser pane has no mic); **still to test on a real Android phone and an iPhone** (an iPhone may not play webm notes recorded on Android).
 
 13i. Done (17 Nov 2026, Urja): **live delivery timing** in the courtroom room (see Nexconn decisions above). No migration. Measured on the live site (17 Nov 2026, browser in India): tap to screen 0.5–1.0 s, of which Nexconn delivery 0.3–0.6 s, both on the reporter's screen and on another firm's junior's screen. Locally tap to screen is ~2.6 s because each of the ~9 database round trips per report goes from India to Tokyo; the live API runs in Tokyo next to the database.
+
+13j. Done (19 Nov 2026, Urja): **client link fixes** after Urja's test failed. (1) `OpenLink` stuck on "Opening your case…" on older Android phones / WhatsApp's in-app browser: `crypto.randomUUID` is missing there and threw; now falls back to `crypto.getRandomValues`, and a 25 s timeout shows an error instead of spinning. (2) 15-minute switch window (see Product decisions). Smoke checks cover take-over, the old phone losing access, and refusal after 15 minutes (206 checks).
 
 ### Not done yet
 

@@ -18,8 +18,12 @@ export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex'
 export const DEMO_CLIENT_TOKEN = 'demo-ramesh-patel'
 export const DEMO_LINK_LABEL = 'Demo client link'
 
-export function setClientCookie(res: Response, linkId: string) {
-  const token = jwt.sign({ lid: linkId, aud: 'client' }, config.jwtSecret, { expiresIn: '180d' })
+/** For 15 minutes after a link is first opened it may move to another browser or phone (the newest takes over). */
+export const LINK_SWITCH_WINDOW_MS = 15 * 60 * 1000
+
+/** `device`: hash of the browser the link is bound to; the session stops working if the link moves elsewhere. */
+export function setClientCookie(res: Response, linkId: string, device?: string) {
+  const token = jwt.sign({ lid: linkId, dev: device, aud: 'client' }, config.jwtSecret, { expiresIn: '180d' })
   res.cookie(COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -55,8 +59,11 @@ export async function requireClient(req: Request, _res: Response, next: NextFunc
   const token = req.cookies?.[COOKIE]
   if (!token) throw new HttpError(401, 'Open the link your lawyer shared on WhatsApp')
   let linkId: string
+  let device: string | undefined
   try {
-    linkId = (jwt.verify(token, config.jwtSecret, { audience: 'client' }) as jwt.JwtPayload).lid as string
+    const claims = jwt.verify(token, config.jwtSecret, { audience: 'client' }) as jwt.JwtPayload
+    linkId = claims.lid as string
+    device = claims.dev as string | undefined
   } catch {
     throw new HttpError(401, 'Open the link your lawyer shared on WhatsApp')
   }
@@ -77,6 +84,11 @@ export async function requireClient(req: Request, _res: Response, next: NextFunc
   if (!row) throw new HttpError(401, 'This link no longer exists. Ask your lawyer for a new one.')
   // Family links were removed (Nov 2026): any that were shared before stop working.
   if (row.link.revokedAt || row.link.kind !== 'client') throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
+  // The link moved to another browser or phone in its first 15 minutes: this one no longer has access.
+  // (Sessions made before 19 Nov 2026 carry no device and keep working.)
+  if (device && row.link.deviceIdHash && device !== row.link.deviceIdHash) {
+    throw new HttpError(409, 'Your case link was opened on another phone. Open the link from WhatsApp again, or ask your lawyer for a new one.')
+  }
   req.clientCtx = row
   next()
 }

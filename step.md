@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 19 Nov 2026 (Urja): client link fixes (no migration)
+
+Nothing to run. Client links no longer get stuck on "Opening your case…" on older phones, and for 15 minutes after the first open a link can move to another phone or browser (the newest takes over). After that the one-phone rule applies as before.
+
 ### 17 Nov 2026 (Urja): voice note transcripts (no migration)
 
 Nothing to run. Voice notes get a **Show text** link (Nexconn speech-to-text) once speech-to-text is switched on for the Nexconn app; until then nothing new shows. On your own Nexconn app it stays hidden unless you switch it on there too.

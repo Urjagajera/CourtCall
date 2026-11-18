@@ -242,7 +242,14 @@ check('client opens link on first phone', (await clientA.post('/c/activate', { t
 const cme = await clientA.get('/c/me')
 check('client sees only their case, live', cme.body.case?.title === 'Smoke vs Test' && cme.body.isToday === true && cme.body.session?.currentItem != null, cme.body)
 check('client never sees reporter names', !JSON.stringify(cme.body.updates ?? []).includes('reporter') && !JSON.stringify(cme.body).includes('Priya'))
-check('second phone is refused', (await new Session('clientB').post('/c/activate', { token: linkToken, deviceId: phoneB })).status === 409)
+// 15-minute switch window: in the first 15 minutes the newest browser/phone takes the link over.
+const clientB = new Session('clientB')
+check('another phone can take the link over in the first 15 minutes', (await clientB.post('/c/activate', { token: linkToken, deviceId: phoneB })).status === 200)
+check('the first phone then loses access', (await clientA.get('/c/me')).status === 409)
+check('the first phone can take it back in the window', (await clientA.post('/c/activate', { token: linkToken, deviceId: phoneA })).status === 200 && (await clientA.get('/c/me')).status === 200)
+check('the other phone loses access again', (await clientB.get('/c/me')).status === 409)
+await sql`update access_links set activated_at = now() - interval '20 minutes' where id = ${mk.body.link?.id}`
+check('after 15 minutes a second phone is refused', (await new Session('clientC').post('/c/activate', { token: linkToken, deviceId: phoneB })).status === 409)
 check('same phone can reopen the link', (await new Session('clientA2').post('/c/activate', { token: linkToken, deviceId: phoneA })).status === 200)
 const listed2 = await lawyer.get(`/cases/${caseId}/links`)
 const clientLink = listed2.body.links?.find((l: any) => l.id === mk.body.link?.id)

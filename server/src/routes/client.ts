@@ -6,6 +6,7 @@ import { db, schema } from '../db/index.js'
 import {
   DEMO_CLIENT_TOKEN,
   DEMO_LINK_LABEL,
+  LINK_SWITCH_WINDOW_MS,
   clearClientCookie,
   requireClient,
   setClientCookie,
@@ -31,16 +32,24 @@ clientRouter.post('/activate', async (req, res) => {
   if (!link) throw new HttpError(404, 'This link is not valid. Check that you opened the full link from WhatsApp.')
   if (link.revokedAt || link.kind !== 'client') throw new HttpError(410, 'This link was turned off. Ask your lawyer for a new one.')
   const device = sha256(deviceId)
-  if (link.deviceIdHash && link.deviceIdHash !== device) {
-    throw new HttpError(409, 'This link is already in use on another phone. Ask your lawyer for a new link.')
+  if (link.label === DEMO_LINK_LABEL) {
+    setClientCookie(res, link.id) // the demo link is never bound to a phone
+    res.json({ ok: true })
+    return
   }
-  if (!link.deviceIdHash && link.label !== DEMO_LINK_LABEL) {
-    await db
-      .update(schema.accessLinks)
-      .set({ deviceIdHash: device, activatedAt: new Date() })
-      .where(eq(schema.accessLinks.id, link.id))
+  if (!link.deviceIdHash) {
+    // First open: this browser owns the link.
+    await db.update(schema.accessLinks).set({ deviceIdHash: device, activatedAt: new Date() }).where(eq(schema.accessLinks.id, link.id))
+  } else if (link.deviceIdHash !== device) {
+    // Another browser or phone. Within 15 minutes of the first open it may take the link over (e.g. opened in
+    // WhatsApp's own browser, then in Chrome; or tested on a laptop, then sent to the phone). After that: refused.
+    const firstOpen = link.activatedAt?.getTime() ?? 0
+    if (Date.now() - firstOpen > LINK_SWITCH_WINDOW_MS) {
+      throw new HttpError(409, 'This link is already open on another phone. Open it there, or ask your lawyer for a new link.')
+    }
+    await db.update(schema.accessLinks).set({ deviceIdHash: device }).where(eq(schema.accessLinks.id, link.id))
   }
-  setClientCookie(res, link.id)
+  setClientCookie(res, link.id, device)
   res.json({ ok: true })
 })
 

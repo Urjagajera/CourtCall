@@ -105,7 +105,7 @@ export function LinkSheet({ c, clientPhone, onClose }: { c: Case; clientPhone: s
             </Button>
           </div>
           <p className="mt-2 text-caption text-ink-muted">
-            This link is shown only now. Don't open it yourself: it locks to the first phone that opens it.
+            This link is shown only now. It locks to the phone that opens it; for the first 15 minutes it can still move to another phone or browser.
           </p>
         </div>
       )}

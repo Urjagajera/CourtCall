@@ -336,10 +336,10 @@ The same courtroom updates also alert **the firm**: the people on the case (main
 
 - On **Cases**, tap the link icon on a case. **Create client link** makes a private link with live progress and chat.
 - **Share on WhatsApp** opens WhatsApp with a ready message to the client's number (+91 is added to 10-digit numbers). **Copy link** works for any other app. The full link is shown only once.
-- The link **locks to the first phone that opens it**. The same phone can always reopen it; any other phone sees "This link is already in use on another phone". Don't open a client's link yourself.
+- The link **locks to the phone that opens it**. For the **first 15 minutes** after the first open it can still move to another phone or browser (for example from WhatsApp's own browser to Chrome); the newest one takes over and the old one loses access. After that, the same phone can always reopen it and any other phone sees "This link is already open on another phone".
 - **Turn off** stops a link at once. **New link** turns the old one off and makes a fresh one (lost or new phone).
 - The list shows each link's status: not opened yet, on a phone, or turned off.
-- To try the real flow: create a link as Mehta, then open it in a private window. Open it again in a second private window to see the one-phone rule.
+- To try the real flow: create a link as Mehta, then open it in a private window. Open it again in a second private window: within 15 minutes it moves there (the first window loses access); after 15 minutes it is refused.
 
 ### Guided tour (first login)
 

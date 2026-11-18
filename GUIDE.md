@@ -117,7 +117,7 @@ You see these as a **pop-up** anywhere in CourtCall. To get them on your **phone
 1. **Clients → Add client:** name, WhatsApp number and alert language.
 2. **Cases → Add case:** client, case number, court complex (e.g. "Gujarat High Court"), court number, next hearing date, item number from the cause list (or later, when it's out), and the case team (firm admins pick the main lawyer; a senior who adds a case leads it).
 3. **Share the case with the client:** on **Cases**, tap the **link icon** on the case, then **Client link → Share on WhatsApp**. The message and link are filled in for you.
-   - The link **locks to the first phone that opens it**, so don't open it yourself.
+   - The link **locks to the phone that opens it**. In the first 15 minutes it can still move to another phone or browser (the newest one takes over), so a test open by you, or the client opening it in WhatsApp first and Chrome later, is fine.
    - Lost or new phone? Tap **New link**. To stop a link at once, tap **Turn off**.
 
 ### Hearing-day briefing and calls
@@ -204,7 +204,8 @@ Each alert comes once. You'll never get a guessed time.
 | Problem | Fix |
 |---|---|
 | Everything looks tiny on your phone, with cards side by side | Chrome is showing the **desktop site**. In Chrome tap **⋮** and untick **Desktop site**. For the installed app: Chrome → **⋮ → Settings → Site settings → Desktop site** → off, then reopen CourtCall. |
-| "This link is already in use on another phone" | The link opened on a different phone first. Ask your lawyer for a **New link**. |
+| "This link is already open on another phone" | The link was opened on a different phone more than 15 minutes ago. Ask your lawyer for a **New link**. |
+| The link page stays on "Opening your case…" | Fixed 19 Nov 2026 for older phones. If it still happens, check the internet connection; after 25 seconds the page says so. |
 | "This link was turned off" | Your lawyer turned it off. Ask for a new one. |
 | No **Install app** option on Android | Use Chrome (not an in-app browser such as WhatsApp's). Open the link, tap **⋮ → Open in Chrome**, then install. |
 | No alerts | Tap **Turn on** on your case page and allow notifications. On iPhone, install it to the home screen first. Check that the phone isn't in battery saver. |
