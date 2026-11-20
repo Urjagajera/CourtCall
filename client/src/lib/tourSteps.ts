@@ -106,7 +106,7 @@ const shared = {
     target: 'case-briefing',
     optional: true,
     title: 'Hearing-day briefing',
-    body: 'On the hearing day between 9 and 10 AM, the client gets a CourtCall voice message: court, item, who appears for them, and your Remember note in their language. Set the appearing lawyer and the note here; the main lawyer can also send it now. "Call client" starts a voice call over Nexconn.',
+    body: 'On the hearing day between 9 and 10 AM, the client gets a CourtCall voice message: court, item, who appears for them, and your Remember note in their language. Set the appearing lawyer and the note here; the main lawyer can also send it now. "Call client" opens your phone's dialler with the client's number and notes the call in your Nexconn chat.',
   },
   caseHearings: {
     id: 'case-hearings',
