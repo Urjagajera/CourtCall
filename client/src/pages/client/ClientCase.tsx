@@ -33,7 +33,7 @@ import { api } from '../../lib/api'
 import { EVENT_META, clockTime, statusMeta, useNow, usePolling, type EventType, type SessionState } from '../../lib/court'
 import { ClientLangContext, LANGS, agoIn, dateIn, useClientLang, useClientText, type Lang } from '../../lib/clientI18n'
 import { MSG_ALERT, MSG_BRIEFING, sendText, startChat, stopChat, useChat, useIncomingMessages, useUnreadCounts, type Message } from '../../lib/nexconn'
-import { setCallLogWriter, setCallNames, startVoiceCall } from '../../lib/calls'
+import { canCall, placeCall, setCallLogWriter, setCallNames } from '../../lib/calls'
 import { BriefingCall } from '../../components/BriefingCall'
 import { todayISO } from '../../lib/dates'
 import { CallOverlay } from '../../components/CallOverlay'
@@ -224,12 +224,14 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
   // Client links stay connected to Nexconn on every tab, so alerts pop up wherever the client is.
   const chat = useChat()
   const lawyerContact = chat.myId?.startsWith('c') ? chat.contacts[0] : undefined
-  const callLawyer = lawyerContact ? () => startVoiceCall(lawyerContact.ncId, lawyerContact.name) : undefined
+  // Nexconn in-app call when switched on, else the phone's dialler with the lawyer's number (lib/calls).
+  const callLawyer =
+    lawyerContact && canCall(lawyerContact.phone, chat.countryCode)
+      ? () => placeCall({ ncId: lawyerContact.ncId, name: lawyerContact.name, phone: lawyerContact.phone, countryCode: chat.countryCode })
+      : undefined
   useEffect(() => {
     setCallNames((id) => chat.contacts.find((p) => p.ncId === id)?.name)
-    setCallLogWriter((peerId, text) => {
-      sendText('direct', peerId, text).catch(() => {})
-    })
+    setCallLogWriter((peerId, text) => sendText('direct', peerId, text).catch((e) => console.warn('[call log]', e)))
   }, [chat.contacts])
   const isClientLink = data?.kind === 'client'
   useEffect(() => {
@@ -592,6 +594,7 @@ function ClientChat({ firm }: { firm: string }) {
   const contacts = chat.myId?.startsWith('c') ? chat.contacts : []
   const active = selected ?? contacts[0]?.ncId ?? null
   const names = Object.fromEntries(contacts.map((p) => [p.ncId, p.name]))
+  const activeContact = contacts.find((p) => p.ncId === active)
 
   return (
     <section data-tour="client-chat" aria-label="Chat with your lawyer" className="flex flex-col gap-2">
@@ -599,9 +602,9 @@ function ClientChat({ firm }: { firm: string }) {
         <p className="flex flex-1 items-center gap-2 text-label text-ink-muted">
           <MessageCircle className="size-4" strokeWidth={1.75} /> {t.chatWith(firm)}
         </p>
-        {active && (
+        {active && activeContact && canCall(activeContact.phone, chat.countryCode) && (
           <button
-            onClick={() => startVoiceCall(active, names[active] ?? firm)}
+            onClick={() => placeCall({ ncId: active, name: names[active] ?? firm, phone: activeContact.phone, countryCode: chat.countryCode })}
             aria-label={`${t.callLawyer}: ${names[active] ?? firm}`}
             className="flex h-11 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink"
           >

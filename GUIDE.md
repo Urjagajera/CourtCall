@@ -125,7 +125,7 @@ You see these as a **pop-up** anywhere in CourtCall. To get them on your **phone
 - On a case page, **Hearing-day briefing**: choose the **Appearing lawyer** (a senior lawyer) and write a **Remember** note for the client (for example "Bring your Aadhaar card and reach court by 10:30"). You can also set both when you record the next date after a hearing.
 - On the hearing day between **9 and 10 AM**, the client gets a **"CourtCall is calling"** voice message in their language: court, item number, who appears for them, and your note (translated automatically). The note is then cleared for the next hearing.
 - The main lawyer or a firm admin can tap **Send briefing now** on the hearing day (once a day). The case page shows when it was sent.
-- **Voice calls inside CourtCall** (Nexconn): **Call** in any one-to-one chat, **Call client** on a case page. The client can tap **Call my lawyer**. Calls ring on the other person's open CourtCall page.
+- **Calls:** **Call** in any one-to-one chat, **Call client** on a case page, and **Call my lawyer** for clients open your phone's dialler with the saved number (a button only shows when a number is saved). The call is noted in the chat ("📞 Called you on the phone").
 
 ### After every hearing: record what happened
 

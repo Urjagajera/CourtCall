@@ -35,12 +35,14 @@ export const MSG_VOICE = 'RC:HQVCMsg'
 export interface TeamInfo {
   groupId: string
   name: string
-  members: { ncId: string; name: string; role: string; isFirmAdmin?: boolean }[]
+  members: { ncId: string; name: string; role: string; isFirmAdmin?: boolean; phone?: string | null }[]
 }
 export interface ChatContact {
   ncId: string
   name: string
   role: string
+  /** For "Call my lawyer" (phone dialler while in-app calls are off). */
+  phone?: string | null
 }
 interface TokenResponse {
   appKey: string
@@ -49,6 +51,8 @@ interface TokenResponse {
   team?: TeamInfo | null
   /** Client links only: the firm people the client can message. */
   contacts?: ChatContact[]
+  /** Client links: the firm's country code for phone numbers. */
+  countryCode?: string
 }
 
 export type ChatState = {
@@ -59,6 +63,8 @@ export type ChatState = {
   error?: string
   /** Nexconn speech-to-text is switched on for this app (voice notes get "Show text"). */
   sttEnabled?: boolean
+  /** Client links: the firm's country code for phone numbers. */
+  countryCode?: string
 }
 
 let state: ChatState = { status: 'idle', myId: null, team: null, contacts: [] }
@@ -124,6 +130,7 @@ export function startChat(tokenPath = '/chat/token') {
         myId: r.data?.userId ?? t.userId,
         team: t.team ?? null,
         contacts: t.contacts ?? [],
+        countryCode: t.countryCode,
         sttEnabled: settings.isOk && !!settings.data?.isSpeechToTextEnabled,
       })
       // In-app voice calls (Nexconn Call SDK) ride on the same connection.

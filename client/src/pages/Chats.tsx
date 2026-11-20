@@ -4,7 +4,8 @@ import { PageHeader } from '../components/AppLayout'
 import { ChatPanel } from '../components/ChatPanel'
 import { Banner, cx } from '../components/ui'
 import type { Client } from '../lib/api'
-import { startVoiceCall } from '../lib/calls'
+import { canCall, IN_APP_CALLS, placeCall, telNumber } from '../lib/calls'
+import { useAuth } from '../lib/auth'
 import { useChat, useUnreadCounts } from '../lib/nexconn'
 import { useApi } from '../lib/useApi'
 
@@ -18,6 +19,7 @@ interface Conv {
   icon: LucideIcon
   group: 'team' | Filter
   admin?: boolean
+  phone?: string | null
 }
 
 const ROLE_LABEL: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'Junior lawyer', staff: 'Office staff' }
@@ -28,6 +30,7 @@ const ROLE_LABEL: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'J
  */
 export default function Chats() {
   const chat = useChat()
+  const countryCode = useAuth().office?.phoneCountryCode ?? '91'
   // Everyone chats with the clients of the cases they are on (firm admins: every client).
   const canChatClients = true
   const clients = useApi<{ clients: (Client & { ncId: string })[] }>(canChatClients ? '/clients' : null)
@@ -55,11 +58,12 @@ export default function Chats() {
           icon: m.role === 'staff' ? ClipboardList : m.role === 'junior' ? Users : Briefcase,
           group: m.role === 'staff' ? 'staff' : 'lawyers',
           admin: m.isFirmAdmin,
+          phone: m.phone,
         })
       }
     }
     for (const c of clients.data?.clients ?? []) {
-      list.push({ key: c.id, kind: 'direct', id: c.ncId, title: c.name, sub: 'Client · private chat', icon: UserRound, group: 'clients' })
+      list.push({ key: c.id, kind: 'direct', id: c.ncId, title: c.name, sub: 'Client · private chat', icon: UserRound, group: 'clients', phone: c.phone })
     }
     return list
   }, [chat.team, chat.myId, clients.data])
@@ -194,12 +198,12 @@ export default function Chats() {
                   {active.admin && ' · Firm admin'}
                 </p>
               </div>
-              {active.kind === 'direct' && (
+              {active.kind === 'direct' && canCall(active.phone, countryCode) && (
                 <button
-                  onClick={() => startVoiceCall(active.id, active.title)}
+                  onClick={() => placeCall({ ncId: active.id, name: active.title, phone: active.phone, countryCode })}
                   disabled={chat.status !== 'ready'}
                   aria-label={`Call ${active.title}`}
-                  title="Voice call (Nexconn)"
+                  title={IN_APP_CALLS ? 'Voice call (Nexconn)' : `Phone call: ${telNumber(active.phone, countryCode)}`}
                   className="flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-label font-semibold text-accent-ink disabled:opacity-50"
                 >
                   <Phone className="size-4" strokeWidth={1.75} /> Call

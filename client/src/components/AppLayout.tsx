@@ -66,9 +66,7 @@ function Shell() {
   const callClients = useApi<{ clients: { ncId: string; name: string }[] }>('/clients')
   useEffect(() => {
     setCallNames((id) => chat.team?.members.find((m) => m.ncId === id)?.name ?? callClients.data?.clients.find((k) => k.ncId === id)?.name)
-    setCallLogWriter((peerId, text) => {
-      sendText('direct', peerId, text).catch(() => {})
-    })
+    setCallLogWriter((peerId, text) => sendText('direct', peerId, text).catch((e) => console.warn('[call log]', e)))
   }, [chat.team, callClients.data])
   const countFor = (to: string) => (to === '/cases' ? updates.unread + updates.todos : to === '/chats' ? updates.chatUnread : 0)
 

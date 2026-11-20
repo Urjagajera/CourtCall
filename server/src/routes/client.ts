@@ -237,7 +237,7 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
   const ncId = ncClientId(ctx.client.id)
   const token = await issueToken(ncId, ctx.client.name)
   const people = await db
-    .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role })
+    .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role, phone: schema.users.phone })
     .from(schema.users)
     .where(
       and(
@@ -262,6 +262,8 @@ clientRouter.post('/chat-token', requireClient, async (req, res) => {
     userId: ncId,
     token,
     team: null,
-    contacts: people.map((p) => ({ ncId: ncStaffId(p.id), name: p.name, role: p.role })),
+    // Phone numbers: "Call my lawyer" opens the phone's dialler (only the people on this client's cases).
+    contacts: people.map((p) => ({ ncId: ncStaffId(p.id), name: p.name, role: p.role, phone: p.phone })),
+    countryCode: ctx.office.phoneCountryCode,
   })
 })

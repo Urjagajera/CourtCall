@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 20 Nov 2026 (Urja): calls open the phone dialler (no migration)
+
+Nothing to run. Nexconn needs a card to switch on in-app calls, so **Call**, **Call client** and **Call my lawyer** now open the phone's dialler with the saved number and note the call in the Nexconn chat. To go back to in-app calls later: `VITE_NEXCONN_CALLS=on` in Vercel (or `client/.env.local`) and rebuild.
+
 ### 19 Nov 2026 (Urja): client link fixes (no migration)
 
 Nothing to run. Client links no longer get stuck on "Opening your case…" on older phones, and for 15 minutes after the first open a link can move to another phone or browser (the newest takes over). After that the one-phone rule applies as before.

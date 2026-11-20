@@ -29,7 +29,7 @@ import { Badge, Banner, Button, Card, PageSpinner, Textarea } from '../../compon
 import { api, type Case, type Hearing } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatDate, todayISO } from '../../lib/dates'
-import { startVoiceCall } from '../../lib/calls'
+import { canCall, IN_APP_CALLS, placeCall, telNumber } from '../../lib/calls'
 import { useApi } from '../../lib/useApi'
 import { useUpdates } from '../../lib/updates'
 
@@ -51,7 +51,7 @@ const ROLE: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'Junior 
 export default function CaseDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, office } = useAuth()
   const { data, error, reload } = useApi<Detail>(`/cases/${id}/detail`)
   const [outcomeOpen, setOutcomeOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
@@ -97,14 +97,20 @@ export default function CaseDetail() {
         action={
           c.status === 'active' ? (
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => startVoiceCall(`c${c.clientId.replace(/-/g, '')}`, c.clientName)}
-                icon={<Phone className="size-5" strokeWidth={1.75} />}
-                title="Voice call in CourtCall (Nexconn). The client must have opened their link."
-              >
-                Call client
-              </Button>
+              {canCall(c.clientPhone, office?.phoneCountryCode) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => placeCall({ ncId: `c${c.clientId.replace(/-/g, '')}`, name: c.clientName, phone: c.clientPhone, countryCode: office?.phoneCountryCode })}
+                  icon={<Phone className="size-5" strokeWidth={1.75} />}
+                  title={
+                    IN_APP_CALLS
+                      ? 'Voice call in CourtCall (Nexconn). The client must have opened their link.'
+                      : `Phone call: ${telNumber(c.clientPhone, office?.phoneCountryCode)}`
+                  }
+                >
+                  Call client
+                </Button>
+              )}
               <Button variant="secondary" onClick={() => setLinkOpen(true)} icon={<Link2 className="size-5" strokeWidth={1.75} />}>
                 Client link
               </Button>

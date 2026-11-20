@@ -44,8 +44,8 @@ export function setCallNames(fn: (id: string) => string | undefined) {
 }
 
 /** Called after a call ends with a log line for the chat (e.g. "Voice call · 2 min 31 s"). */
-let onLog: ((peerId: string, text: string) => void) | null = null
-export function setCallLogWriter(fn: (peerId: string, text: string) => void) {
+let onLog: ((peerId: string, text: string) => unknown) | null = null
+export function setCallLogWriter(fn: (peerId: string, text: string) => unknown) {
   onLog = fn
 }
 
@@ -179,4 +179,49 @@ function ring(on: boolean) {
   }
   beep()
   ringTimer = setInterval(beep, 2500)
+}
+
+// ---------- phone-dialler fallback ----------
+
+/**
+ * In-app calls need Nexconn's Call service switched on for the app, and Nexconn asks for a card even for the
+ * free plan. Until the build sets VITE_NEXCONN_CALLS=on, the call buttons open the phone's own dialler instead,
+ * and the call is still logged as a Nexconn chat message and counted on the Team page.
+ */
+export const IN_APP_CALLS = import.meta.env.VITE_NEXCONN_CALLS === 'on'
+
+/** "+919876543210" for the dialler, or null when there is no usable number. 10-digit numbers get the firm's code. */
+export function telNumber(phone: string | null | undefined, countryCode = '91'): string | null {
+  const raw = (phone ?? '').trim()
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length < 7) return null
+  if (raw.startsWith('+')) return `+${digits}`
+  if (digits.length === 10) return `+${countryCode}${digits}`
+  if (digits.length === 11 && digits.startsWith('0')) return `+${countryCode}${digits.slice(1)}`
+  return `+${digits}`
+}
+
+/** Can this person be called (in the app, or on the phone because a number is saved)? */
+export function canCall(phone: string | null | undefined, countryCode?: string) {
+  return IN_APP_CALLS || telNumber(phone, countryCode) !== null
+}
+
+/** One call button for the whole app: Nexconn in-app call when switched on, else the phone's dialler. */
+export function placeCall(p: { ncId: string; name: string; phone?: string | null; countryCode?: string }) {
+  if (IN_APP_CALLS) {
+    void startVoiceCall(p.ncId, p.name)
+    return
+  }
+  const tel = telNumber(p.phone, p.countryCode)
+  if (!tel) return
+  logUsage('call', 0)
+  // Open the dialler with a link click (a page navigation to tel: can cut off requests still in flight).
+  const a = document.createElement('a')
+  a.href = `tel:${tel}`
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Nexconn direct-chat line, so the call shows in the chat for both sides.
+  void Promise.resolve(onLog?.(p.ncId, '📞 Called you on the phone')).catch(() => {})
 }
