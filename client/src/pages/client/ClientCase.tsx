@@ -617,7 +617,7 @@ function ClientChat({ firm }: { firm: string }) {
         placeholder={t.message(active ? (names[active] ?? firm) : firm)}
         voiceLang={voiceLang}
         translate={{ to: clientLang, auto: true, path: '/c/translate' }}
-        className="h-[calc(100dvh-17rem)] min-h-[22rem] lg:h-[calc(100dvh-14rem)]"
+        className="h-[calc(100dvh-22rem)] min-h-[20rem] lg:h-[calc(100dvh-14rem)]"
         emptyText={t.chatEmpty}
       />
     </section>
