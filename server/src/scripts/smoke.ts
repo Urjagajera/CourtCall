@@ -105,6 +105,16 @@ await lawyer.patch('/office/settings', settingsBefore)
 const tmr = await lawyer.get('/hearings/tomorrow')
 check("tomorrow's hearings answer with a date and a list", tmr.status === 200 && /^\d{4}-\d{2}-\d{2}$/.test(tmr.body.date) && Array.isArray(tmr.body.cases), tmr.body)
 
+// App language (first-login picker, Settings) and translation of typed text.
+check('bad app language is refused', (await lawyer3.post('/auth/language', { language: 'fr' })).status === 400)
+const langRes = await lawyer3.post('/auth/language', { language: 'gu' })
+check('app language is saved to the profile', langRes.body.user?.language === 'gu', langRes.body)
+check('app language shows in /auth/me', (await lawyer3.get('/auth/me')).body.user?.language === 'gu')
+await lawyer3.post('/auth/language', { language: 'en' })
+const same = await lawyer.post('/translate', { texts: ['Adjourned to the next date.'], to: 'en' })
+check('text already in the language comes back as typed', same.status === 200 && same.body.texts?.[0] === 'Adjourned to the next date.', same.body)
+check('translate refuses more than 20 texts', (await lawyer.post('/translate', { texts: Array(21).fill('a'), to: 'gu' })).status === 400)
+
 // Usage (Team page "This week in CourtCall"): firm admins only; calls and voice notes are reported by the app.
 const usage0 = (await lawyer.get('/office/usage')).body
 check('firm admin sees the weekly usage', typeof usage0.updates?.week === 'number' && typeof usage0.calls?.weekMinutes === 'number', usage0)
@@ -385,6 +395,7 @@ check('cron endpoint is locked without CRON_SECRET', [401, 503].includes((await 
 
 const demoClient = new Session('demoClient')
 check('client demo opens Ramesh Patel', (await demoClient.post('/c/demo')).status === 200 && (await demoClient.get('/c/me')).body.case?.title === 'Patel vs State of Gujarat')
+check('client link can translate text', (await demoClient.post('/c/translate', { texts: ['Item 15'], to: 'en' })).body.texts?.[0] === 'Item 15')
 const rameshMe = (await demoClient.get('/c/me')).body
 check('client picks Gujarati (also their alert language)', (await demoClient.post('/c/language', { language: 'gu' })).status === 200 && (await demoClient.get('/c/me')).body.language === 'gu')
 await demoClient.post('/c/language', { language: 'en' })

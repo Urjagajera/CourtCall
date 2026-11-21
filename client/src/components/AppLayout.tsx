@@ -7,6 +7,8 @@ import { MSG_STAFF_ALERT, sendText, startChat, useChat, useIncomingMessages, typ
 import { useApi } from '../lib/useApi'
 import { CallOverlay } from './CallOverlay'
 import { firstName, markTourSeen, tourSeen } from '../lib/tour'
+import { getAppLang, setAppLang } from '../lib/i18n'
+import { LanguagePicker } from './LanguagePicker'
 import { tourStepsFor } from '../lib/tourSteps'
 import { UpdatesProvider, useUpdates } from '../lib/updates'
 import { useTour } from './Tour'
@@ -58,7 +60,7 @@ function CountBadge({ n, compact }: { n: number; compact?: boolean }) {
 }
 
 function Shell() {
-  const { user, office } = useAuth()
+  const { user, office, setSession } = useAuth()
   const chat = useChat()
   const items = navFor(user!.role)
   const updates = useUpdates()
@@ -109,14 +111,21 @@ function Shell() {
   // First login: start the guided tour once the first page has rendered.
   const tour = useTour()
   const userId = user!.id
+  // First login: the language comes first (from the profile on any device), then the tour in that language.
+  const needsLanguage = !user!.language
+  useEffect(() => {
+    const l = user!.language
+    if (l && l !== getAppLang()) setAppLang(l)
+  }, [user])
   useEffect(() => {
     const u = user!
+    if (!u.language) return
     if (tourSeen(u)) return
     const t = setTimeout(() => tour.start(tourStepsFor(u.role, firstName(u.name), u.isFirmAdmin), () => markTourSeen(u)), 900)
     return () => clearTimeout(t)
-    // Only once per signed-in user, not on every profile refresh.
+    // Only once per signed-in user (and once the language is chosen), not on every profile refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId])
+  }, [userId, needsLanguage])
 
   const chatDot = user!.role !== 'admin' && (
     <span
@@ -131,6 +140,7 @@ function Shell() {
 
   return (
     <div className="min-h-screen lg:flex">
+      {needsLanguage && <LanguagePicker onDone={(u) => setSession(u)} />}
       {/* Laptop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 border-r border-line bg-surface p-4 lg:flex">
         <Logo />

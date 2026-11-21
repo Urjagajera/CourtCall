@@ -10,9 +10,24 @@ export function scriptLang(text: string): Lang {
   return 'en'
 }
 
+// Same text, same language: answer from memory (the free API has a daily limit). Bounded so it can't grow forever.
+const cache = new Map<string, string>()
+
 export async function translateNote(text: string, to: Lang): Promise<{ text: string; translated: boolean }> {
   const from = scriptLang(text)
   if (!text.trim() || from === to) return { text, translated: false }
+  const key = `${to}|${text}`
+  const hit = cache.get(key)
+  if (hit) return { text: hit, translated: true }
+  const r = await translateUncached(text, from, to)
+  if (r.translated) {
+    if (cache.size > 2000) cache.clear()
+    cache.set(key, r.text)
+  }
+  return r
+}
+
+async function translateUncached(text: string, from: Lang, to: Lang): Promise<{ text: string; translated: boolean }> {
   try {
     const url = new URL('https://api.mymemory.translated.net/get')
     url.searchParams.set('q', text.slice(0, 450)) // the free API takes up to 500 bytes per request

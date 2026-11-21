@@ -15,6 +15,7 @@ import { notificationsRouter } from './routes/notifications.js'
 import { linksRouter } from './routes/links.js'
 import { officeRouter } from './routes/office.js'
 import { usageRouter } from './routes/usage.js'
+import { translateRouter } from './routes/translate.js'
 import { pushRouter } from './routes/push.js'
 import { cronRouter } from './routes/cron.js'
 
@@ -49,6 +50,7 @@ app.get('/api/health', async (_req, res) => {
 
 app.use('/api/auth', authRouter)
 app.use('/api', usageRouter)
+app.use('/api', translateRouter)
 app.use('/api/office', officeRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/cases', casesRouter)

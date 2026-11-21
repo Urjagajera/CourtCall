@@ -55,6 +55,7 @@ The first time each person signs in, a **guided tour** points out every feature.
 
 1. Tap **Get started → Create a firm**. Enter your name, email, mobile, a password and your firm's name.
 2. You can start straight away: you're the **firm admin**.
+   - The first time anyone signs in, CourtCall asks for a **language** (English, हिंदी or ગુજરાતી). Menus, buttons and the tour follow it. Change it any time in **Settings → Language**.
 3. As firm admin, Open **Team** to find your firm's **6-character invite code**.
 4. Send the code to your lawyers, juniors and office staff.
 
@@ -165,6 +166,7 @@ Open **Chat**:
 - **Clients** tab (senior lawyers and staff): a private chat with each client you look after (firm admins: every client).
 - **Voice typing:** tap the **mic** next to the message box and speak. The words appear in the box so you can check them before tapping Send. The **EN / हिं / ગુ** button next to the mic picks the language you speak.
 - **Voice notes:** when the message box is empty, the send button becomes a **sound-wave** button. Tap it, speak (up to 1 minute), then tap **Send**, or **X** to throw it away. Works in courtroom room chat, team chat and client chat. If the voice note has a **Show text** link under it, tap it to read what was said (Nexconn speech-to-text).
+- **Translate:** a message written in another language than yours has a **Show in …** link under it (for example **ગુજરાતીમાં બતાવો**). Tap it to read it in your language; **Show original** goes back.
 - Use the search box to find someone. A dot on a tab means unread messages there.
 
 ### Lawyers: watch from anywhere
@@ -180,6 +182,7 @@ Open **Chat**:
    - **My case**: **Now** (the item the court is hearing), **Your item** (your number on today's list), how many cases are before yours, when it was last reported, the next hearing date and the latest updates.
    - **Your cases**: all your cases with this firm (today, upcoming and past). Tap one to open it.
    - **History**: earlier court days: alerts, the next date your lawyer set, and their note on what happened (if they shared it).
+   - **Your language**: the first time you open the link, choose English, हिन्दी or ગુજરાતી. Everything follows it, including your lawyer's messages, the notes on what happened in court, the morning briefing and alerts, even when the firm wrote them in English (tap **Show original** to see what they typed).
    - **Chat**: message the people at the firm who look after you. Type, tap the **mic** and speak (in your page language), or send a **voice note** with the sound-wave button. Tap **Call my lawyer** for a voice call inside CourtCall.
    - **Hearing-day briefing**: on the morning of your hearing, CourtCall "calls" you: tap **Answer** to hear your court, item number and your lawyer's message in your language. It stays on **My case** under **Today's briefing** (tap **Listen** to hear it again).
    - **Settings**: language (English, हिन्दी, ગુજરાતી; your alerts switch too), **Get alerts on this phone**, light or dark, **Take the tour again**, and **Sign out**.

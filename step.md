@@ -20,6 +20,14 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 21 Nov 2026 (Urja): app language and translation (migration 0016)
+
+**Do this after pulling:** `npm --prefix server run db:migrate` (Urja already ran it on the live database).
+
+- Everyone picks **English, हिंदी or ગુજરાતી** at first login (before the tour); change it in Settings → Language. The whole staff app follows it.
+- **New staff UI texts must be added to `client/src/lib/uiDict.ts`** with Hindi and Gujarati, or they stay English.
+- Chat messages in another language get a **Show in …** button. Clients see firm messages, hearing summaries, the briefing and alerts in their own language automatically (free MyMemory translator).
+
 ### 21 Nov 2026 (Urja): Tomorrow's hearings card (no migration)
 
 Nothing to run. Lawyers and juniors see a **Tomorrow's hearings** card on Today with their own cases for tomorrow; tapping one opens the case page to add the client's briefing note.

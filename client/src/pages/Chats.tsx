@@ -1,6 +1,7 @@
 import { ArrowLeft, Briefcase, ClipboardList, Crown, Lock, Search, UserRound, Users, type LucideIcon, Phone } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../components/AppLayout'
+import { useAppLang } from '../lib/i18n'
 import { ChatPanel } from '../components/ChatPanel'
 import { Banner, cx } from '../components/ui'
 import type { Client } from '../lib/api'
@@ -29,6 +30,7 @@ const ROLE_LABEL: Record<string, string> = { lawyer: 'Senior lawyer', junior: 'J
  * lawyers and staff) private chats with clients. Filters: Lawyers (senior first, then juniors), Staff, Clients.
  */
 export default function Chats() {
+  const appLang = useAppLang()
   const chat = useChat()
   const countryCode = useAuth().office?.phoneCountryCode ?? '91'
   // Everyone chats with the clients of the cases they are on (firm admins: every client).
@@ -217,6 +219,7 @@ export default function Chats() {
               names={names}
               className="flex-1"
               placeholder={active.kind === 'group' ? 'Message your firm' : `Message ${active.title}`}
+              translate={{ to: appLang }}
               emptyText={
                 active.group === 'clients'
                   ? 'Messages appear here once the client opens their CourtCall link.'

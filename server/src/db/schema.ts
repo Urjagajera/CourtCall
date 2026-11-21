@@ -52,6 +52,8 @@ export const users = pgTable('users', {
   isFirmAdmin: boolean('is_firm_admin').notNull().default(false),
   // Set when the user finishes or ends the first-login guided tour.
   tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
+  // App language chosen at first login ('en' | 'hi' | 'gu'); empty until chosen, which shows the picker.
+  language: text('language'),
   createdAt: createdAt(),
 })
 

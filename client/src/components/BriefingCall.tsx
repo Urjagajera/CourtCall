@@ -1,6 +1,7 @@
 import { Phone, PhoneOff, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useClientLang, useClientText } from '../lib/clientI18n'
+import { useTranslated } from '../lib/translateText'
 import { cx } from './ui'
 
 /** Reads text aloud with the phone's own voice in the given language. Returns false when no voice can. */
@@ -27,9 +28,11 @@ export function speak(text: string, locale: string, onEnd?: () => void): boolean
  * The client's hearing-day briefing as a phone-call style screen (CLAUDE.md "Hearing-day briefing"):
  * rings, "Answer" reads it aloud in the client's language, "Listen again", "Call my lawyer".
  */
-export function BriefingCall({ text, firm, onClose, onCallLawyer }: { text: string; firm: string; onClose: () => void; onCallLawyer?: () => void }) {
+export function BriefingCall({ text: written, firm, onClose, onCallLawyer }: { text: string; firm: string; onClose: () => void; onCallLawyer?: () => void }) {
   const t = useClientText()
   const lang = useClientLang()
+  // The briefing is written in the language the client had when it was sent; show it in today's choice.
+  const text = useTranslated(written, lang.code, { auto: true, path: '/c/translate' }).text
   const [answered, setAnswered] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [noVoice, setNoVoice] = useState(false)

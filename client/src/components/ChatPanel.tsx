@@ -1,4 +1,4 @@
-import { AudioLines, Loader2, MessageCircle, Mic, Send, Square, Type, WifiOff, X } from 'lucide-react'
+import { AudioLines, Languages, Loader2, MessageCircle, Mic, Send, Square, Type, WifiOff, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { EVENT_META, clockTime, type EventType } from '../lib/court'
 import {
@@ -19,6 +19,8 @@ import {
   type Message,
 } from '../lib/nexconn'
 import { useDictation } from '../lib/dictation'
+import type { AppLang } from '../lib/i18n'
+import { SHOW_IN, SHOW_ORIGINAL, TRANSLATED, useTranslated } from '../lib/translateText'
 import { logUsage } from '../lib/usage'
 import { MAX_VOICE_SECONDS, useVoiceRecorder, voiceNotesSupported } from '../lib/voiceNote'
 import { cx } from './ui'
@@ -49,13 +51,15 @@ interface Props {
   emptyText?: string
   /** Fixed voice-typing language (client page). Without it, staff pick EN / हिं / ગુ next to the mic. */
   voiceLang?: string
+  /** Reader's language: messages in another language get translated (auto for clients, a button for staff). */
+  translate?: { to: AppLang; auto?: boolean; path?: string }
 }
 
 /** Oldest at the top, newest at the bottom, whatever order the server or socket delivers them in. */
 const byTime = (list: Message[]) => [...list].sort((a, b) => a.sentTime - b.sentTime)
 
 /** Real-time chat for one Nexconn channel: history, live messages, structured progress cards. */
-export function ChatPanel({ kind, channelId, names, placeholder = 'Message', readOnly, className, emptyText = 'No messages yet.', voiceLang }: Props) {
+export function ChatPanel({ kind, channelId, names, placeholder = 'Message', readOnly, className, emptyText = 'No messages yet.', voiceLang, translate }: Props) {
   const chat = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
@@ -154,7 +158,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
             <MessageCircle className="size-4" strokeWidth={1.75} /> {emptyText}
           </p>
         ) : (
-          messages.map((m) => <Bubble key={m.messageId || m.sentTime} m={m} mine={m.senderUserId === chat.myId} names={names} />)
+          messages.map((m) => <Bubble key={m.messageId || m.sentTime} m={m} mine={m.senderUserId === chat.myId} names={names} translate={translate} />)
         )}
       </div>
       {!readOnly && recorder.recording && (
@@ -254,7 +258,7 @@ export function ChatPanel({ kind, channelId, names, placeholder = 'Message', rea
   )
 }
 
-function Bubble({ m, mine, names }: { m: Message; mine: boolean; names: Record<string, string> }) {
+function Bubble({ m, mine, names, translate }: { m: Message; mine: boolean; names: Record<string, string>; translate?: Props['translate'] }) {
   const time = clockTime(new Date(m.sentTime).toISOString())
 
   if (m.messageType === MSG_PROGRESS) {
@@ -290,19 +294,34 @@ function Bubble({ m, mine, names }: { m: Message; mine: boolean; names: Record<s
         ? (m.content as { text?: string }).text
         : null
   if (text == null) return null
+  return <TextBubble text={text} mine={mine} who={names[m.senderUserId] ?? 'Member'} time={time} translate={translate} />
+}
 
+/** A text message. Written in another language than the reader's: translated (auto) or a button to translate. */
+function TextBubble({ text, mine, who, time, translate }: { text: string; mine: boolean; who: string; time: string; translate?: Props['translate'] }) {
+  const to = translate?.to ?? 'en'
+  const t = useTranslated(mine || !translate ? null : text, to, { auto: translate?.auto, path: translate?.path })
   return (
     <div className={cx('cc-pop flex max-w-[85%] flex-col', mine ? 'items-end self-end' : 'items-start self-start')}>
-      {!mine && <span className="mb-0.5 px-1 text-caption font-semibold text-ink-muted">{names[m.senderUserId] ?? 'Member'}</span>}
+      {!mine && <span className="mb-0.5 px-1 text-caption font-semibold text-ink-muted" data-no-translate>{who}</span>}
       <div
+        data-no-translate
         className={cx(
           'whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-body',
           mine ? 'rounded-br-sm bg-accent text-accent-ink' : 'rounded-bl-sm border border-line bg-surface-raised text-ink',
         )}
       >
-        {text}
+        {mine ? text : t.text}
       </div>
-      <span className="mt-0.5 px-1 text-caption text-ink-muted">{time}</span>
+      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 px-1 text-caption text-ink-muted" data-no-translate>
+        {time}
+        {t.needs && (
+          <button type="button" onClick={t.showing ? t.hide : t.show} className="inline-flex items-center gap-1 font-semibold text-accent underline-offset-2 hover:underline">
+            <Languages className="size-3.5" strokeWidth={2} />
+            {t.loading ? '…' : t.showing ? `${TRANSLATED[to]} · ${SHOW_ORIGINAL[to]}` : SHOW_IN[to]}
+          </button>
+        )}
+      </span>
     </div>
   )
 }

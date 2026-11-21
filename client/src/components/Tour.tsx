@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { TourStep } from '../lib/tourSteps'
+import { getAppLang } from '../lib/i18n'
 import { cx } from './ui'
 
 // Guided tour: dims the page, "zooms" a spotlight onto one feature at a time, and explains it.
@@ -31,6 +32,24 @@ const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').match
 
 type Box = { top: number; left: number; width: number; height: number }
 const fullScreen = (): Box => ({ top: 0, left: 0, width: innerWidth, height: innerHeight })
+
+// The tour's own buttons in the reader's language: the client's choice on client pages, else the app language.
+const TOUR_WORDS = {
+  en: { step: (i: number, n: number) => `Step ${i} of ${n}`, end: 'End tour', opening: 'Opening…', back: 'Back', finish: 'Finish', start: 'Start tour', next: 'Next' },
+  hi: { step: (i: number, n: number) => `चरण ${i} / ${n}`, end: 'टूर बंद करें', opening: 'खुल रहा है…', back: 'पीछे', finish: 'पूरा', start: 'टूर शुरू करें', next: 'आगे' },
+  gu: { step: (i: number, n: number) => `પગલું ${i} / ${n}`, end: 'ટૂર બંધ કરો', opening: 'ખુલે છે…', back: 'પાછળ', finish: 'પૂરું', start: 'ટૂર શરૂ કરો', next: 'આગળ' },
+}
+function tourWords() {
+  let code: string = getAppLang()
+  if (/^\/case(\/|$)/.test(location.pathname)) {
+    try {
+      code = localStorage.getItem('cc-client-lang') ?? 'en'
+    } catch {
+      code = 'en'
+    }
+  }
+  return TOUR_WORDS[code as keyof typeof TOUR_WORDS] ?? TOUR_WORDS.en
+}
 
 export function TourProvider({ children }: { children: ReactNode }) {
   const [steps, setSteps] = useState<TourStep[] | null>(null)
@@ -240,6 +259,7 @@ function TourOverlay({
   onBack: () => void
   onEnd: () => void
 }) {
+  const w = tourWords()
   const nextRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     nextRef.current?.focus({ preventScroll: true })
@@ -302,17 +322,17 @@ function TourOverlay({
       >
         <div className="flex items-center justify-between gap-3">
           <span className="text-caption font-semibold uppercase tracking-wider text-ink-muted">
-            Step {index + 1} of {total}
+            {w.step(index + 1, total)}
           </span>
           <button onClick={onEnd} className="flex items-center gap-1 rounded-md px-2 py-1 text-caption font-semibold text-ink-muted hover:bg-surface-raised hover:text-ink">
-            <X className="size-3.5" strokeWidth={2} /> End tour
+            <X className="size-3.5" strokeWidth={2} /> {w.end}
           </button>
         </div>
         <h2 id="tour-title" className="mt-2 text-h2">
           {step.title}
         </h2>
         <p className="mt-1 text-label text-ink-muted" aria-live="polite">
-          {searching ? 'Opening…' : step.body}
+          {searching ? w.opening : step.body}
         </p>
         <div className="mt-3 flex gap-1" aria-hidden="true">
           {Array.from({ length: total }, (_, i) => (
@@ -325,7 +345,7 @@ function TourOverlay({
             disabled={index === 0}
             className="flex h-10 items-center gap-1 rounded-md px-3 text-label font-semibold hover:bg-surface-raised disabled:invisible"
           >
-            <ArrowLeft className="size-4" strokeWidth={2} /> Back
+            <ArrowLeft className="size-4" strokeWidth={2} /> {w.back}
           </button>
           <button
             ref={nextRef}
@@ -334,15 +354,15 @@ function TourOverlay({
           >
             {last ? (
               <>
-                Finish <Check className="size-4" strokeWidth={2} />
+                {w.finish} <Check className="size-4" strokeWidth={2} />
               </>
             ) : index === 0 ? (
               <>
-                Start tour <ArrowRight className="size-4" strokeWidth={2} />
+                {w.start} <ArrowRight className="size-4" strokeWidth={2} />
               </>
             ) : (
               <>
-                Next <ArrowRight className="size-4" strokeWidth={2} />
+                {w.next} <ArrowRight className="size-4" strokeWidth={2} />
               </>
             )}
           </button>

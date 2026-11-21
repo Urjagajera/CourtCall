@@ -38,6 +38,8 @@ export interface User {
   verificationStatus: Verification
   officeId: string | null
   isFirmAdmin: boolean
+  /** App language chosen at first login; null until chosen. */
+  language?: 'en' | 'hi' | 'gu' | null
   tourCompletedAt: string | null
   createdAt: string
 }

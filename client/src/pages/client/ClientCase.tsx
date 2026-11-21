@@ -1,27 +1,4 @@
-import {
-  BellOff,
-  BellRing,
-  Briefcase,
-  CalendarDays,
-  Compass,
-  FolderOpen,
-  Hash,
-  History,
-  Info,
-  Landmark,
-  LayoutDashboard,
-  LogOut,
-  Megaphone,
-  MessageCircle,
-  Monitor,
-  Moon,
-  Phone,
-  RefreshCw,
-  Settings as SettingsIcon,
-  Sun,
-  Users,
-  Volume2,
-} from 'lucide-react'
+import { BellOff, BellRing, Briefcase, CalendarDays, Compass, FolderOpen, Hash, History, Info, Landmark, LayoutDashboard, LogOut, Megaphone, MessageCircle, Monitor, Moon, Phone, RefreshCw, Settings as SettingsIcon, Sun, Users, Volume2, Languages } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChatPanel } from '../../components/ChatPanel'
@@ -31,6 +8,7 @@ import { Logo } from '../../components/Logo'
 import { Badge, Banner, Button, Card, PageSpinner, cx } from '../../components/ui'
 import { api } from '../../lib/api'
 import { EVENT_META, clockTime, statusMeta, useNow, usePolling, type EventType, type SessionState } from '../../lib/court'
+import { SHOW_IN, SHOW_ORIGINAL, TRANSLATED, useTranslated } from '../../lib/translateText'
 import { ClientLangContext, LANGS, agoIn, dateIn, useClientLang, useClientText, type Lang } from '../../lib/clientI18n'
 import { MSG_ALERT, MSG_BRIEFING, sendText, startChat, stopChat, useChat, useIncomingMessages, useUnreadCounts, type Message } from '../../lib/nexconn'
 import { canCall, placeCall, setCallLogWriter, setCallNames } from '../../lib/calls'
@@ -113,12 +91,13 @@ export default function ClientCase() {
   }
   return (
     <ClientLangContext.Provider value={lang}>
-      <ClientCaseInner lang={lang} onLang={choose} onFirmLang={setFromFirm} />
+      <ClientCaseInner lang={lang} onLang={choose} onFirmLang={setFromFirm} langChosen={picked !== null} />
+      {picked === null && <ClientLanguagePicker current={lang} onPick={choose} />}
     </ClientLangContext.Provider>
   )
 }
 
-function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l: Lang) => void; onFirmLang: (l: Lang) => void }) {
+function ClientCaseInner({ lang, onLang, onFirmLang, langChosen }: { lang: Lang; onLang: (l: Lang) => void; onFirmLang: (l: Lang) => void; langChosen: boolean }) {
   const t = useClientText()
   const [data, setData] = useState<ClientView | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -165,7 +144,7 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
     })
   }, [tour, tourKey, firstName, kind, lang])
   useEffect(() => {
-    if (!tourKey) return
+    if (!tourKey || !langChosen) return
     let seen = true
     try {
       seen = localStorage.getItem(tourKey) === '1'
@@ -175,9 +154,9 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
     if (seen) return
     const t = setTimeout(startTour, 900)
     return () => clearTimeout(t)
-    // Only once per link, when the page first has data.
+    // Only once per link, when the page first has data and the language is chosen.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourKey])
+  }, [tourKey, langChosen])
 
   async function signOut() {
     // Stop alerts to this phone too, then forget the client session.
@@ -321,12 +300,12 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
         <button onClick={() => setFlash(null)} className="cc-pop mb-4 w-full text-left" aria-label="Dismiss alert">
           <Banner tone="info">
             <span className="flex items-start gap-2">
-              <BellRing className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} /> {flash}
+              <BellRing className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} /> <ClientTranslated text={flash} plain />
             </span>
           </Banner>
         </button>
       )}
-      {ringing && (
+      {ringing && langChosen && (
         <BriefingCall
           text={ringing.text}
           firm={data.firmName}
@@ -343,7 +322,7 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
           <p className="flex items-center gap-2 text-h2">
             <Megaphone className="size-5" strokeWidth={1.75} /> {t.briefingTitle}
           </p>
-          <p className="mt-2 text-body">{data.briefing.text}</p>
+          <p className="mt-2 text-body"><ClientTranslated text={data.briefing.text} /></p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => setRinging({ text: data.briefing!.text, caseId: data.caseId })} icon={<Volume2 className="size-4" strokeWidth={1.75} />}>
               {t.listen}
@@ -445,7 +424,7 @@ function ClientCaseInner({ lang, onLang, onFirmLang }: { lang: Lang; onLang: (l:
                   {data.alerts.slice(0, 5).map((a) => (
                     <li key={'a' + a.at} className="flex items-start gap-2 py-2 text-label">
                       <BellRing className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={1.75} />
-                      <span className="flex-1">{a.message}</span>
+                      <span className="flex-1"><ClientTranslated text={a.message} /></span>
                       <span className="text-caption text-ink-muted">{clockTime(a.at)}</span>
                     </li>
                   ))}
@@ -588,6 +567,7 @@ function AlertsCard() {
 function ClientChat({ firm }: { firm: string }) {
   const t = useClientText()
   const voiceLang = useClientLang().speech
+  const clientLang = useClientLang().code
   const chat = useChat()
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -636,6 +616,7 @@ function ClientChat({ firm }: { firm: string }) {
         names={names}
         placeholder={t.message(active ? (names[active] ?? firm) : firm)}
         voiceLang={voiceLang}
+        translate={{ to: clientLang, auto: true, path: '/c/translate' }}
         className="h-[calc(100dvh-17rem)] min-h-[22rem] lg:h-[calc(100dvh-14rem)]"
         emptyText={t.chatEmpty}
       />
@@ -722,13 +703,13 @@ function CaseHistory({ data }: { data: ClientView }) {
               {o?.summary && (
                 <div className="mb-2 rounded-md bg-surface-raised p-2.5 text-label">
                   <p className="mb-0.5 text-caption font-semibold text-ink-muted">{t.whatHappened}</p>
-                  {o.summary}
+                  <ClientTranslated text={o.summary} />
                 </div>
               )}
               <ul className="flex flex-col gap-1.5 border-l-2 border-line pl-3">
                 {[...items].reverse().map((h) => (
                   <li key={h.at + h.message} className="flex items-start gap-2 text-label">
-                    <span className="flex-1">{h.message}</span>
+                    <span className="flex-1"><ClientTranslated text={h.message} /></span>
                     <span className="shrink-0 text-caption text-ink-muted">{clockTime(h.at)}</span>
                   </li>
                 ))}
@@ -903,5 +884,51 @@ function ThemeCard() {
         ))}
       </div>
     </Card>
+  )
+}
+
+/** Text the firm typed (e.g. what happened in court), shown in the client's language with "Show original". */
+function ClientTranslated({ text, plain }: { text: string; plain?: boolean }) {
+  const lang = useClientLang().code
+  const tr = useTranslated(text, lang, { auto: true, path: '/c/translate' })
+  return (
+    <>
+      <span className="whitespace-pre-wrap">{tr.text}</span>
+      {!plain && tr.needs && !tr.loading && (
+        <button type="button" onClick={tr.showing ? tr.hide : tr.show} className="ml-1 text-caption font-semibold text-accent underline-offset-2 hover:underline">
+          {tr.showing ? `${TRANSLATED[lang]} · ${SHOW_ORIGINAL[lang]}` : SHOW_IN[lang]}
+        </button>
+      )}
+    </>
+  )
+}
+
+/** First open on this phone: choose the language before anything else (the guided tour follows in it). */
+function ClientLanguagePicker({ current, onPick }: { current: Lang; onPick: (l: Lang) => void }) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-ink/50 p-4" role="dialog" aria-modal="true" aria-labelledby="client-lang-title">
+      <div className="w-full max-w-md rounded-lg border border-line bg-surface p-6 shadow-sheet">
+        <p id="client-lang-title" className="flex items-center gap-2 text-h2">
+          <Languages className="size-6" strokeWidth={1.75} /> Choose your language
+        </p>
+        <p className="mt-1 text-label text-ink-muted">अपनी भाषा चुनें · તમારી ભાષા પસંદ કરો</p>
+        <div className="mt-4 flex flex-col gap-2">
+          {LANGS.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              onClick={() => onPick(l.code)}
+              className={cx(
+                'flex h-14 items-center justify-between rounded-md border px-4 text-body font-semibold',
+                current === l.code ? 'border-accent' : 'border-line bg-surface-raised hover:border-accent',
+              )}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-caption text-ink-muted">Your case page, alerts and messages will use this language. Change it any time in Settings.</p>
+      </div>
+    </div>
   )
 }

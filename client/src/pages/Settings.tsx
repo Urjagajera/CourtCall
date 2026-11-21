@@ -7,6 +7,7 @@ import { tourStepsFor } from '../lib/tourSteps'
 import { PageHeader } from '../components/AppLayout'
 import { Button, Card, cx } from '../components/ui'
 import { useAuth } from '../lib/auth'
+import { LanguageChoice } from '../components/LanguagePicker'
 import { useTheme, type ThemePref } from '../lib/theme'
 
 const OPTIONS: [ThemePref, string, typeof Sun][] = [
@@ -16,7 +17,7 @@ const OPTIONS: [ThemePref, string, typeof Sun][] = [
 ]
 
 export default function Settings() {
-  const { user, office, logout } = useAuth()
+  const { user, office, logout, setSession } = useAuth()
   const { pref, setPref } = useTheme()
   const tour = useTour()
 
@@ -32,6 +33,11 @@ export default function Settings() {
             {user!.isFirmAdmin && ' · Firm admin'}
             {office && ` · ${office.name}`}
           </p>
+        </Card>
+        <Card data-tour="settings-language">
+          <p className="mb-1 text-h2">Language</p>
+          <p className="mb-3 text-label text-ink-muted">Menus, buttons and messages appear in this language. Names and what people type stay as written.</p>
+          <LanguageChoice onSaved={(u) => setSession(u)} />
         </Card>
         <Card>
           <p className="mb-3 text-h2">Appearance</p>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useAppLang } from '../../lib/i18n'
 import { ChatPanel } from '../../components/ChatPanel'
 import { Sheet } from '../../components/Sheet'
 import { MSG_PROGRESS, isFromChannel, useChat, useIncomingMessages, type Message } from '../../lib/nexconn'
@@ -69,6 +70,7 @@ const tint: Record<Tone, string> = {
 }
 
 export default function Room() {
+  const appLang = useAppLang()
   const { id } = useParams<{ id: string }>()
   const [data, setData] = useState<RoomData | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -418,6 +420,7 @@ export default function Room() {
           channelId={data.chatGroupId}
           names={Object.fromEntries(members.map((m) => [m.ncId, m.officeName ? `${m.name} · ${m.officeName}` : m.name]))}
           placeholder="Message the courtroom"
+          translate={{ to: appLang }}
           className="h-96 lg:h-[30rem]"
           emptyText="Progress updates and messages from this courtroom appear here."
         />
