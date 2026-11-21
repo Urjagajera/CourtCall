@@ -38,7 +38,7 @@ npm run dev                            # web http://localhost:5173, API http://l
 
 If two people share the **same** Supabase database, they share demo data and migrations: coordinate before running `db:generate` (see section 8).
 
-Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 206 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
+Useful checks: `npm test` (courtroom and alert rule unit tests, 29), `npm --prefix server run smoke` (end-to-end API test, 207 checks; needs the API running and `DEMO_LOGIN=true`; run `seed:demo` first because it records a hearing outcome on the demo data, then **always** `npm --prefix server run smoke:cleanup`, which also removes its usage rows), `db:ping`, `db:check`, `nexconn:check`.
 
 ---
 
@@ -201,6 +201,8 @@ Done (in order):
 13j. Done (19 Nov 2026, Urja): **client link fixes** after Urja's test failed. (1) `OpenLink` stuck on "Opening your case…" on older Android phones / WhatsApp's in-app browser: `crypto.randomUUID` is missing there and threw; now falls back to `crypto.getRandomValues`, and a 25 s timeout shows an error instead of spinning. (2) 15-minute switch window (see Product decisions). Smoke checks cover take-over, the old phone losing access, and refusal after 15 minutes (206 checks).
 
 13k. Done (20 Nov 2026, Urja): **calls via the phone dialler** (see Nexconn decisions). Tested locally: Call client opened `tel:+919811111111` and the chat line reached Ramesh's Nexconn chat; usage counted. 206 smoke checks.
+
+13l. Done (21 Nov 2026, Urja): **Tomorrow's hearings** card on Today for lawyers and juniors (`client/src/components/TomorrowCard.tsx`, `GET /api/hearings/tomorrow` in `routes/hearings.ts`): their own cases for tomorrow (India date) with court, room, item, client, appearing lawyer (else a senior main lawyer, same rule as the briefing) and "Note added" when the case has a briefing note. Tapping opens the case page, where the note for the client's 9 am briefing is written. Hidden when nothing is tomorrow; not shown to staff. No migration; smoke check added (207).
 
 ### Not done yet
 

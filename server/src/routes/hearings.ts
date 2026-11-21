@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { Router, type Request } from 'express'
 import { z } from 'zod'
 import { db, schema } from '../db/index.js'
@@ -286,6 +287,53 @@ hearingsRouter.get('/clients/:id/detail', ...anyStaff, async (req, res) => {
 })
 
 /** Calendar: upcoming hearings (active cases) and past hearings (recorded outcomes) between two dates. */
+/**
+ * Tomorrow's hearings for the signed-in lawyer (only the cases they are on; firm admins: the whole firm),
+ * so they can prepare the evening before and add the note the client hears in the 9 am briefing.
+ */
+hearingsRouter.get('/hearings/tomorrow', ...anyStaff, async (req, res) => {
+  const tomorrow = courtDate(new Date(Date.now() + 24 * 60 * 60 * 1000))
+  const appearing = alias(schema.users, 'appearing')
+  const main = alias(schema.users, 'main')
+  const rows = await db
+    .select({
+      caseId: schema.cases.id,
+      title: schema.cases.title,
+      caseNo: schema.cases.caseNo,
+      clientName: schema.clients.name,
+      courtComplex: schema.courtrooms.courtComplex,
+      roomNo: schema.courtrooms.roomNo,
+      itemNo: schema.cases.itemNo,
+      appearingLawyer: appearing.name,
+      mainLawyer: main.name,
+      mainLawyerRole: main.role,
+      hasNote: schema.cases.rememberNote,
+    })
+    .from(schema.cases)
+    .innerJoin(schema.clients, eq(schema.clients.id, schema.cases.clientId))
+    .innerJoin(schema.courtrooms, eq(schema.courtrooms.id, schema.cases.courtroomId))
+    .leftJoin(appearing, eq(appearing.id, schema.cases.appearingLawyerId))
+    .leftJoin(main, eq(main.id, schema.cases.mainLawyerId))
+    .where(
+      and(
+        eq(schema.cases.officeId, req.user!.officeId!),
+        eq(schema.cases.status, 'active'),
+        eq(schema.cases.hearingDate, tomorrow),
+        caseVisible(req.user!),
+      ),
+    )
+    .orderBy(asc(schema.courtrooms.courtComplex), asc(schema.courtrooms.roomNo), asc(schema.cases.itemNo))
+  res.json({
+    date: tomorrow,
+    cases: rows.map(({ hasNote, mainLawyer, mainLawyerRole, appearingLawyer, ...r }) => ({
+      ...r,
+      // Who appears: the chosen appearing lawyer, else a senior main lawyer (same rule as the briefing).
+      appearingLawyer: appearingLawyer ?? (mainLawyerRole === 'lawyer' ? mainLawyer : null),
+      noteForClient: !!hasNote?.trim(),
+    })),
+  })
+})
+
 hearingsRouter.get('/calendar', ...anyStaff, async (req, res) => {
   const q = parse(z.object({ from: z.iso.date(), to: z.iso.date() }), req.query)
   if (q.to < q.from) throw badRequest('"to" must be after "from"')

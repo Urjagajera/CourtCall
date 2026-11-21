@@ -20,6 +20,10 @@ Your tests, demo data and chat messages never touch the live site. Only your **c
 
 Each entry says what changed and **what you must do**. Full technical details are in CLAUDE.md (section 6, "Status").
 
+### 21 Nov 2026 (Urja): Tomorrow's hearings card (no migration)
+
+Nothing to run. Lawyers and juniors see a **Tomorrow's hearings** card on Today with their own cases for tomorrow; tapping one opens the case page to add the client's briefing note.
+
 ### 20 Nov 2026 (Urja): calls open the phone dialler (no migration)
 
 Nothing to run. Nexconn needs a card to switch on in-app calls, so **Call**, **Call client** and **Call my lawyer** now open the phone's dialler with the saved number and note the call in the Nexconn chat. To go back to in-app calls later: `VITE_NEXCONN_CALLS=on` in Vercel (or `client/.env.local`) and rebuild.

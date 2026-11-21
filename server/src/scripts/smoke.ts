@@ -101,6 +101,10 @@ check('firm admin changes firm settings', setRes.body.settings?.staleMinutes ===
 check('settings show in /auth/me', (await lawyer.get('/auth/me')).body.office?.staleMinutes === 30)
 await lawyer.patch('/office/settings', settingsBefore)
 
+// Tomorrow's hearings (Today card): the signed-in person's own cases for tomorrow.
+const tmr = await lawyer.get('/hearings/tomorrow')
+check("tomorrow's hearings answer with a date and a list", tmr.status === 200 && /^\d{4}-\d{2}-\d{2}$/.test(tmr.body.date) && Array.isArray(tmr.body.cases), tmr.body)
+
 // Usage (Team page "This week in CourtCall"): firm admins only; calls and voice notes are reported by the app.
 const usage0 = (await lawyer.get('/office/usage')).body
 check('firm admin sees the weekly usage', typeof usage0.updates?.week === 'number' && typeof usage0.calls?.weekMinutes === 'number', usage0)
